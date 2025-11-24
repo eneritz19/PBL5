@@ -54,8 +54,6 @@ CREATE TABLE IF NOT EXISTS `skinXpert`.`images` (
   `id_image` INT NOT NULL AUTO_INCREMENT,
   `id_request` INT NOT NULL,
   `file_path` VARCHAR(255) NOT NULL,
-  `file_type` VARCHAR(10),
-  `file_size_bytes` INT,
   `upload_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_image`),
   CONSTRAINT `fk_image_request`
@@ -112,10 +110,10 @@ VALUES
 (2, 'processing');
 
 -- Images
-INSERT INTO `images` (`id_request`, `file_path`, `file_type`, `file_size_bytes`)
+INSERT INTO `images` (`id_request`, `file_path`)
 VALUES
-(1, '/uploads/request1_photo.jpg', 'jpg', 204800),
-(2, '/uploads/request2_photo.png', 'png', 305000);
+(1, '/uploads/request1_photo.jpg'),
+(2, '/uploads/request2_photo.png');
 
 -- Results
 INSERT INTO `results` (`id_request`, `diagnosis`, `confidence_level`, `recommendations`, `id_doctor`)
