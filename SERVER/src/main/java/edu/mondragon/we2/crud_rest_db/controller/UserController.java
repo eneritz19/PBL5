@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import edu.mondragon.we2.crud_rest_db.model.User;
-import edu.mondragon.we2.crud_rest_db.model.UserRepository;
+import edu.mondragon.we2.crud_rest_db.entity.User;
+import edu.mondragon.we2.crud_rest_db.repository.UserRepository;
 import jakarta.websocket.server.PathParam;
 
 @RestController
 @RequestMapping("/skinXpert")
-public class Controller {
+public class UserController {
 
     @Autowired
     UserRepository user_repository;

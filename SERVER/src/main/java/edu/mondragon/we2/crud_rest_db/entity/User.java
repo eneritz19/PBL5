@@ -1,4 +1,4 @@
-package edu.mondragon.we2.crud_rest_db.model;
+package edu.mondragon.we2.crud_rest_db.entity;
 
 import lombok.Data;
 import jakarta.persistence.Entity;
