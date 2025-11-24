@@ -36,9 +36,9 @@ public class UserController {
      */
 
     
-    @GetMapping(value = "/show", produces = { "application/json", "application/xml" })
+    @GetMapping(value = "/showUser", produces = { "application/json", "application/xml" })
     @ResponseBody
-    public ResponseEntity<List<User>>getDisease() {
+    public ResponseEntity<List<User>>getUser() {
 
         List<User> user_list = user_repository.findAll();
 
@@ -57,96 +57,62 @@ public class UserController {
      * @return an HTTP response (OK if the article is found, not found if the
      *         article does not exist in the database)
      */
-    /*@GetMapping(value = "/cityWeather/{id}", produces = { "application/json", "application/xml" })
-    public ResponseEntity<Disease>getCityWeather(@PathVariable int id) {
+    @GetMapping(value = "/showUser/{id}", produces = { "application/json", "application/xml" })
+    public ResponseEntity<User>getUserID(@PathVariable int id) {
 
-        Optional<Disease> article = city_repository.findById(id);
+        Optional<User> user = user_repository.findById(id);
 
-        if (article.isPresent()) {
-            return new ResponseEntity<>(article.get(), HttpStatus.OK);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-
-    }*/
-
-    //postman
-    // POST http://localhost:8080/weatherservice/addCityWeather
-    // RAW
-    /*{
-    "idCity": 5,
-    "cityName": "GALICIA",
-    "maxTemperature": 0,
-    "minTemperature": 0,
-    "weather": 19,
-    "windSpeed": 0,
-    "rain": 0.0
-    } */
-    /*@PostMapping(value = "/addCityWeather", consumes = { "application/json", "application/xml" }, produces = {
-            "application/json", "application/xml" })
-    public ResponseEntity<Disease> addCityWeather(@RequestBody Disease article) {
-
-       
-            city_repository.save(article);
-            return new ResponseEntity<>(article, HttpStatus.CREATED);
-       
-
-    }*/
-
-    // PUT  http://localhost:8080/weatherservice/modifyCity/1
-    /* {
-    "idCity": 1,
-    "cityName": "GALICIA",
-    "maxTemperature": 0,
-    "minTemperature": 0,
-    "weather": 19,
-    "windSpeed": 0,
-    "rain": 0.0
-     }*/
-    /*@PutMapping(value = "/modifyCity/{id}", consumes = { "application/json", "application/xml" }, produces = {
-            "application/json", "application/xml" })
-    public ResponseEntity<Disease> putArticle(@PathVariable int id, @RequestBody Disease article) {
-
-        Optional<Disease> found_article = city_repository.findById(id);
-
-        if (found_article.isPresent()) {
-
-            found_article.get().setCityName(article.getCityName());
-            found_article.get().setIdCity(article.getIdCity());
-            found_article.get().setMaxTemperature(article.getMaxTemperature());
-            found_article.get().setMinTemperature(article.getMinTemperature());
-            found_article.get().setRain(article.getRain());
-            found_article.get().setWeather(article.getWeather());
-            found_article.get().setWindSpeed(article.getWindSpeed());
-            city_repository.save(found_article.get());
-            city_repository.save(found_article.get());
-            return new ResponseEntity<>(article, HttpStatus.OK);
-
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-
-    }*/
-
-
-
-    // DELETE http://localhost:8080/weatherservice/deleteCityWeather?id=5
-
-    /*@DeleteMapping(value = "/deleteCityWeather")  //CAMBIAR A PARAM
-    public ResponseEntity<Disease> deleteCityWeather(@RequestParam int id) {
-
-        Optional<Disease> found_article = city_repository.findById(id);
-
-        if (found_article.isPresent()) {
-
-            city_repository.delete(found_article.get());
-            return ResponseEntity.ok().build();
+        if (user.isPresent()) {
+            return new ResponseEntity<>(user.get(), HttpStatus.OK);
         } else {
             return ResponseEntity.notFound().build();
         }
 
     }
-*/
- 
 
+    @PostMapping(value = "/addUser", consumes = { "application/json", "application/xml" }, produces = {
+            "application/json", "application/xml" })
+    public ResponseEntity<User> addUser(@RequestBody User user) {
+
+       
+            user_repository.save(user);
+            return new ResponseEntity<>(user, HttpStatus.CREATED);
+       
+
+    }
+
+    @PutMapping(value = "/modifyUser/{id}", consumes = { "application/json", "application/xml" }, produces = {
+            "application/json", "application/xml" })
+    public ResponseEntity<User> putUser(@PathVariable int id, @RequestBody User user) {
+
+        Optional<User> found_user = user_repository.findById(id);
+
+        if (found_user.isPresent()) {
+
+            found_user.get().setName(user.getName());
+            found_user.get().setEmail(user.getEmail());
+            found_user.get().setCreated_at(user.getCreated_at());
+            user_repository.save(found_user.get());
+            user_repository.save(found_user.get());
+            return new ResponseEntity<>(user, HttpStatus.OK);
+
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+
+    }
+
+    @DeleteMapping(value = "/deleteUser") 
+    public ResponseEntity<User> deleteUser(@RequestParam int id) {
+
+        Optional<User> found_user = user_repository.findById(id);
+
+        if (found_user.isPresent()) {
+
+            user_repository.delete(found_user.get());
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
