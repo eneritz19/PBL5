@@ -1,0 +1,123 @@
+-- Create schema
+CREATE SCHEMA IF NOT EXISTS `skinXpert` DEFAULT CHARACTER SET utf8 ;
+USE `skinXpert` ;
+
+-- ------------------------------------------------------------
+-- 1. TABLE: Users
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `skinXpert`.`users` (
+  `id_user` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NULL,
+  `email` VARCHAR(150) UNIQUE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_user`)
+);
+
+-- ------------------------------------------------------------
+-- 2. TABLE: Doctors
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `skinXpert`.`doctors` (
+  `id_doctor` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(150) UNIQUE,
+  `role` VARCHAR(50),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_doctor`)
+);
+
+-- ------------------------------------------------------------
+-- 3. TABLE: Requests
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `skinXpert`.`requests` (
+  `id_request` INT NOT NULL AUTO_INCREMENT,
+  `id_user` INT NULL,
+  `upload_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `status` ENUM('pending','processing','completed','rejected') DEFAULT 'pending',
+  `assigned_doctor_id` INT NULL,
+  PRIMARY KEY (`id_request`),
+  CONSTRAINT `fk_request_user`
+    FOREIGN KEY (`id_user`)
+    REFERENCES `skinXpert`.`users` (`id_user`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_request_doctor`
+    FOREIGN KEY (`assigned_doctor_id`)
+    REFERENCES `skinXpert`.`doctors` (`id_doctor`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 4. TABLE: Images
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `skinXpert`.`images` (
+  `id_image` INT NOT NULL AUTO_INCREMENT,
+  `id_request` INT NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `file_type` VARCHAR(10),
+  `file_size_bytes` INT,
+  `upload_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_image`),
+  CONSTRAINT `fk_image_request`
+    FOREIGN KEY (`id_request`)
+    REFERENCES `skinXpert`.`requests` (`id_request`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 5. TABLE: Results
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `skinXpert`.`results` (
+  `id_result` INT NOT NULL AUTO_INCREMENT,
+  `id_request` INT NOT NULL,
+  `diagnosis` TEXT NOT NULL,
+  `confidence_level` DECIMAL(5,2),
+  `recommendations` TEXT,
+  `analysis_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `id_doctor` INT,
+  PRIMARY KEY (`id_result`),
+  CONSTRAINT `fk_result_request`
+    FOREIGN KEY (`id_request`)
+    REFERENCES `skinXpert`.`requests` (`id_request`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_result_doctor`
+    FOREIGN KEY (`id_doctor`)
+    REFERENCES `skinXpert`.`doctors` (`id_doctor`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- INSERT EXAMPLES
+-- ------------------------------------------------------------
+
+-- Users
+INSERT INTO `users` (`name`, `email`)
+VALUES 
+('John Smith', 'john@example.com'),
+('Emily Carter', 'emily@example.com');
+
+-- Doctors
+INSERT INTO `doctors` (`name`, `email`, `role`)
+VALUES
+('Dr. Michael Brown', 'mbrown@clinic.com', 'dermatologist'),
+('Dr. Sarah Johnson', 'sjohnson@clinic.com', 'dermatologist');
+
+-- Requests
+INSERT INTO `requests` (`id_user`, `status`)
+VALUES
+(1, 'pending'),
+(2, 'processing');
+
+-- Images
+INSERT INTO `images` (`id_request`, `file_path`, `file_type`, `file_size_bytes`)
+VALUES
+(1, '/uploads/request1_photo.jpg', 'jpg', 204800),
+(2, '/uploads/request2_photo.png', 'png', 305000);
+
+-- Results
+INSERT INTO `results` (`id_request`, `diagnosis`, `confidence_level`, `recommendations`, `id_doctor`)
+VALUES
+(2, 'Atopic dermatitis', 88.50, 'Apply moisturizer and consult a dermatologist.', 1);
