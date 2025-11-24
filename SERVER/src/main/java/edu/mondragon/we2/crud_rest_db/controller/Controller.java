@@ -17,16 +17,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import edu.mondragon.we2.crud_rest_db.model.City;
-import edu.mondragon.we2.crud_rest_db.model.CityRepository;
+import edu.mondragon.we2.crud_rest_db.model.User;
+import edu.mondragon.we2.crud_rest_db.model.UserRepository;
 import jakarta.websocket.server.PathParam;
 
 @RestController
-@RequestMapping("/weatherservice") ////http://localhost:8080/weatherservice/citiesWeather
+@RequestMapping("/skinXpert")
 public class Controller {
 
     @Autowired
-    CityRepository city_repository;
+    UserRepository user_repository;
 
     /**
      * @brief This method returns the list of articles in XML and JSON format.
@@ -35,21 +35,21 @@ public class Controller {
      *         not articles)
      */
 
-    //http://localhost:8080/weatherservice/citiesWeather
-    @GetMapping(value = "/citiesWeather", produces = { "application/json", "application/xml" })
+    
+    @GetMapping(value = "/show", produces = { "application/json", "application/xml" })
     @ResponseBody
-    public ResponseEntity<List<City>>getCityWeather() {
+    public ResponseEntity<List<User>>getDisease() {
 
-        List<City> article_list = city_repository.findAll();
+        List<User> user_list = user_repository.findAll();
 
-        if (article_list.isEmpty()) {
+        if (user_list.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {
-            return new ResponseEntity<>(article_list, HttpStatus.OK);
+            return new ResponseEntity<>(user_list, HttpStatus.OK);
         }
 
     }
-
+ 
     /**
      * @brief This method returns the information about an article in XML and JSON
      *        formats.
@@ -57,10 +57,10 @@ public class Controller {
      * @return an HTTP response (OK if the article is found, not found if the
      *         article does not exist in the database)
      */
-    @GetMapping(value = "/cityWeather/{id}", produces = { "application/json", "application/xml" })
-    public ResponseEntity<City>getCityWeather(@PathVariable int id) {
+    /*@GetMapping(value = "/cityWeather/{id}", produces = { "application/json", "application/xml" })
+    public ResponseEntity<Disease>getCityWeather(@PathVariable int id) {
 
-        Optional<City> article = city_repository.findById(id);
+        Optional<Disease> article = city_repository.findById(id);
 
         if (article.isPresent()) {
             return new ResponseEntity<>(article.get(), HttpStatus.OK);
@@ -68,7 +68,7 @@ public class Controller {
             return ResponseEntity.notFound().build();
         }
 
-    }
+    }*/
 
     //postman
     // POST http://localhost:8080/weatherservice/addCityWeather
@@ -82,16 +82,16 @@ public class Controller {
     "windSpeed": 0,
     "rain": 0.0
     } */
-    @PostMapping(value = "/addCityWeather", consumes = { "application/json", "application/xml" }, produces = {
+    /*@PostMapping(value = "/addCityWeather", consumes = { "application/json", "application/xml" }, produces = {
             "application/json", "application/xml" })
-    public ResponseEntity<City> addCityWeather(@RequestBody City article) {
+    public ResponseEntity<Disease> addCityWeather(@RequestBody Disease article) {
 
        
             city_repository.save(article);
             return new ResponseEntity<>(article, HttpStatus.CREATED);
        
 
-    }
+    }*/
 
     // PUT  http://localhost:8080/weatherservice/modifyCity/1
     /* {
@@ -103,11 +103,11 @@ public class Controller {
     "windSpeed": 0,
     "rain": 0.0
      }*/
-    @PutMapping(value = "/modifyCity/{id}", consumes = { "application/json", "application/xml" }, produces = {
+    /*@PutMapping(value = "/modifyCity/{id}", consumes = { "application/json", "application/xml" }, produces = {
             "application/json", "application/xml" })
-    public ResponseEntity<City> putArticle(@PathVariable int id, @RequestBody City article) {
+    public ResponseEntity<Disease> putArticle(@PathVariable int id, @RequestBody Disease article) {
 
-        Optional<City> found_article = city_repository.findById(id);
+        Optional<Disease> found_article = city_repository.findById(id);
 
         if (found_article.isPresent()) {
 
@@ -126,16 +126,16 @@ public class Controller {
             return ResponseEntity.notFound().build();
         }
 
-    }
+    }*/
 
 
 
     // DELETE http://localhost:8080/weatherservice/deleteCityWeather?id=5
 
-    @DeleteMapping(value = "/deleteCityWeather")  //CAMBIAR A PARAM
-    public ResponseEntity<City> deleteCityWeather(@RequestParam int id) {
+    /*@DeleteMapping(value = "/deleteCityWeather")  //CAMBIAR A PARAM
+    public ResponseEntity<Disease> deleteCityWeather(@RequestParam int id) {
 
-        Optional<City> found_article = city_repository.findById(id);
+        Optional<Disease> found_article = city_repository.findById(id);
 
         if (found_article.isPresent()) {
 
@@ -146,7 +146,7 @@ public class Controller {
         }
 
     }
-
+*/
  
 
 }
