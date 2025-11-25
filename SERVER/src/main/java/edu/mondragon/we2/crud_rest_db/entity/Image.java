@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "images")
-public class Images {
+public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // This line indicates that the id is an auto_increment value
@@ -22,10 +22,10 @@ public class Images {
     private String file_path;
     private Timestamp upload_date;
 
-    public Images() {
+    public Image() {
     }
 
-    public Images(int id_image, int id_request, String file_path, Timestamp upload_date) {
+    public Image(int id_image, int id_request, String file_path, Timestamp upload_date) {
         this.id_image = id_image;
         this.id_request = id_request;
         this.file_path = file_path;
@@ -64,7 +64,5 @@ public class Images {
     public void setUpload_date(Timestamp upload_date) {
         this.upload_date = upload_date;
     }
- 
-    
 }
 

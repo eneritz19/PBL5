@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "results")
-public class Results {
+public class Result {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // This line indicates that the id is an auto_increment value
@@ -25,10 +25,10 @@ public class Results {
     private Timestamp analysis_date;
     private int id_doctor;
 
-    public Results() {
+    public Result() {
     }
 
-    public Results(int id_result, int id_request, String diagnosis, float confidence_level, String recommendations,
+    public Result(int id_result, int id_request, String diagnosis, float confidence_level, String recommendations,
             Timestamp analysis_date, int id_doctor) {
         this.id_result = id_result;
         this.id_request = id_request;

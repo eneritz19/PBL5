@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -62,6 +63,18 @@ public class DoctorsController {
             return ResponseEntity.notFound().build();
         }
 
+    }
+
+    @GetMapping(value = "/doctorName", produces = { "application/json", "application/xml" })
+    public ResponseEntity<Doctor> getDoctorByName(@RequestParam String name) {
+
+        Doctor doctor = doctor_repository.findByDoctorName(name);
+
+        if (doctor == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return new ResponseEntity<>(doctor, HttpStatus.OK);
+        }
     }
 
 }

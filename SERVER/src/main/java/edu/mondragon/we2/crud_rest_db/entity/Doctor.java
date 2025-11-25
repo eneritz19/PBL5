@@ -1,5 +1,7 @@
 package edu.mondragon.we2.crud_rest_db.entity;
 
+import java.security.Timestamp;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,12 +18,12 @@ public class Doctor {
     private String name;
     private String email;
     private String role;
-    private String created_at;
+    private Timestamp created_at;
 
     public Doctor() {
     }
 
-    public Doctor(int id_doctor, String name, String email, String role, String created_at) {
+    public Doctor(int id_doctor, String name, String email, String role, Timestamp created_at) {
         this.id_doctor = id_doctor;
         this.name = name;
         this.email = email;
@@ -61,13 +63,12 @@ public class Doctor {
         this.role = role;
     }
 
-    public String getCreated_at() {
+    public Timestamp getCreated_at() {
         return created_at;
     }
 
-    public void setCreated_at(String created_at) {
+    public void setCreated_at(Timestamp created_at) {
         this.created_at = created_at;
     }
-    
 }
 
