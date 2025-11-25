@@ -122,7 +122,7 @@ CREATE TABLE skin_diseases (
     `alternatives` TEXT,
     `recommendations` TEXT,
     `referral` VARCHAR(255),
-    source VARCHAR(255)
+    `source` VARCHAR(255)
 );
 
 -- ---------------------------------------------------
