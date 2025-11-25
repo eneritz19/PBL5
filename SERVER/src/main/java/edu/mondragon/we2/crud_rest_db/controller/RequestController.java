@@ -88,8 +88,9 @@ public class RequestController {
 
         if (found_request.isPresent()) {
 
-            found_request.get().setUpload_date(request.getUpload_date());;
-            found_request.get().setStatus(request.getStatus());
+             found_request.get().setStatus(request.getStatus());
+             found_request.get().setAssigned_doctor_id(request.getAssigned_doctor_id());
+
             request_repository.save(found_request.get());
             return new ResponseEntity<>(request, HttpStatus.OK);
 

@@ -89,7 +89,6 @@ public class ImageController {
         if (found_image.isPresent()) {
 
             found_image.get().setFile_path(image.getFile_path());
-            found_image.get().setUpload_date(image.getUpload_date());
             image_repository.save(found_image.get());
             return new ResponseEntity<>(image, HttpStatus.OK);
 

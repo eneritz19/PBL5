@@ -91,7 +91,6 @@ public class ResultController {
             found_result.get().setDiagnosis(result.getDiagnosis());
             found_result.get().setConfidence_level(result.getConfidence_level());
             found_result.get().setRecommendations(result.getRecommendations());
-            found_result.get().setAnalysis_date(result.getAnalysis_date());
             result_repository.save(found_result.get());
             return new ResponseEntity<>(result, HttpStatus.OK);
 
