@@ -92,7 +92,6 @@ public class RequestController {
             found_request.get().setUpload_date(request.getUpload_date());;
             found_request.get().setStatus(request.getStatus());
             request_repository.save(found_request.get());
-            request_repository.save(found_request.get());
             return new ResponseEntity<>(request, HttpStatus.OK);
 
         } else {

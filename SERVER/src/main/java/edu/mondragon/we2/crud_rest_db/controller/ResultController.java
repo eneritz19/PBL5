@@ -94,7 +94,6 @@ public class ResultController {
             found_result.get().setRecommendations(result.getRecommendations());
             found_result.get().setAnalysis_date(result.getAnalysis_date());
             result_repository.save(found_result.get());
-            result_repository.save(found_result.get());
             return new ResponseEntity<>(result, HttpStatus.OK);
 
         } else {

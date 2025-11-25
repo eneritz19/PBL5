@@ -91,8 +91,7 @@ public class UserController {
 
             found_user.get().setName(user.getName());
             found_user.get().setEmail(user.getEmail());
-            found_user.get().setCreated_at(user.getCreated_at());
-            user_repository.save(found_user.get());
+            found_user.get().setPassword(user.getPassword());
             user_repository.save(found_user.get());
             return new ResponseEntity<>(user, HttpStatus.OK);
 

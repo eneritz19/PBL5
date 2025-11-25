@@ -25,20 +25,24 @@ public class User {
     private int id_user;
     private String name;
     private String email;
+    private String password;
     private Timestamp created_at;
 
     public User() {
     }
 
-    public User(int id_user, String name, String email, Timestamp created_at) {
+
+    public User(int id_user, String name, String email, String password, Timestamp created_at) {
         this.id_user = id_user;
         this.name = name;
         this.email = email;
+        this.password = password;
         this.created_at = created_at;
     }
+    
 
     public int getId_user() {
-        return id_user;
+        return this.id_user;
     }
 
     public void setId_user(int id_user) {
@@ -46,7 +50,7 @@ public class User {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -54,19 +58,28 @@ public class User {
     }
 
     public String getEmail() {
-        return email;
+        return this.email;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
 
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public Timestamp getCreated_at() {
-        return created_at;
+        return this.created_at;
     }
 
     public void setCreated_at(Timestamp created_at) {
         this.created_at = created_at;
     }
+    
 }
 

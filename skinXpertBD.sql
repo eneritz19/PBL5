@@ -147,4 +147,4 @@ VALUES
 
 INSERT INTO `admin` (`name`, `email`, `password`)
 VALUES
-('System Admin', 'admin@skinXpert.com', SHA2('admin123',256));
+('admin', 'admin@skinXpert.com', SHA2('admin',256));

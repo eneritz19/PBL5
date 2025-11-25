@@ -17,22 +17,26 @@ public class Doctor {
     private int id_doctor;
     private String name;
     private String email;
+    private String password;
     private String role;
     private Timestamp created_at;
 
     public Doctor() {
     }
 
-    public Doctor(int id_doctor, String name, String email, String role, Timestamp created_at) {
+
+    public Doctor(int id_doctor, String name, String email, String password, String role, Timestamp created_at) {
         this.id_doctor = id_doctor;
         this.name = name;
         this.email = email;
+        this.password = password;
         this.role = role;
         this.created_at = created_at;
     }
+   
 
     public int getId_doctor() {
-        return id_doctor;
+        return this.id_doctor;
     }
 
     public void setId_doctor(int id_doctor) {
@@ -40,7 +44,7 @@ public class Doctor {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -48,15 +52,23 @@ public class Doctor {
     }
 
     public String getEmail() {
-        return email;
+        return this.email;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
 
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getRole() {
-        return role;
+        return this.role;
     }
 
     public void setRole(String role) {
@@ -64,11 +76,12 @@ public class Doctor {
     }
 
     public Timestamp getCreated_at() {
-        return created_at;
+        return this.created_at;
     }
 
     public void setCreated_at(Timestamp created_at) {
         this.created_at = created_at;
     }
+
 }
 

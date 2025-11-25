@@ -93,7 +93,6 @@ public class ImageController {
             found_image.get().setFile_path(image.getFile_path());
             found_image.get().setUpload_date(image.getUpload_date());
             image_repository.save(found_image.get());
-            image_repository.save(found_image.get());
             return new ResponseEntity<>(image, HttpStatus.OK);
 
         } else {
