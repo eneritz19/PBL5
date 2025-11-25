@@ -6,5 +6,5 @@ import edu.mondragon.we2.crud_rest_db.entity.Doctor;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Integer> {
 
-    Doctor findByDoctorName(String name);
+    Doctor findByName(String name);
 }

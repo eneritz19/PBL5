@@ -68,7 +68,7 @@ public class DoctorsController {
     @GetMapping(value = "/doctorName", produces = { "application/json", "application/xml" })
     public ResponseEntity<Doctor> getDoctorByName(@RequestParam String name) {
 
-        Doctor doctor = doctor_repository.findByDoctorName(name);
+        Doctor doctor = doctor_repository.findByName(name);
 
         if (doctor == null) {
             return ResponseEntity.notFound().build();

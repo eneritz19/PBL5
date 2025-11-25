@@ -1,6 +1,6 @@
 package edu.mondragon.we2.crud_rest_db.entity;
 
-import java.security.Timestamp;
+import java.sql.Timestamp;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
