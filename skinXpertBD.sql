@@ -70,6 +70,18 @@ CREATE TABLE IF NOT EXISTS `images` (
     ON UPDATE CASCADE
 );
 
+DROP TABLE IF EXISTS `skin_diseases`;
+CREATE TABLE skin_diseases (
+	`id_skindiseases` INT AUTO_INCREMENT PRIMARY KEY,
+	`disease` VARCHAR(255) NOT NULL,
+    `ICD_code` VARCHAR(255),
+    `standard_treatment` TEXT,
+    `medications` TEXT,
+    `alternatives` TEXT,
+    `recommendations` TEXT,
+    `referral` VARCHAR(255),
+    `source` VARCHAR(255)
+);
 -- ------------------------------------------------------------
 -- 5. Results
 -- ------------------------------------------------------------
@@ -112,18 +124,7 @@ CREATE TABLE IF NOT EXISTS `admin` (
   PRIMARY KEY (`id_admin`)
 );
 
-DROP TABLE IF EXISTS `skin_diseases`;
-CREATE TABLE skin_diseases (
-	`id_skindiseases` INT AUTO_INCREMENT PRIMARY KEY,
-	`disease` VARCHAR(255) NOT NULL,
-    `ICD_code` VARCHAR(255),
-    `standard_treatment` TEXT,
-    `medications` TEXT,
-    `alternatives` TEXT,
-    `recommendations` TEXT,
-    `referral` VARCHAR(255),
-    `source` VARCHAR(255)
-);
+
 
 -- ---------------------------------------------------
 -- INSERT EXAMPLES
