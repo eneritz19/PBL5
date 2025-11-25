@@ -28,8 +28,6 @@ public class Skindiseases {
     public Skindiseases() {
     }
 
-
-
     public Skindiseases(int id_skindiseases, String disease, String ICD_code, String standard_treatment, String medications, String alternatives, String recommendations, String referral, String source) {
         this.id_skindiseases = id_skindiseases;
         this.disease = disease;
