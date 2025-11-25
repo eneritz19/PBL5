@@ -88,9 +88,10 @@ public class ResultController {
 
         if (found_result.isPresent()) {
 
-            found_result.get().setDiagnosis(result.getDiagnosis());
-            found_result.get().setConfidence_level(result.getConfidence_level());
-            found_result.get().setRecommendations(result.getRecommendations());
+            found_result.get().setId_request(result.getId_request());
+            found_result.get().setConfidence_level(result.getConfidence_level());;
+            found_result.get().setId_skindiseases(result.getId_skindiseases());
+            found_result.get().setAnalysis_date(result.getAnalysis_date());
             result_repository.save(found_result.get());
             return new ResponseEntity<>(result, HttpStatus.OK);
 
