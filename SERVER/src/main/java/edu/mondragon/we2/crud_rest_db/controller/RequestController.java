@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.mondragon.we2.crud_rest_db.entity.Request;
 import edu.mondragon.we2.crud_rest_db.repository.RequestRepository;
-import jakarta.websocket.server.PathParam;
 
 @RestController
 @RequestMapping("/skinXpert")

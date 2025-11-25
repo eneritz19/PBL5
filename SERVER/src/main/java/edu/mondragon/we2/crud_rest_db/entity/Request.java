@@ -1,7 +1,5 @@
 package edu.mondragon.we2.crud_rest_db.entity;
 
-import lombok.Data;
-
 import java.security.Timestamp;
 
 import jakarta.persistence.Entity;
