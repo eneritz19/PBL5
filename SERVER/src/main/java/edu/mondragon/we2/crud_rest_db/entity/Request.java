@@ -1,7 +1,9 @@
 package edu.mondragon.we2.crud_rest_db.entity;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,21 +19,22 @@ public class Request {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // This line indicates that the id is an auto_increment value
     private int id_request;
     private int id_user;
-    private Timestamp upload_date;
     private String status;
-    private int assigned_doctor_id;
+    private Integer assigned_doctor_id;
+
+    @Column(name = "upload_date", insertable = false, updatable = false)
+    private LocalDateTime upload_date;
 
     public Request() {
     }
 
-    public Request(int id_request, int id_user, Timestamp upload_date, String status, int assigned_doctor_id) {
+     public Request(int id_request, int id_user, LocalDateTime upload_date, String status, Integer assigned_doctor_id) {
         this.id_request = id_request;
         this.id_user = id_user;
         this.upload_date = upload_date;
         this.status = status;
         this.assigned_doctor_id = assigned_doctor_id;
     }
-
 
     public int getId_request() {
         return this.id_request;
@@ -49,11 +52,11 @@ public class Request {
         this.id_user = id_user;
     }
 
-    public Timestamp getUpload_date() {
+    public LocalDateTime getUpload_date() {
         return this.upload_date;
     }
 
-    public void setUpload_date(Timestamp upload_date) {
+    public void setUpload_date(LocalDateTime upload_date) {
         this.upload_date = upload_date;
     }
 
@@ -65,14 +68,13 @@ public class Request {
         this.status = status;
     }
 
-    public int getAssigned_doctor_id() {
+    public Integer getAssigned_doctor_id() {
         return this.assigned_doctor_id;
     }
 
-    public void setAssigned_doctor_id(int assigned_doctor_id) {
+    public void setAssigned_doctor_id(Integer assigned_doctor_id) {
         this.assigned_doctor_id = assigned_doctor_id;
     }
-
  
     
 }

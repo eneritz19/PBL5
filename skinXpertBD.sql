@@ -1,4 +1,5 @@
 -- Create schema
+
 CREATE SCHEMA IF NOT EXISTS `skinXpert` DEFAULT CHARACTER SET utf8 ;
 USE `skinXpert` ;
 USE `skinXpert`;

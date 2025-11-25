@@ -1,7 +1,11 @@
 package edu.mondragon.we2.crud_rest_db.entity;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,13 +23,17 @@ public class Result {
     private int id_request;
     private float confidence_level;
     private int id_skindiseases;
-    private Timestamp analysis_date;
     private int id_doctor;
+
+
+    @Column(name = "analysis_date", insertable = false, updatable = false)
+    private LocalDateTime analysis_date;
+
 
     public Result() {
     }
 
-    public Result(int id_result, int id_request, float confidence_level, int id_skindiseases, Timestamp analysis_date,
+    public Result(int id_result, int id_request, float confidence_level, int id_skindiseases, LocalDateTime analysis_date,
             int id_doctor) {
         this.id_result = id_result;
         this.id_request = id_request;
@@ -67,11 +75,11 @@ public class Result {
         this.id_skindiseases = id_skindiseases;
     }
 
-    public Timestamp getAnalysis_date() {
+    public LocalDateTime getAnalysis_date() {
         return analysis_date;
     }
 
-    public void setAnalysis_date(Timestamp analysis_date) {
+    public void setAnalysis_date(LocalDateTime analysis_date) {
         this.analysis_date = analysis_date;
     }
 
