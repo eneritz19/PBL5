@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: skinxpert_db
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: "skinxpert"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./skinXpertBD.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - skinxpert_network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -proot || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  node-red:
+    image: nodered/node-red:latest
+    container_name: skinxpert_nodered
+    ports:
+      - "1880:1880"   # puerto para acceder a Node-RED
+    volumes:
+      - nodered_data:/data
+    networks:
+      - skinxpert_network
+    depends_on:
+      - db
+
+  
+volumes:
+  mysql_data:
+    driver: local
+  nodered_data:
+
+networks:
+  skinxpert_network:
+    driver: bridge
