@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS `admin` (
 -- Users
 INSERT INTO `users` (`name`, `email`, `password`)
 VALUES 
-('John Smith', 'john@example.com', SHA2('user123',256)),
+('John Smith', 'john@example.com',  SHA2('user123',256)),
 ('Emily Carter', 'emily@example.com', SHA2('user123',256));
 
 
