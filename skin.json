@@ -1,0 +1,135 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "3cc11d24.ff01a2",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "WARNING: please check you have started this container with a volume that is mounted to /data\\n otherwise any flow changes are lost when you redeploy or upgrade the container\\n (e.g. upgrade to a more recent node-red docker image).\\n  If you are using named volumes you can ignore this warning.\\n Double click or see info side panel to learn how to start Node-RED in Docker to save your work",
+        "info": "\nTo start docker with a bind mount volume (-v option), for example:\n\n```\ndocker run -it -p 1880:1880 -v /home/user/node_red_data:/data --name mynodered nodered/node-red\n```\n\nwhere `/home/user/node_red_data` is a directory on your host machine where you want to store your flows.\n\nIf you do not do this then you can experiment and redploy flows, but if you restart or upgrade the container the flows will be disconnected and lost. \n\nThey will still exist in a hidden data volume, which can be recovered using standard docker techniques, but that is much more complex than just starting with a named volume as described above.",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "d3c09b79c40da40c",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Login Endpoint",
+        "url": "/login",
+        "method": "post",
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 240,
+        "wires": [
+            [
+                "0609af0ceba2e7ba"
+            ]
+        ]
+    },
+    {
+        "id": "0609af0ceba2e7ba",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Login Query",
+        "func": "// Extraer email y password\nconst email = msg.payload?.email?.trim();\nconst password = msg.payload?.password?.trim();\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan email o password' };\n    return msg;\n}\n\n// Guardamos los valores originales para chequear doctor después\nmsg.loginEmail = email;\nmsg.loginPassword = password;\n\n// Query inicial para usuarios\nmsg.topic = `SELECT id_user AS id_user, name, email \n             FROM users \n             WHERE email='${email}' AND password=SHA2('${password}',256) \n             LIMIT 1`;\nmsg.step = 'check_user';\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 240,
+        "wires": [
+            [
+                "6f57fcf9fb87d6d8"
+            ]
+        ]
+    },
+    {
+        "id": "6f57fcf9fb87d6d8",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Check Users",
+        "x": 630,
+        "y": 240,
+        "wires": [
+            [
+                "49976fcb4b4f2abc"
+            ]
+        ]
+    },
+    {
+        "id": "aa25bdec252b2128",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Check Doctors",
+        "x": 1130,
+        "y": 240,
+        "wires": [
+            [
+                "49976fcb4b4f2abc"
+            ]
+        ]
+    },
+    {
+        "id": "49976fcb4b4f2abc",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Process Login Result",
+        "func": "if (msg.step === 'check_user') {\nif (msg.payload.length > 0) {\nconst u = msg.payload[0];\nmsg.payload = {\nsuccess: true,\nrole: 'User',\nuser: { id: u.id_user, name: u.name, email: u.email },\ntoken: 'fake-token-user'\n};\nreturn [msg, null];\n}\n\n// No encontrado → buscar doctor usando email/password originales\nmsg.step = 'check_doctor';\nmsg.topic = `SELECT id_doctor AS id_doctor, name, email, role \n             FROM doctors \n             WHERE email='${msg.loginEmail}' AND password=SHA2('${msg.loginPassword}',256) \n             LIMIT 1`;\nreturn [null, msg];\n\n}\n\nif (msg.step === 'check_doctor') {\nif (msg.payload.length > 0) {\nconst d = msg.payload[0];\nmsg.payload = {\nsuccess: true,\nrole: 'Doctor', // Aseguramos que el dashboard cargue correctamente\nuser: { id: d.id_doctor, name: d.name, email: d.email, specialty: d.role },\ntoken: 'fake-token-doctor'\n};\nreturn msg;\n}\n\n// No encontrado ni usuario ni doctor\nmsg.statusCode = 401;\nmsg.payload = { error: 'Usuario o contraseña incorrectos' };\nreturn msg;\n\n}",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 880,
+        "y": 240,
+        "wires": [
+            [
+                "d5c43fb1bc46df34"
+            ],
+            [
+                "aa25bdec252b2128"
+            ]
+        ]
+    },
+    {
+        "id": "d5c43fb1bc46df34",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1130,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "9c12c0e15685ca58",
+        "type": "MySQLdatabase",
+        "name": "skinxpert_mysql",
+        "host": "db",
+        "port": "3306",
+        "db": "skinXpert",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "01ebd27048ea6f9b",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-mysql-test   ": "1.0.0"
+        }
+    }
+]
