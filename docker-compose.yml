@@ -39,7 +39,7 @@ services:
       ports:
         - "8080:80"
       volumes:
-        - "C:/Users/Maialen/Desktop/3.maila/PBL/skin.html:/usr/share/nginx/html/index.html:ro"
+        - "C:/Users/annez/Desktop/PBL5/PBL5/skin.html:/usr/share/nginx/html/index.html:ro"
       networks:
         - skinxpert_network
       depends_on:
