@@ -1,437 +1,127 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkinXpert - Plataforma Dermatológica</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #0284c7; /* Azul médico */
-            --secondary: #0ea5e9;
-            --bg: #f8fafc;
-            --text: #334155;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --warning: #f59e0b;
-        }
-
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
-        
-        /* Layouts */
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .hidden { display: none !important; }
-        
-        /* Login Styles */
-        .login-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-        }
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        .login-card img { width: 80px; margin-bottom: 20px; }
-
-        /* Dashboard Styles */
-        header {
-            background: white;
-            padding: 15px 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo { font-size: 24px; font-weight: bold; color: var(--primary); }
-        .nav-btn { cursor: pointer; color: var(--text); margin-left: 20px; }
-        .nav-btn:hover { color: var(--primary); }
-
-        /* Tabs */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
-        .tab-btn {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #64748b;
-            font-weight: 600;
-        }
-        .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); margin-bottom: -2px; }
-
-        /* Forms & Inputs */
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-        button.btn-primary {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            transition: 0.3s;
-        }
-        button.btn-primary:hover { background: #0369a1; }
-        button.btn-danger { background: var(--danger); color: white; border:none; padding: 8px 12px; border-radius: 4px; cursor:pointer;}
-
-        /* Cards Grid */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--secondary);
-        }
-        .card.urgency-high { border-left-color: var(--danger); background: #fef2f2; }
-        .card.urgency-medium { border-left-color: var(--warning); }
-        .card img { width: 100%; border-radius: 6px; margin-top: 10px; height: 200px; object-fit: cover; }
-        
-        /* Camera Preview */
-        #camera-preview { width: 100%; border-radius: 8px; background: #000; display: none; }
-
-        /* Modal */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-        }
-        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; }
-        
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkinXpert</title>
+<style>
+    body { font-family: Arial,sans-serif; background:#f2f2f2; margin:0; padding:0; }
+    .container { width:90%; max-width:420px; margin:60px auto; padding:25px; background:white; border-radius:12px; box-shadow:0 0 12px rgba(0,0,0,0.1);}
+    h2,h3 { text-align:center; }
+    input, button { width:100%; margin-top:12px; padding:12px; border-radius:6px; border:1px solid #ccc; }
+    button { background:#2A6BE4; color:white; cursor:pointer; font-weight:bold; }
+    button:hover { background:#1f52b4; }
+    .hidden { display:none; }
+    .case-card { padding:12px; background:#fff; margin-top:10px; border-radius:8px; border:1px solid #ddd; }
+    .case-card img { width:100%; border-radius:6px; margin-top:8px; }
+</style>
 </head>
 <body>
 
-    <div id="loginSection" class="login-wrapper">
-        <div class="login-card">
-            <i class="fa-solid fa-user-doctor" style="font-size: 50px; color: var(--primary);"></i>
-            <h2>SkinXpert</h2>
-            <p>Acceso Seguro</p>
-            <input type="text" id="loginId" placeholder="Email / DNI / Código Médico">
-            <input type="password" id="loginPass" placeholder="Contraseña">
-            <button class="btn-primary" onclick="login()">Entrar</button>
-        </div>
-    </div>
+<div id="loginPage" class="container">
+<h2>Iniciar Sesión</h2>
+<input id="email" type="email" placeholder="Correo electrónico">
+<input id="password" type="password" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
+<div class="nav"><a href="#" onclick="showRegister()">¿No tienes cuenta? Registrarse</a></div>
+</div>
 
-    <div id="mainApp" class="hidden">
-        <header>
-            <div class="logo">SkinXpert <span id="userRoleBadge" style="font-size: 14px; background: #e0f2fe; padding: 5px 10px; border-radius: 20px;"></span></div>
-            <div>
-                <span id="userNameDisplay">Usuario</span>
-                <i class="fa-solid fa-right-from-bracket nav-btn" onclick="logout()" title="Cerrar Sesión"></i>
-            </div>
-        </header>
+<div id="registerPage" class="container hidden">
+<h2>Registro</h2>
+<input id="reg_name" type="text" placeholder="Nombre completo">
+<input id="reg_email" type="email" placeholder="Correo electrónico">
+<input id="reg_password" type="password" placeholder="Contraseña">
+<button onclick="register()">Crear cuenta</button>
+<div class="nav"><a href="#" onclick="showLogin()">Volver al login</a></div>
+</div>
 
-        <div class="container">
-            
-            <div id="adminDashboard" class="hidden">
-                <h2>Gestión de Usuarios</h2>
-                <div class="card">
-                    <h3>Añadir Nuevo Usuario</h3>
-                    <input type="text" id="adminNewName" placeholder="Nombre Completo">
-                    <input type="email" id="adminNewEmail" placeholder="Email">
-                    <input type="password" id="adminNewPass" placeholder="Contraseña">
-                    <select id="adminNewRole">
-                        <option value="DOCTOR">Médico</option>
-                        <option value="PATIENT">Paciente</option>
-                        <option value="ADMIN">Administrador</option>
-                    </select>
-                    <button class="btn-primary" onclick="adminCreateUser()">Crear Usuario</button>
-                </div>
-                <br>
-                <h3>Lista de Usuarios</h3>
-                <div id="adminUserList" class="grid"></div>
-            </div>
+<div id="userDashboard" class="container hidden">
+<h2>Mis Consultas</h2>
+<h3>Crear nueva consulta</h3>
+<input type="file" id="uploadImage">
+<button onclick="uploadCase()">Enviar imagen</button>
+<hr>
+<h3>Historial</h3>
+<div id="userCases"></div>
+<button style="margin-top:25px; background:#888;" onclick="logout()">Cerrar sesión</button>
+</div>
 
-            <div id="patientDashboard" class="hidden">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('p-upload')">Nueva Consulta</button>
-                    <button class="tab-btn" onclick="switchTab('p-appointments')">Mis Citas</button>
-                    <button class="tab-btn" onclick="switchTab('p-history')">Historial Médico</button>
-                </div>
-
-                <div id="p-upload" class="tab-content">
-                    <div class="card" style="text-align: center;">
-                        <h3>Subir o Tomar Foto de la Lesión</h3>
-                        <input type="file" id="patientFile" accept="image/*" capture="environment">
-                        <p style="color: #64748b; font-size: 0.9em;">La foto será analizada por IA para determinar urgencia.</p>
-                        <button class="btn-primary" onclick="patientUploadCase()">Enviar Consulta</button>
-                    </div>
-                </div>
-
-                <div id="p-appointments" class="tab-content hidden">
-                    <div id="patientAppointmentList" class="grid"></div>
-                </div>
-
-                <div id="p-history" class="tab-content hidden">
-                    <div id="patientHistoryList" class="grid"></div>
-                </div>
-            </div>
-
-            <div id="doctorDashboard" class="hidden">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('d-pending')">Casos Pendientes</button>
-                    <button class="tab-btn" onclick="switchTab('d-patients')">Mis Pacientes</button>
-                    <button class="tab-btn" onclick="switchTab('d-appointments')">Gestión Citas</button>
-                    <button class="tab-btn" onclick="switchTab('d-camera')">Cámara Rápida</button>
-                </div>
-
-                <div id="d-pending" class="tab-content">
-                    <p>Ordenado por Urgencia IA</p>
-                    <div id="doctorPendingList" class="grid"></div>
-                </div>
-
-                <div id="d-patients" class="tab-content hidden">
-                    <div id="doctorPatientsList" class="grid"></div>
-                </div>
-
-                <div id="d-appointments" class="tab-content hidden">
-                    <div class="card">
-                        <h3>Crear Nueva Cita</h3>
-                        <input type="text" id="appPatientId" placeholder="ID del Paciente">
-                        <input type="datetime-local" id="appDate">
-                        <button class="btn-primary" onclick="doctorCreateAppointment()">Agendar Cita</button>
-                    </div>
-                    <br>
-                    <div id="doctorAppointmentList" class="grid"></div>
-                </div>
-
-                <div id="d-camera" class="tab-content hidden">
-                    <div class="card" style="text-align: center;">
-                        <h3>Herramienta de Visualización</h3>
-                        <video id="camera-preview" autoplay playsinline></video>
-                        <button class="btn-primary" onclick="startCamera()">Activar Cámara</button>
-                        <button class="btn-danger" onclick="stopCamera()">Detener</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div id="diagnosisModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Emitir Diagnóstico</h3>
-            <p id="modalCaseInfo"></p>
-            <textarea id="diagnosisText" rows="5" placeholder="Escriba el diagnóstico y tratamiento..."></textarea>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn-primary" onclick="submitDiagnosis()">Enviar</button>
-                <button class="btn-danger" onclick="closeModal()">Cancelar</button>
-            </div>
-        </div>
-    </div>
+<div id="doctorDashboard" class="container hidden">
+<h2>Casos pendientes</h2>
+<div id="doctorCases"></div>
+<button style="margin-top:25px; background:#888;" onclick="logout()">Cerrar sesión</button>
+</div>
 
 <script>
-    // URL del Backend Spring Boot
-    const API_URL = "http://localhost:8080/api"; 
-    
-    // Estado Global
-    let currentUser = null;
-    let currentCaseId = null;
+const API = "http://localhost:1880";
 
-    // ================= AUTENTICACIÓN =================
-    async function login() {
-        const email = document.getElementById('loginId').value;
-        const password = document.getElementById('loginPass').value;
+function showRegister() { loginPage.classList.add("hidden"); registerPage.classList.remove("hidden"); }
+function showLogin() { registerPage.classList.add("hidden"); loginPage.classList.remove("hidden"); }
+function logout() { localStorage.removeItem("token"); localStorage.removeItem("role"); location.reload(); }
 
-        try {
-            const res = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const res = await fetch(`${API}/login`, {
+        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password})
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.error||"Error en login");
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.user.role);
+    loadDashboard();
+}
 
-            if (!res.ok) throw new Error("Credenciales incorrectas");
+async function register() {
+    const name = document.getElementById("reg_name").value;
+    const email = document.getElementById("reg_email").value;
+    const password = document.getElementById("reg_password").value;
+    const res = await fetch(`${API}/register`, {
+        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name,email,password})
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.error||"Error en registro");
+    alert("Cuenta creada con éxito");
+    showLogin();
+}
 
-            const data = await res.json();
-            currentUser = data; // Guardamos ID, Nombre y Rol
-            
-            // Guardar en Storage para persistencia
-            localStorage.setItem('user', JSON.stringify(data));
-            
-            initDashboard();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
+function loadDashboard() {
+    loginPage.classList.add("hidden"); registerPage.classList.add("hidden");
+    userDashboard.classList.add("hidden"); doctorDashboard.classList.add("hidden");
+    const role = localStorage.getItem("role");
+    if(role==="Doctor"){ doctorDashboard.classList.remove("hidden"); loadDoctorCases(); }
+    else{ userDashboard.classList.remove("hidden"); loadUserCases(); }
+}
 
-    function logout() {
-        localStorage.removeItem('user');
-        location.reload();
-    }
+async function loadUserCases() {
+    const res = await fetch(`${API}/cases`);
+    const list = await res.json();
+    userCases.innerHTML = "";
+    list.forEach(c=>{
+        userCases.innerHTML+=`<div class="case-card"><p><b>ID:</b>${c.id_request}</p><p><b>Fecha:</b>${c.created_at}</p><img src="${c.file_path}"></div>`;
+    });
+}
 
-    function initDashboard() {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) currentUser = JSON.parse(storedUser);
+async function loadDoctorCases() {
+    const res = await fetch(`${API}/cases`);
+    const list = await res.json();
+    doctorCases.innerHTML = "";
+    list.forEach(c=>{
+        doctorCases.innerHTML+=`<div class="case-card"><p><b>ID:</b>${c.id_request}</p><p><b>Paciente:</b>${c.id_user}</p><img src="${c.file_path}"></div>`;
+    });
+}
 
-        if (!currentUser) return; // Se queda en login
+async function uploadCase() {
+    const file = document.getElementById("uploadImage").files[0];
+    if(!file) return alert("Selecciona una imagen");
+    const form = new FormData();
+    form.append("image", file);
+    await fetch(`${API}/upload`, {method:"POST", body:form});
+    alert("Consulta enviada");
+    loadUserCases();
+}
 
-        // UI Toggle
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        
-        // Header Info
-        document.getElementById('userNameDisplay').textContent = currentUser.name;
-        document.getElementById('userRoleBadge').textContent = currentUser.type || currentUser.role;
-
-        // Routing por Rol
-        if (currentUser.role === 'ADMIN' || currentUser.name === 'admin') {
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            loadAdminUsers();
-        } else if (currentUser.type === 'doctor') {
-            document.getElementById('doctorDashboard').classList.remove('hidden');
-            loadDoctorPendingCases();
-        } else {
-            document.getElementById('patientDashboard').classList.remove('hidden');
-            loadPatientHistory();
-        }
-    }
-
-    // ================= UTILIDADES UI =================
-    function switchTab(tabId) {
-        // Ocultar todos los contenidos de tabs en el dashboard actual
-        const contents = document.querySelectorAll('.tab-content');
-        contents.forEach(el => el.classList.add('hidden'));
-        
-        // Desactivar botones
-        const btns = document.querySelectorAll('.tab-btn');
-        btns.forEach(el => el.classList.remove('active'));
-
-        // Mostrar seleccionado (Buscando el padre para no afectar otros dashboards)
-        document.getElementById(tabId).classList.remove('hidden');
-        event.target.classList.add('active');
-    }
-
-    function closeModal() {
-        document.getElementById('diagnosisModal').classList.add('hidden');
-    }
-
-    // ================= FUNCIONES PACIENTE =================
-    async function patientUploadCase() {
-        const fileInput = document.getElementById('patientFile');
-        if(fileInput.files.length === 0) return alert("Selecciona una foto");
-
-        const formData = new FormData();
-        formData.append("image", fileInput.files[0]);
-        formData.append("userId", currentUser.id);
-
-        try {
-            await fetch(`${API_URL}/cases/upload`, { method: 'POST', body: formData });
-            alert("Caso enviado con éxito. Esperando evaluación.");
-            switchTab('p-history');
-            loadPatientHistory();
-        } catch (e) { console.error(e); alert("Error al subir"); }
-    }
-
-    async function loadPatientHistory() {
-        // GET /api/cases/user/{id}
-        const res = await fetch(`${API_URL}/cases/user/${currentUser.id}`);
-        const data = await res.json(); // Array de casos
-        
-        const container = document.getElementById('patientHistoryList');
-        container.innerHTML = data.map(c => `
-            <div class="card">
-                <p><b>Fecha:</b> ${new Date(c.upload_date).toLocaleDateString()}</p>
-                <p><b>Estado:</b> ${c.status}</p>
-                <img src="${c.file_path || 'placeholder.jpg'}">
-                ${c.diagnosis ? `<div style="background:#f0fdf4; padding:10px; margin-top:10px; border-radius:4px;">
-                    <strong>Diagnóstico Dr:</strong> ${c.diagnosis}
-                </div>` : '<p style="color:orange">Pendiente de revisión</p>'}
-            </div>
-        `).join('');
-    }
-
-    // ================= FUNCIONES MÉDICO =================
-    async function loadDoctorPendingCases() {
-        // GET /api/cases/pending (Backend debe ordenar por urgencia)
-        const res = await fetch(`${API_URL}/cases/pending`); 
-        const data = await res.json();
-        
-        const container = document.getElementById('doctorPendingList');
-        container.innerHTML = data.map(c => `
-            <div class="card ${c.urgency > 80 ? 'urgency-high' : 'urgency-medium'}">
-                <div style="display:flex; justify-content:space-between">
-                    <span><b>Paciente ID:</b> ${c.id_user}</span>
-                    <span style="color:red; font-weight:bold">Urgencia: ${c.urgency}%</span>
-                </div>
-                <img src="${c.file_path}">
-                <p><b>IA Detectó:</b> ${c.ai_prediction}</p>
-                <button class="btn-primary" onclick="openDiagnosisModal(${c.id_request})">Diagnosticar</button>
-            </div>
-        `).join('');
-    }
-
-    function openDiagnosisModal(caseId) {
-        currentCaseId = caseId;
-        document.getElementById('diagnosisModal').classList.remove('hidden');
-    }
-
-    async function submitDiagnosis() {
-        const text = document.getElementById('diagnosisText').value;
-        await fetch(`${API_URL}/cases/${currentCaseId}/diagnose`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ doctorId: currentUser.id, diagnosis: text })
-        });
-        alert("Diagnóstico enviado");
-        closeModal();
-        loadDoctorPendingCases();
-    }
-
-    // Cámara Rápida (Solo visualización, no guarda)
-    let stream;
-    async function startCamera() {
-        const video = document.getElementById('camera-preview');
-        video.style.display = 'block';
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
-    }
-    function stopCamera() {
-        const video = document.getElementById('camera-preview');
-        if (stream) stream.getTracks().forEach(track => track.stop());
-        video.style.display = 'none';
-    }
-
-    // ================= FUNCIONES ADMIN =================
-    async function adminCreateUser() {
-        const name = document.getElementById('adminNewName').value;
-        const email = document.getElementById('adminNewEmail').value;
-        const password = document.getElementById('adminNewPass').value;
-        const role = document.getElementById('adminNewRole').value;
-
-        await fetch(`${API_URL}/users`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, email, password, role })
-        });
-        alert("Usuario Creado");
-        loadAdminUsers();
-    }
-
-    async function loadAdminUsers() {
-        // Simulación: en backend real sería GET /api/users
-        // Por ahora dejamos vacío o mock para que veas la UI
-        document.getElementById('adminUserList').innerHTML = "<p><i>Funcionalidad conectada al endpoint GET /api/users</i></p>";
-    }
-
-    // Inicializar si ya hay sesión
-    window.onload = initDashboard;
-
+window.onload=()=>{if(localStorage.getItem("token")) loadDashboard();}
 </script>
 </body>
 </html>
