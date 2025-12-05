@@ -182,7 +182,6 @@ async function handleLogin() {
 
         const data = await res.json();
 
-<<<<<<< HEAD
             if (!data.success) {
                 alert("Credenciales incorrectas.");
                 return;
@@ -211,11 +210,6 @@ async function handleLogin() {
         } catch (error) {
             console.error(error);
             alert("Error de conexión con el servidor");
-=======
-        if (!data.success) {
-            alert("Usuario o contraseña incorrectos.");
-            return;
->>>>>>> 402a44a41176547fc0b405c23496aee00c4b534c
         }
 
         document.getElementById("loginPage").classList.add("hidden");
