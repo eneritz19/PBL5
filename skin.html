@@ -18,13 +18,13 @@
     <div id="loginPage" class="container reveal-on-scroll" style="max-width: 450px; text-align: center;">
         
         <div style="margin-bottom: 20px;">
-            <img src="logo_pequeño2.png" alt="Logo SkinXpert" style="width: 80px; height: auto;">
+            <img src="logopequeño.png" alt="Logo SkinXpert" style="width: 80px; height: auto;">
         </div>
         
         <h2 style="margin-top: 0;">Skin<span class="brand-x">X</span>pert</h2>
         <p style="font-size: 19px; margin-bottom: 30px;">Inicia sesión para continuar.</p>
 
-        <input id="email" type="text" placeholder="Correo electrónico o ID">
+        <input id="email" type="text" placeholder="Correo electrónico">
         <input id="password" type="password" placeholder="Contraseña">
 
         <button onclick="handleLogin()">Iniciar Sesión</button>
@@ -57,18 +57,7 @@
         </div>
 
         <div id="p-citas" class="tab-content">
-            <div class="case-card reveal-on-scroll urgency-medium">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h4 style="margin:0;">Revisión Anual</h4>
-                        <p style="margin:5px 0 0 0; color:var(--text-secondary);">Dr. Asignado</p>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-weight:bold; color:var(--sk-blue-dark);">15 DIC</span><br>
-                        <span style="font-size:14px;">10:00 AM</span>
-                    </div>
-                </div>
-            </div>
+            <div id="patientAppointmentsList"></div>
         </div>
 
         <div id="p-historial" class="tab-content">
@@ -101,21 +90,15 @@
         </div>
 
         <div id="d-patients" class="tab-content">
-            <div class="case-card reveal-on-scroll" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong>Ana Lopez</strong><br>
-                    <span style="font-size:14px; color:#888;">ID: 001 • Última visita: Oct 2023</span>
-                </div>
-                <button class="btn-secondary" style="width:auto; margin:0; padding: 10px 20px;">Ver Ficha</button>
-            </div>
+            <div id="doctorPatientsList"></div>
         </div>
 
         <div id="d-citas" class="tab-content">
             <div class="case-card reveal-on-scroll">
                 <h3 style="margin-bottom:20px;">Agendar Cita</h3>
-                <input type="text" placeholder="Buscar paciente...">
-                <input type="datetime-local">
-                <button onclick="alert('Cita guardada en base de datos')">Confirmar Cita</button>
+                <input type="text" id="appDni" placeholder="DNI del Paciente">
+                <input type="datetime-local" id="appDate">
+                <button onclick="createAppointment()">Confirmar Cita</button>
             </div>
         </div>
 
@@ -139,15 +122,16 @@
             <button class="btn-secondary" style="width: auto; margin:0;" onclick="logout()">Salir</button>
         </div>
         <div class="case-card reveal-on-scroll">
-            <h3>Base de Datos</h3>
-            <p>Gestión de usuarios y registros del sistema.</p>
-            <button>Administrar Usuarios</button>
+            <h3>Gestión de Base de Datos</h3>
+            <p>Administración de usuarios (Médicos, Pacientes, Clínicas).</p>
+            <button onclick="alert('Funcionalidad Admin')">Gestionar Usuarios</button>
         </div>
     </div>
 
 
 <script>
     const API = "http://localhost:1880";
+    let currentUser = null;
 
     // --- 1. ANIMACIÓN SCROLL ---
     const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
@@ -165,21 +149,16 @@
         elements.forEach(el => observer.observe(el));
     }
 
-    // --- 2. LOGICA SPLASH SCREEN (REBOTE) ---
+    // --- 2. SPLASH SCREEN (REBOTE) ---
     window.addEventListener('load', () => {
         const splash = document.getElementById('splash-screen');
-
-        // Simular tiempo de carga de 3.5 segundos mientras rebota
         setTimeout(() => {
-            splash.classList.add('hidden-splash'); // Iniciar transición de salida
-            
-            // Esperar a que termine la transición CSS (0.8s) antes de ocultar
+            splash.classList.add('hidden-splash');
             setTimeout(() => {
                 splash.style.display = 'none';
-                initScrollAnimations(); // Animar entrada del login
+                initScrollAnimations();
             }, 800);
-            
-        }, 3500); // Tiempo total de "carga"
+        }, 3500); 
     });
 
     // --- 3. LOGIN ---
@@ -199,21 +178,25 @@
             const data = await res.json();
 
             if (!data.success) {
-                alert("Usuario o contraseña incorrectos.");
+                alert("Credenciales incorrectas.");
                 return;
             }
 
+            currentUser = data.user; // Guardamos usuario logueado
             document.getElementById("loginPage").classList.add("hidden");
 
-            if (data.role === "User" || data.role === "patient") {
+            // ENRUTAMIENTO SEGÚN NUEVA BD (roles)
+            if (data.role === "User" || data.role === "patient") { // Ajustado a tu tabla 'patients'
                 document.getElementById("patientDashboard").classList.remove("hidden");
-                document.getElementById("p_name").innerText = data.user.name;
-                loadPatientMockData();
-            } else if (data.role === "Doctor") {
+                document.getElementById("p_name").innerText = currentUser.name;
+                loadPatientData(currentUser.id_patient);
+            } 
+            else if (data.role === "Doctor" || data.role === "doctor") { // Ajustado a tu tabla 'doctors'
                 document.getElementById("doctorDashboard").classList.remove("hidden");
-                document.getElementById("d_name").innerText = data.user.name;
-                loadDoctorMockData();
-            } else if (data.role === "Admin") {
+                document.getElementById("d_name").innerText = currentUser.name;
+                loadDoctorData(currentUser.id_doctor);
+            } 
+            else if (data.role === "Admin") {
                 document.getElementById("adminDashboard").classList.remove("hidden");
             }
             
@@ -221,7 +204,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("Error de conexión con el servidor (Node-RED 1880)");
+            alert("Error de conexión con el servidor");
         }
     }
 
@@ -237,12 +220,115 @@
         setTimeout(initScrollAnimations, 50);
     }
 
+    // --- 5. LOGICA PACIENTE ---
+    async function loadPatientData(patientId) {
+        // Cargar Historial (Simulado con estructura real)
+        const historyList = document.getElementById('patientHistoryList');
+        // Aquí harías fetch(`${API}/cases?patientId=${patientId}`)
+        // Usamos datos mock basados en tus INSERTS de la BD
+        const mockHistory = [
+            { date: "2025-01-10", status: "diagnosticada", diagnosis: "Acné leve", treatment: "Limpieza diaria + Crema X", img: "https://via.placeholder.com/100" }
+        ];
+
+        historyList.innerHTML = mockHistory.map(h => `
+            <div class="case-card reveal-on-scroll urgency-low">
+                <p style="font-size:14px; color:#888;">${h.date}</p>
+                <div style="display:flex; gap:15px; margin-top:10px;">
+                    <img src="${h.img}" style="width:80px; height:80px; border-radius:8px; margin:0;">
+                    <div>
+                        <strong>${h.diagnosis}</strong>
+                        <p style="margin-top:5px; font-size:14px;">Tx: ${h.treatment}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Cargar Citas
+        const appointmentsList = document.getElementById('patientAppointmentsList');
+        appointmentsList.innerHTML = `
+            <div class="case-card reveal-on-scroll urgency-medium">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h4 style="margin:0;">Revisión Evolución</h4>
+                        <p style="margin:5px 0 0 0; color:var(--text-secondary);">Dr. Asignado</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-weight:bold; color:var(--sk-blue-dark);">15 FEB</span><br>
+                        <span style="font-size:14px;">10:00 AM</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     async function uploadCase() {
         const file = document.getElementById("uploadImage").files[0];
         if(!file) return alert("Selecciona una imagen");
-        alert("Imagen enviada a Node-RED (/upload)");
+        
+        // Simulación de subida a tabla 'photo_requests' e 'images'
+        alert("Imagen subida. Se ha creado una solicitud pendiente.");
     }
 
+    // --- 6. LOGICA DOCTOR ---
+    async function loadDoctorData(doctorId) {
+        // Cargar Pacientes
+        const patList = document.getElementById('doctorPatientsList');
+        patList.innerHTML = `
+            <div class="case-card reveal-on-scroll" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>Ana Martínez</strong><br><span style="font-size:14px; color:#888;">DNI: 12345678A</span></div>
+                <button class="btn-secondary" style="width:auto; margin:0; padding:10px;">Ficha</button>
+            </div>
+            <div class="case-card reveal-on-scroll" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>Pedro López</strong><br><span style="font-size:14px; color:#888;">DNI: 87654321B</span></div>
+                <button class="btn-secondary" style="width:auto; margin:0; padding:10px;">Ficha</button>
+            </div>
+        `;
+
+        // Cargar Pendientes (Mock basado en 'photo_requests')
+        const pendingList = document.getElementById('doctorPendingList');
+        const cases = [
+            { patient: "Ana Martínez", urgency: 3, img: "https://via.placeholder.com/300/FFEBEB/FF0000?text=Urgencia+3", prediction: "Posible Melanoma" }, // Urgency 3 = Alta
+            { patient: "Pedro López", urgency: 1, img: "https://via.placeholder.com/300/F0FFF4/000000?text=Urgencia+1", prediction: "Acné" }      // Urgency 1 = Baja
+        ];
+        
+        // Ordenar por urgencia DESC (3 > 2 > 1)
+        cases.sort((a,b) => b.urgency - a.urgency);
+
+        pendingList.innerHTML = cases.map(c => {
+            let badgeClass = 'badge-low';
+            let cardClass = 'urgency-low';
+            let urgencyText = "BAJA";
+
+            if(c.urgency === 3) { badgeClass = 'badge-high'; cardClass = 'urgency-high'; urgencyText = "ALTA (3)"; }
+            else if(c.urgency === 2) { badgeClass = 'badge-medium'; cardClass = 'urgency-medium'; urgencyText = "MEDIA (2)"; }
+
+            return `
+                <div class="case-card reveal-on-scroll ${cardClass}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>${c.patient}</h3>
+                        <span class="urgency-badge ${badgeClass}">URGENCIA ${urgencyText}</span>
+                    </div>
+                    <img src="${c.img}" style="height:120px;">
+                    <p style="margin-top:15px; color:#1d1d1f;"><b>IA Sugiere:</b> ${c.prediction}</p>
+                    
+                    <textarea placeholder="Escribe diagnóstico y tratamiento..." rows="3"></textarea>
+                    
+                    <button style="margin-top:10px;">Guardar Diagnóstico</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function createAppointment() {
+        const dni = document.getElementById('appDni').value;
+        const date = document.getElementById('appDate').value;
+        if(!dni || !date) return alert("Rellena todos los campos");
+        
+        // Simular insert en tabla 'appointments'
+        alert(`Cita creada para el paciente con DNI ${dni} el ${date}`);
+    }
+
+    // --- CÁMARA ---
     let stream = null;
     async function toggleCamera() {
         const video = document.getElementById('camera-preview');
@@ -262,57 +348,6 @@
             btn.innerText = "Iniciar";
             btn.style.color = "black";
         }
-    }
-
-    // --- 5. DATOS ---
-    function loadPatientMockData() {
-        document.getElementById('patientHistoryList').innerHTML = `
-            <div class="case-card reveal-on-scroll urgency-low">
-                <p style="font-size:14px; color:#888;">10 OCT 2023</p>
-                <div style="display:flex; gap:15px; margin-top:10px;">
-                    <img src="https://via.placeholder.com/100" style="width:80px; height:80px; border-radius:8px; margin:0;">
-                    <div>
-                        <strong>Dermatitis Atópica</strong>
-                        <p style="margin-top:5px; font-size:14px;">Tratamiento: Hidratación...</p>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // CARGA DE CASOS DOCTOR
-    function loadDoctorMockData() {
-        const cases = [
-            { name: "Ana L.", urgency: 90, dx: "Posible Melanoma", img: "https://via.placeholder.com/300/FFEBEB/FF0000?text=Lesion" },
-            { name: "Carlos R.", urgency: 30, dx: "Acné leve", img: "https://via.placeholder.com/300/F0FFF4/000000?text=Lesion" }
-        ];
-        cases.sort((a,b) => b.urgency - a.urgency);
-
-        const list = document.getElementById('doctorPendingList');
-        list.innerHTML = "";
-        
-        cases.forEach(c => {
-            let badgeClass = 'badge-low';
-            let cardClass = 'urgency-low'; 
-
-            if(c.urgency > 80) { badgeClass = 'badge-high'; cardClass = 'urgency-high'; }
-            else if(c.urgency > 40) { badgeClass = 'badge-medium'; cardClass = 'urgency-medium'; }
-
-            list.innerHTML += `
-                <div class="case-card reveal-on-scroll ${cardClass}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>${c.name}</h3>
-                        <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
-                    </div>
-                    <img src="${c.img}" style="height:120px;">
-                    <p style="margin-top:15px; color:#1d1d1f;"><b>IA Detectó:</b> ${c.dx}</p>
-                    
-                    <textarea placeholder="Escribe tu diagnóstico clínico aquí..." rows="3"></textarea>
-                    
-                    <button style="margin-top:10px;">Enviar Informe</button>
-                </div>
-            `;
-        });
     }
 </script>
 
