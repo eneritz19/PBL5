@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkinXpert</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div id="splash-screen">
+        <div class="splash-bouncer-container">
+            <img src="logopequeño.png" alt="Cargando..." class="splash-bouncer">
+        </div>
+    </div>
+
+    <div id="loginPage" class="container reveal-on-scroll" style="max-width: 450px; text-align: center;">
+
+        <div style="margin-bottom: 20px;">
+            <img src="logo_pequeño2.png" alt="Logo SkinXpert" style="width: 80px; height: auto;">
+        </div>
+
+        <h2 style="margin-top: 0;">Skin<span class="brand-x">X</span>pert</h2>
+        <p style="font-size: 19px; margin-bottom: 30px;">Inicia sesión para continuar.</p>
+
+        <input id="email" type="text" placeholder="Correo electrónico o DNI">
+        <input id="password" type="password" placeholder="Contraseña">
+
+        <button onclick="handleLogin()">Iniciar Sesión</button>
+    </div>
+
+
+    <div id="patientDashboard" class="container hidden">
+        <div class="header-flex">
+            <div>
+                <h2 style="font-size: 32px;">Hola, <span id="p_name">Paciente</span></h2>
+                <span class="role-badge">Paciente</span>
+            </div>
+            <button class="btn-secondary" style="width: auto; margin:0;" onclick="logout()">Salir</button>
+        </div>
+
+        <div class="tabs reveal-on-scroll">
+            <button class="tab-btn active" onclick="openTab('p-consult', this)">Consulta</button>
+            <button class="tab-btn" onclick="openTab('p-citas', this)">Citas</button>
+            <button class="tab-btn" onclick="openTab('p-historial', this)">Historial</button>
+        </div>
+
+        <div id="p-consult" class="tab-content active">
+            <div class="case-card reveal-on-scroll" style="text-align: center; padding: 50px;">
+                <i class="fa-solid fa-camera" style="font-size: 50px; color: #d2d2d7; margin-bottom: 20px;"></i>
+                <h3>Nueva Consulta</h3>
+                <p>Sube una foto de tu lesión para que tu médico la evalúe.</p>
+                <input type="file" id="uploadImage" accept="image/*" capture="environment">
+                <button onclick="uploadCase()">Enviar Consulta</button>
+            </div>
+        </div>
+
+        <div id="p-citas" class="tab-content">
+            <div class="case-card reveal-on-scroll urgency-medium">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h4 style="margin:0;">Revisión Anual</h4>
+                        <p style="margin:5px 0 0 0; color:var(--text-secondary);">Dr. Asignado</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-weight:bold; color:var(--sk-blue-dark);">15 DIC</span><br>
+                        <span style="font-size:14px;">10:00 AM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-historial" class="tab-content">
+            <div id="patientHistoryList"></div>
+        </div>
+    </div>
+
+
+    <div id="doctorDashboard" class="container hidden" style="max-width: 900px;">
+        <div class="header-flex">
+            <div>
+                <h2 style="font-size: 32px;">Dr. <span id="d_name">Médico</span></h2>
+                <span class="role-badge">Dermatología</span>
+            </div>
+            <button class="btn-secondary" style="width: auto; margin:0;" onclick="logout()">Salir</button>
+        </div>
+
+        <div class="tabs reveal-on-scroll">
+            <button class="tab-btn active" onclick="openTab('d-pending', this)">Pendientes</button>
+            <button class="tab-btn" onclick="openTab('d-patients', this)">Pacientes</button>
+            <button class="tab-btn" onclick="openTab('d-citas', this)">Agenda</button>
+            <button class="tab-btn" onclick="openTab('d-camera', this)">Cámara</button>
+        </div>
+
+        <div id="d-pending" class="tab-content active">
+            <p class="reveal-on-scroll" style="font-size:14px; color:var(--text-secondary); margin-bottom:20px;">
+                <i class="fa-solid fa-arrow-down-short-wide"></i> Ordenado por Urgencia (IA)
+            </p>
+            <div id="doctorPendingList"></div>
+        </div>
+
+        <div id="d-patients" class="tab-content">
+            <div class="case-card reveal-on-scroll"
+                style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>Ana Lopez</strong><br>
+                    <span style="font-size:14px; color:#888;">ID: 001 • Última visita: Oct 2023</span>
+                </div>
+                <button class="btn-secondary" style="width:auto; margin:0; padding: 10px 20px;">Ver Ficha</button>
+            </div>
+        </div>
+
+        <div id="d-citas" class="tab-content">
+            <div class="case-card reveal-on-scroll">
+                <h3 style="margin-bottom:20px;">Agendar Cita</h3>
+                <input type="text" placeholder="Buscar paciente...">
+                <input type="datetime-local">
+                <button onclick="alert('Cita guardada en base de datos')">Confirmar Cita</button>
+            </div>
+        </div>
+
+        <div id="d-camera" class="tab-content">
+            <div class="case-card reveal-on-scroll" style="background:#000; color:white; text-align:center;">
+                <h3 style="color:white; margin-bottom:10px;">Visor Dermatoscopio</h3>
+                <video id="camera-preview" autoplay playsinline
+                    style="width:100%; border-radius:12px; background:#333; display:none;"></video>
+                <div style="padding-top:20px;">
+                    <button id="btnCamera" class="btn-secondary" onclick="toggleCamera()"
+                        style="background:white !important; color:black !important; width:auto;">
+                        <i class="fa-solid fa-camera"></i> Iniciar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="adminDashboard" class="container hidden">
+        <div class="header-flex">
+            <h2>Admin Panel</h2>
+            <button class="btn-secondary" style="width: auto; margin:0;" onclick="logout()">Salir</button>
+        </div>
+        <div class="case-card reveal-on-scroll">
+            <h3>Base de Datos</h3>
+            <p>Gestión de usuarios y registros del sistema.</p>
+            <button>Administrar Usuarios</button>
+        </div>
+    </div>
+
+
+    <script>
+        const API = "http://localhost:1880";
+
+        // --- 1. ANIMACIÓN SCROLL ---
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        function initScrollAnimations() {
+            const elements = document.querySelectorAll('.case-card, .container, .tabs, .reveal-on-scroll');
+            elements.forEach(el => observer.observe(el));
+        }
+
+        // --- 2. LOGICA SPLASH SCREEN (REBOTE) ---
+        window.addEventListener('load', () => {
+            const splash = document.getElementById('splash-screen');
+
+            // Simular tiempo de carga de 3.5 segundos mientras rebota
+            setTimeout(() => {
+                splash.classList.add('hidden-splash'); // Iniciar transición de salida
+
+                // Esperar a que termine la transición CSS (0.8s) antes de ocultar
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    initScrollAnimations(); // Animar entrada del login
+                }, 800);
+
+            }, 3500); // Tiempo total de "carga"
+        });
+
+        // --- 3. LOGIN ---
+        // --- 3. LOGIN ---
+        async function handleLogin() {
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+
+            if (!email || !password) return alert("Por favor, rellena todos los campos.");
+
+            try {
+                const res = await fetch(`${API}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    alert("Usuario o contraseña incorrectos.");
+                    return;
+                }
+
+                document.getElementById("loginPage").classList.add("hidden");
+
+                const role = data.role.toLowerCase();
+
+                if (role === "patient" || role === "patients") {
+                    document.getElementById("patientDashboard").classList.remove("hidden");
+                    document.getElementById("p_name").innerText = data.user.name;
+                    loadPatientMockData();
+
+                } else if (role === "doctor" || role === "doctors") {
+                    document.getElementById("doctorDashboard").classList.remove("hidden");
+                    document.getElementById("d_name").innerText = data.user.name;
+                    loadDoctorMockData();
+
+                } else if (role === "admin") {
+                    document.getElementById("adminDashboard").classList.remove("hidden");
+                }
+
+                setTimeout(initScrollAnimations, 100);
+
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión con el servidor.");
+            }
+        }
+
+
+        function logout() { location.reload(); }
+
+        // --- 4. INTERFAZ ---
+        function openTab(tabId, btn) {
+            const parent = btn.closest('.container');
+            parent.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            parent.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            parent.querySelector(`#${tabId}`).classList.add('active');
+            btn.classList.add('active');
+            setTimeout(initScrollAnimations, 50);
+        }
+
+        async function uploadCase() {
+            // ID del input de tipo file
+            const file = document.getElementById("uploadImage").files[0];
+            if (!file) return alert("Selecciona una imagen antes de enviar.");
+
+            // Usamos una Promesa para esperar que la conversión a Base64 termine
+            const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    // Elimina el prefijo 'data:image/jpeg;base64,' y resuelve solo con la cadena Base64 pura
+                    const base64String = e.target.result.split(',')[1];
+                    resolve(base64String);
+                };
+
+                reader.onerror = reject;
+
+                // Lee el archivo como una URL de datos Base64
+                reader.readAsDataURL(file);
+            });
+
+            if (!base64Data) {
+                return alert("Fallo en la lectura de la imagen.");
+            }
+
+            // 1. Preparamos el objeto JSON para enviar a Node-RED
+            const dataToSend = {
+                image_base64: base64Data,
+                // Asumiendo que has guardado el rol y el token en localStorage al loguearte
+                token: localStorage.getItem("token")
+            };
+
+            // 2. Usamos fetch para enviar los datos a Node-RED
+            try {
+                const res = await fetch(`${API}/analyze_image`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dataToSend)
+                });
+
+                const resultData = await res.json();
+
+                if (!res.ok) {
+                    return alert("Error de Node-RED: " + (resultData.error || res.statusText));
+                }
+
+                // Muestra las conclusiones simuladas de la IA
+                console.log("Respuesta de Simulación:", resultData);
+                alert(`Consulta enviada con éxito. Mensaje de simulación: ${resultData.message}\nConclusiones principales: ${JSON.stringify(resultData.ai_conclusions[0])}`);
+
+            } catch (error) {
+                console.error("Error de red:", error);
+                alert("Error de conexión al endpoint de Node-RED.");
+            }
+        }
+
+        let stream = null;
+        async function toggleCamera() {
+            const video = document.getElementById('camera-preview');
+            const btn = document.getElementById('btnCamera');
+
+            if (video.style.display === 'none') {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    btn.innerText = "Detener";
+                    btn.style.color = "red";
+                } catch (e) { alert("Cámara no disponible"); }
+            } else {
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                video.style.display = 'none';
+                btn.innerText = "Iniciar";
+                btn.style.color = "black";
+            }
+        }
+
+        // --- 5. DATOS ---
+        function loadPatientMockData() {
+            document.getElementById('patientHistoryList').innerHTML = `
+            <div class="case-card reveal-on-scroll urgency-low">
+                <p style="font-size:14px; color:#888;">10 OCT 2023</p>
+                <div style="display:flex; gap:15px; margin-top:10px;">
+                    <img src="https://via.placeholder.com/100" style="width:80px; height:80px; border-radius:8px; margin:0;">
+                    <div>
+                        <strong>Dermatitis Atópica</strong>
+                        <p style="margin-top:5px; font-size:14px;">Tratamiento: Hidratación...</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+
+        // CARGA DE CASOS DOCTOR
+        function loadDoctorMockData() {
+            const cases = [
+                { name: "Ana L.", urgency: 90, dx: "Posible Melanoma", img: "https://via.placeholder.com/300/FFEBEB/FF0000?text=Lesion" },
+                { name: "Carlos R.", urgency: 30, dx: "Acné leve", img: "https://via.placeholder.com/300/F0FFF4/000000?text=Lesion" }
+            ];
+            cases.sort((a, b) => b.urgency - a.urgency);
+
+            const list = document.getElementById('doctorPendingList');
+            list.innerHTML = "";
+
+            cases.forEach(c => {
+                let badgeClass = 'badge-low';
+                let cardClass = 'urgency-low';
+
+                if (c.urgency > 80) { badgeClass = 'badge-high'; cardClass = 'urgency-high'; }
+                else if (c.urgency > 40) { badgeClass = 'badge-medium'; cardClass = 'urgency-medium'; }
+
+                list.innerHTML += `
+                <div class="case-card reveal-on-scroll ${cardClass}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>${c.name}</h3>
+                        <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
+                    </div>
+                    <img src="${c.img}" style="height:120px;">
+                    <p style="margin-top:15px; color:#1d1d1f;"><b>IA Detectó:</b> ${c.dx}</p>
+                    
+                    <textarea placeholder="Escribe tu diagnóstico clínico aquí..." rows="3"></textarea>
+                    
+                    <button style="margin-top:10px;">Enviar Informe</button>
+                </div>
+            `;
+            });
+        }
+    </script>
+
+</body>
+
+</html>
