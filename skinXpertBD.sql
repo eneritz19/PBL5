@@ -1,168 +1,172 @@
--- Create schema
+/* ===========================================================
+   SCHEMA
+   =========================================================== */
 
-CREATE SCHEMA IF NOT EXISTS `skinXpert` DEFAULT CHARACTER SET utf8 ;
-USE `skinXpert` ;
-USE `skinXpert`;
+DROP SCHEMA IF EXISTS skinXpert;
+CREATE SCHEMA skinXpert;
+USE skinXpert;
 
--- ------------------------------------------------------------
--- 1. TABLE: Users (ahora con password)
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `id_user` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NULL,
-  `email` VARCHAR(150) UNIQUE,
-  `password` VARCHAR(256) NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_user`)
+
+/* ===========================================================
+   1. CLINICAS
+   =========================================================== */
+
+DROP TABLE IF EXISTS clinics;
+CREATE TABLE clinics (
+    id_clinic INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    address VARCHAR(255)
 );
 
--- ------------------------------------------------------------
--- 2. TABLE: Doctors (ahora con password)
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `doctors`;
-CREATE TABLE IF NOT EXISTS `doctors` (
-  `id_doctor` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NOT NULL,
-  `email` VARCHAR(150) UNIQUE,
-  `password` VARCHAR(256) NOT NULL,
-  `role` VARCHAR(50),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_doctor`)
+INSERT INTO clinics (name, address) VALUES
+('Clínica Dermatológica Central', 'Av. Salud 123'),
+('Clínica Especialistas del Sur', 'Calle Medicina 45');
+
+
+/* ===========================================================
+   2. ADMIN
+   =========================================================== */
+
+DROP TABLE IF EXISTS admin;
+CREATE TABLE admin (
+    id_admin INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150),
+    email VARCHAR(150) UNIQUE,
+    password VARCHAR(256) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ------------------------------------------------------------
--- 3. Requests
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `requests`;
-CREATE TABLE IF NOT EXISTS `requests` (
-  `id_request` INT NOT NULL AUTO_INCREMENT,
-  `id_user` INT NULL,
-  `upload_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `status` ENUM('pending','processing','completed','rejected') DEFAULT 'pending',
-  `assigned_doctor_id` INT NULL,
-  PRIMARY KEY (`id_request`),
-  CONSTRAINT `fk_request_user`
-    FOREIGN KEY (`id_user`)
-    REFERENCES `users` (`id_user`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_request_doctor`
-    FOREIGN KEY (`assigned_doctor_id`)
-    REFERENCES `doctors` (`id_doctor`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE
+INSERT INTO admin (name, email, password) VALUES
+('Admin1', 'admin@skinXpert.com', SHA2('admin123',256));
+
+
+/* ===========================================================
+   3. MÉDICOS
+   =========================================================== */
+
+DROP TABLE IF EXISTS doctors;
+CREATE TABLE doctors (
+    id_doctor INT AUTO_INCREMENT PRIMARY KEY,
+    doctor_code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE,
+    password VARCHAR(256) NOT NULL,
+    id_clinic INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_clinic) REFERENCES clinics(id_clinic)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- ------------------------------------------------------------
--- 4. Images
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `images`;
-CREATE TABLE IF NOT EXISTS `images` (
-  `id_image` INT NOT NULL AUTO_INCREMENT,
-  `id_request` INT NOT NULL,
-  `file_path` VARCHAR(255) NOT NULL,
-  `upload_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_image`),
-  CONSTRAINT `fk_image_request`
-    FOREIGN KEY (`id_request`)
-    REFERENCES `requests` (`id_request`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+INSERT INTO doctors (doctor_code, name, email, password, id_clinic) VALUES
+('MED001', 'Dr. Juan Pérez', 'jperez@clinic.com', SHA2('med123',256), 1),
+('MED002', 'Dra. Laura Gómez', 'lgomez@clinic.com', SHA2('med123',256), 1),
+('MED003', 'Dr. Carlos Ruiz', 'cruiz@clinic.com', SHA2('med123',256), 2);
+
+
+/* ===========================================================
+   4. PACIENTES
+   =========================================================== */
+
+DROP TABLE IF EXISTS patients;
+CREATE TABLE patients (
+    id_patient INT AUTO_INCREMENT PRIMARY KEY,
+    dni VARCHAR(15) UNIQUE NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE,
+    password VARCHAR(256) NOT NULL,
+    id_doctor INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor)
+        ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS `skin_diseases`;
+INSERT INTO patients (dni, name, email, password, id_doctor) VALUES
+('12345678A', 'Ana Martínez', 'ana@example.com', SHA2('ana123',256), 1),
+('87654321B', 'Pedro López', 'pedro@example.com', SHA2('pedro123',256), 1),
+('11223344C', 'Carla Torres', 'carla@example.com', SHA2('carla123',256), 2);
+
+
+/* ===========================================================
+   5. CITAS (Médico <-> Paciente)
+   =========================================================== */
+
+DROP TABLE IF EXISTS appointments;
+CREATE TABLE appointments (
+    id_appointment INT AUTO_INCREMENT PRIMARY KEY,
+    id_patient INT NOT NULL,
+    id_doctor INT NOT NULL,
+    date DATETIME NOT NULL,
+    status ENUM('pendiente','realizada','cancelada') DEFAULT 'pendiente',
+    comments TEXT,
+    FOREIGN KEY (id_patient) REFERENCES patients(id_patient)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES
+(1, 1, '2025-02-15 10:00:00', 'pendiente', 'Revisión inicial'),
+(2, 1, '2025-02-16 12:00:00', 'realizada', 'Control de evolución'),
+(3, 2, '2025-02-20 09:30:00', 'pendiente', 'Estudio de lesión');
+
+
+/* ===========================================================
+   6. SOLICITUDES DE FOTOS
+   =========================================================== */
+
+DROP TABLE IF EXISTS photo_requests;
+CREATE TABLE photo_requests (
+    id_request INT AUTO_INCREMENT PRIMARY KEY,
+    id_patient INT NOT NULL,
+    urgency TINYINT DEFAULT 1,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pendiente','revisando','diagnosticada') DEFAULT 'pendiente',
+    FOREIGN KEY (id_patient) REFERENCES patients(id_patient)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+INSERT INTO photo_requests (id_patient, urgency, status) VALUES
+(1, 3, 'pendiente'),
+(2, 1, 'revisando'),
+(3, 2, 'pendiente');
+
+
+/* ===========================================================
+   7. IMÁGENES
+   =========================================================== */
+
+DROP TABLE IF EXISTS images;
+CREATE TABLE images (
+    id_image INT AUTO_INCREMENT PRIMARY KEY,
+    id_request INT NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_request) REFERENCES photo_requests(id_request)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+INSERT INTO images (id_request, file_path) VALUES
+(1, '/uploads/foto_ana_01.jpg'),
+(2, '/uploads/foto_pedro_01.jpg'),
+(3, '/uploads/foto_carla_01.jpg');
+
+
+/* ===========================================================
+   8. ENFERMEDADES (ICD)
+   =========================================================== */
+
+DROP TABLE IF EXISTS skin_diseases;
 CREATE TABLE skin_diseases (
-	`id_skindiseases` INT AUTO_INCREMENT PRIMARY KEY,
-	`disease` VARCHAR(255) NOT NULL,
-    `ICD_code` VARCHAR(255),
-    `standard_treatment` TEXT,
-    `medications` TEXT,
-    `alternatives` TEXT,
-    `recommendations` TEXT,
-    `referral` VARCHAR(255),
-    `source` VARCHAR(255)
+	id_skindiseases INT AUTO_INCREMENT PRIMARY KEY,
+	disease VARCHAR(255) NOT NULL,
+    ICD_code VARCHAR(255),
+    standard_treatment TEXT,
+    medications TEXT,
+    alternatives TEXT,
+    recommendations TEXT,
+    referral VARCHAR(255),
+    source VARCHAR(255)
 );
--- ------------------------------------------------------------
--- 5. Results
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `results`;
-CREATE TABLE IF NOT EXISTS `results` (
-  `id_result` INT NOT NULL AUTO_INCREMENT,
-  `id_request` INT NOT NULL,
-  `confidence_level` DECIMAL(5,2),
-  `id_skindiseases` INT NOT NULL,
-  `analysis_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `id_doctor` INT,
-    PRIMARY KEY (`id_result`),
-  CONSTRAINT `fk_result_request`
-    FOREIGN KEY (`id_request`)
-    REFERENCES `requests` (`id_request`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_result_doctor`
-    FOREIGN KEY (`id_doctor`)
-    REFERENCES `doctors` (`id_doctor`)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT `fk_result_skindiseases`
-    FOREIGN KEY (`id_skindiseases`)
-    REFERENCES `skin_diseases` (`id_skindiseases`)
-    ON DELETE RESTRICT
-    ON UPDATE CASCADE
-);
-
--- ------------------------------------------------------------
--- Admin con password
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `admin`;
-CREATE TABLE IF NOT EXISTS `admin` (
-  `id_admin` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(100) NULL,
-  `email` VARCHAR(150) UNIQUE,
-  `password` VARCHAR(256) NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_admin`)
-);
-
-
-
--- ---------------------------------------------------
--- INSERT EXAMPLES
--- ------------------------------------------------------------
-
--- Users
-INSERT INTO `users` (`name`, `email`, `password`)
-VALUES 
-('John Smith', 'john@example.com',  SHA2('user123',256)),
-('Emily Carter', 'emily@example.com', SHA2('user123',256));
-
-
--- Doctors
-INSERT INTO `doctors` (`name`, `email`, `password`, `role`)
-VALUES
-('Dr. Michael Brown', 'mbrown@clinic.com', SHA2('doc123',256), 'dermatologist'),
-('Dr. Sarah Johnson', 'sjohnson@clinic.com', SHA2('doc123',256), 'dermatologist');
-
-
--- Requests
-INSERT INTO `requests` (`id_user`, `status`)
-VALUES
-(1, 'pending'),
-(2, 'processing');
-
--- Images
-INSERT INTO `images` (`id_request`, `file_path`)
-VALUES
-(1, '/uploads/request1_photo.jpg'),
-(2, '/uploads/request2_photo.png');
-
--- admin
-
-INSERT INTO `admin` (`name`, `email`, `password`)
-VALUES
-('admin', 'admin@skinXpert.com', SHA2('admin',256));
-
 
 INSERT INTO skin_diseases 
 (disease, ICD_code, standard_treatment, medications, alternatives, recommendations, referral, source)
@@ -374,8 +378,37 @@ VALUES
 'Dermatology',
 'Viral infection guidelines');
 
--- results
 
-INSERT INTO `results` (`id_request`, `confidence_level`, `id_skindiseases`, `id_doctor`)
-VALUES
-(2, 88.50, 3, 1);
+/* ===========================================================
+   9. DIAGNÓSTICOS MÉDICOS
+   =========================================================== */
+
+DROP TABLE IF EXISTS diagnoses;
+CREATE TABLE diagnoses (
+    id_diagnosis INT AUTO_INCREMENT PRIMARY KEY,
+    id_request INT NOT NULL,
+    id_doctor INT NOT NULL,
+    id_patient INT NOT NULL,
+    id_skindiseases INT NOT NULL,
+    confidence DECIMAL(5,2),
+    diagnosis_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    doctor_notes TEXT,
+    FOREIGN KEY (id_request) REFERENCES photo_requests(id_request)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_patient) REFERENCES patients(id_patient)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_skindiseases) REFERENCES skin_diseases(id_skindiseases)
+        ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) VALUES
+(1, 1, 1, 1, 87.5, 'Lesión compatible con acné leve.'),
+(2, 1, 2, 2, 92.3, 'Dermatitis en fase activa.'),
+(3, 2, 3, 3, 75.0, 'Placas compatibles con psoriasis.');
+
+
+/* ===========================================================
+   FIN DEL SCRIPT
+   =========================================================== */
