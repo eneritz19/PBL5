@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
 
     <div id="splash-screen">
@@ -16,11 +18,11 @@
     </div>
 
     <div id="loginPage" class="container reveal-on-scroll" style="max-width: 450px; text-align: center;">
-        
+
         <div style="margin-bottom: 20px;">
             <img src="logopequeño.png" alt="Logo SkinXpert" style="width: 80px; height: auto;">
         </div>
-        
+
         <h2 style="margin-top: 0;">Skin<span class="brand-x">X</span>pert</h2>
         <p style="font-size: 19px; margin-bottom: 30px;">Inicia sesión para continuar.</p>
 
@@ -90,7 +92,18 @@
         </div>
 
         <div id="d-patients" class="tab-content">
+<<<<<<< HEAD
             <div id="doctorPatientsList"></div>
+=======
+            <div class="case-card reveal-on-scroll"
+                style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>Ana Lopez</strong><br>
+                    <span style="font-size:14px; color:#888;">ID: 001 • Última visita: Oct 2023</span>
+                </div>
+                <button class="btn-secondary" style="width:auto; margin:0; padding: 10px 20px;">Ver Ficha</button>
+            </div>
+>>>>>>> dadbb3dc833f50522e5e24c3190e3f9cb28079a4
         </div>
 
         <div id="d-citas" class="tab-content">
@@ -105,9 +118,11 @@
         <div id="d-camera" class="tab-content">
             <div class="case-card reveal-on-scroll" style="background:#000; color:white; text-align:center;">
                 <h3 style="color:white; margin-bottom:10px;">Visor Dermatoscopio</h3>
-                <video id="camera-preview" autoplay playsinline style="width:100%; border-radius:12px; background:#333; display:none;"></video>
+                <video id="camera-preview" autoplay playsinline
+                    style="width:100%; border-radius:12px; background:#333; display:none;"></video>
                 <div style="padding-top:20px;">
-                    <button id="btnCamera" class="btn-secondary" onclick="toggleCamera()" style="background:white !important; color:black !important; width:auto;">
+                    <button id="btnCamera" class="btn-secondary" onclick="toggleCamera()"
+                        style="background:white !important; color:black !important; width:auto;">
                         <i class="fa-solid fa-camera"></i> Iniciar
                     </button>
                 </div>
@@ -133,21 +148,21 @@
     const API = "http://localhost:1880";
     let currentUser = null;
 
-    // --- 1. ANIMACIÓN SCROLL ---
-    const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-visible');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
+        // --- 1. ANIMACIÓN SCROLL ---
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
 
-    function initScrollAnimations() {
-        const elements = document.querySelectorAll('.case-card, .container, .tabs, .reveal-on-scroll');
-        elements.forEach(el => observer.observe(el));
-    }
+        function initScrollAnimations() {
+            const elements = document.querySelectorAll('.case-card, .container, .tabs, .reveal-on-scroll');
+            elements.forEach(el => observer.observe(el));
+        }
 
     // --- 2. SPLASH SCREEN (REBOTE) ---
     window.addEventListener('load', () => {
@@ -352,4 +367,5 @@
 </script>
 
 </body>
+
 </html>
