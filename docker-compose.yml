@@ -6,7 +6,7 @@ services:
     container_name: skinxpert_db
     environment:
       MYSQL_ROOT_PASSWORD: "root"
-      MYSQL_DATABASE: "skinxpert"
+      MYSQL_DATABASE: "skinXpert"
     ports:
       - "3307:3306"
     volumes:
