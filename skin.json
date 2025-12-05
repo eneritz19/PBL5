@@ -105,17 +105,15 @@
         "wires": []
     },
     {
-        "id": "9c12c0e15685ca58",
-        "type": "MySQLdatabase",
-        "name": "skinxpert_mysql",
-        "host": "db",
-        "port": "3306",
-        "db": "skinXpert",
-        "tz": "",
-        "charset": "UTF8",
-        "user": "root",
-        "passwd": "root"
-    },
+    "id": "9c12c0e15685ca58",
+    "type": "MySQLdatabase",
+    "name": "skinxpert_mysql",
+    "host": "db",
+    "port": "3306",
+    "db": "skinXpert",
+    "user": "root",
+    "passwd": "root"
+},
     {
         "id": "01ebd27048ea6f9b",
         "type": "global-config",
