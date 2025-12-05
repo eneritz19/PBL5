@@ -22,17 +22,17 @@ services:
 
 
   node-red:
-    image: nodered/node-red
-    container_name: skinxpert_nodered
-    ports:
-      - "1880:1880"
-    # Montamos el JSON como flujo principal
-    volumes:
-      - ./skin.json:/data/flows.json
-    networks:
-      - skinxpert_network
-    depends_on:
-      - db
+      build: ./node-red
+      container_name: skinxpert_nodered
+      ports:
+        - "1880:1880"
+      volumes:
+        - nodered_data:/data
+        - ./skin.json:/data/flows.json
+      networks:
+        - skinxpert_network
+      depends_on:
+       - db
 
   web:
       image: nginx:latest
@@ -41,6 +41,7 @@ services:
         - "8080:80"
       volumes:
         - "./skin.html:/usr/share/nginx/html/index.html:ro"
+        - "./styles.css:/usr/share/nginx/html/styles.css:ro"
       networks:
         - skinxpert_network
       depends_on:

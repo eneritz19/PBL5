@@ -412,3 +412,4 @@ INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confi
 /* ===========================================================
    FIN DEL SCRIPT
    =========================================================== */
+   
