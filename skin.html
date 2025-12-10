@@ -12,7 +12,11 @@
 <body>
 
     <div id="splash-screen">
-        <div class="splash-bouncer-container">
+        <video id="splashVideo" autoplay muted loop playsinline>
+            <source src="video_de_introduccion.mp4" type="video/mp4">
+            Tu navegador no soporta la etiqueta de video.
+        </video>
+        <div class="splash-bouncer-container hidden">
             <img src="logopequeño.png" alt="Cargando..." class="splash-bouncer">
         </div>
     </div>
@@ -171,12 +175,30 @@
         }
 
         // --- 2. LOGICA SPLASH SCREEN (REBOTE) ---
+        // --- 2. LOGICA SPLASH SCREEN (VIDEO) ---
         window.addEventListener('load', () => {
             const splash = document.getElementById('splash-screen');
+            const video = document.getElementById('splashVideo'); // Obtenemos la referencia al video
 
-            // Simular tiempo de carga de 3.5 segundos mientras rebota
+            // **Nueva lógica de video:**
+            // Asegura que el video comienza a reproducirse tan pronto como sea posible
+            if (video) {
+                // Intenta forzar la reproducción (necesario en algunos entornos)
+                video.play().catch(e => console.log("Error al reproducir video", e));
+            }
+
+            // Usaremos el mismo temporizador de 3.5 segundos para la transición de salida
+            // Simular tiempo de carga de 3.5 segundos
+            const SPLASH_DURATION = 3500;
+
             setTimeout(() => {
                 splash.classList.add('hidden-splash'); // Iniciar transición de salida
+
+                // Detener la reproducción del video para ahorrar recursos
+                if (video) {
+                    video.pause();
+                    video.currentTime = 0; // Reiniciar
+                }
 
                 // Esperar a que termine la transición CSS (0.8s) antes de ocultar
                 setTimeout(() => {
@@ -184,7 +206,7 @@
                     initScrollAnimations(); // Animar entrada del login
                 }, 800);
 
-            }, 3500); // Tiempo total de "carga"
+            }, SPLASH_DURATION); // Tiempo total de "carga"
         });
 
         // --- 3. LOGIN ---
