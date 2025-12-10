@@ -24,12 +24,12 @@
         </div>
 
         <h2 style="margin-top: 0;">Skin<span class="brand-x">X</span>pert</h2>
-        <p style="font-size: 19px; margin-bottom: 30px;">Inicia sesión para continuar.</p>
+        <p style="font-size: 19px; margin-bottom: 30px;">Inicia sesion para continuar.</p>
 
         <input id="email" type="text" placeholder="Correo electrónico o DNI">
         <input id="password" type="password" placeholder="Contraseña">
 
-        <button onclick="handleLogin()">Iniciar Sesión</button>
+        <button onclick="handleLogin()">Iniciar Sesion</button>
     </div>
 
 
@@ -52,7 +52,7 @@
             <div class="case-card reveal-on-scroll" style="text-align: center; padding: 50px;">
                 <i class="fa-solid fa-camera" style="font-size: 50px; color: #d2d2d7; margin-bottom: 20px;"></i>
                 <h3>Nueva Consulta</h3>
-                <p>Sube una foto de tu lesión para que tu médico la evalúe.</p>
+                <p>Sube una foto de tu lesion para que tu medico la evalúe.</p>
                 <input type="file" id="uploadImage" accept="image/*" capture="environment">
                 <button onclick="uploadCase()">Enviar Consulta</button>
             </div>
@@ -62,7 +62,7 @@
             <div class="case-card reveal-on-scroll urgency-medium">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <h4 style="margin:0;">Revisión Anual</h4>
+                        <h4 style="margin:0;">Revision Anual</h4>
                         <p style="margin:5px 0 0 0; color:var(--text-secondary);">Dr. Asignado</p>
                     </div>
                     <div style="text-align:right;">
@@ -82,8 +82,8 @@
     <div id="doctorDashboard" class="container hidden" style="max-width: 900px;">
         <div class="header-flex">
             <div>
-                <h2 style="font-size: 32px;">Dr. <span id="d_name">Médico</span></h2>
-                <span class="role-badge">Dermatología</span>
+                <h2 style="font-size: 32px;"><span id="d_name">Médico</span></h2>
+                <span class="role-badge">Dermatologia</span>
             </div>
             <button class="btn-secondary" style="width: auto; margin:0;" onclick="logout()">Salir</button>
         </div>
@@ -92,7 +92,7 @@
             <button class="tab-btn active" onclick="openTab('d-pending', this)">Pendientes</button>
             <button class="tab-btn" onclick="openTab('d-patients', this)">Pacientes</button>
             <button class="tab-btn" onclick="openTab('d-citas', this)">Agenda</button>
-            <button class="tab-btn" onclick="openTab('d-camera', this)">Cámara</button>
+            <button class="tab-btn" onclick="openTab('d-camera', this)">Camara</button>
         </div>
 
         <div id="d-pending" class="tab-content active">
@@ -107,7 +107,7 @@
                 style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <strong>Ana Lopez</strong><br>
-                    <span style="font-size:14px; color:#888;">ID: 001 • Última visita: Oct 2023</span>
+                    <span style="font-size:14px; color:#888;">ID: 001 • Ultima visita: Oct 2023</span>
                 </div>
                 <button class="btn-secondary" style="width:auto; margin:0; padding: 10px 20px;">Ver Ficha</button>
             </div>
@@ -145,7 +145,7 @@
         </div>
         <div class="case-card reveal-on-scroll">
             <h3>Base de Datos</h3>
-            <p>Gestión de usuarios y registros del sistema.</p>
+            <p>Gestion de usuarios y registros del sistema.</p>
             <button>Administrar Usuarios</button>
         </div>
     </div>
@@ -221,7 +221,11 @@
                 } else if (role === "doctor" || role === "doctors") {
                     document.getElementById("doctorDashboard").classList.remove("hidden");
                     document.getElementById("d_name").innerText = data.user.name;
-                    loadDoctorMockData();
+                    localStorage.setItem("doctor_id", data.user.id);
+                    localStorage.setItem("token", data.token);
+                    loadDoctorPatients();
+                    loadDoctorPending();
+                    loadDoctorAppointments();
 
                 } else if (role === "admin") {
                     document.getElementById("adminDashboard").classList.remove("hidden");
@@ -342,14 +346,48 @@
         }
 
         // CARGA DE CASOS DOCTOR
-        function loadDoctorMockData() {
-            const cases = [
-                { name: "Ana L.", urgency: 90, dx: "Posible Melanoma", img: "https://via.placeholder.com/300/FFEBEB/FF0000?text=Lesion" },
-                { name: "Carlos R.", urgency: 30, dx: "Acné leve", img: "https://via.placeholder.com/300/F0FFF4/000000?text=Lesion" }
-            ];
-            cases.sort((a, b) => b.urgency - a.urgency);
+        async function loadDoctorPatients() {
+            const doctorId = localStorage.getItem("doctor_id");
 
-            const list = document.getElementById('doctorPendingList');
+            try {
+                const res = await fetch(`${API}/doctor/patients?id_doctor=${doctorId}`);
+                const patients = await res.json();
+
+                const list = document.getElementById("d-patients");
+                list.innerHTML = "";
+
+                patients.forEach(p => {
+                    list.innerHTML += `
+                <div class="case-card reveal-on-scroll"
+                    style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${p.name}</strong><br>
+                        <span style="font-size:14px; color:#888;">
+                            DNI: ${p.dni} • ${p.email}
+                        </span>
+                    </div>
+                    <button class="btn-secondary" style="width:auto; margin:0;">
+                        Ver Ficha
+                    </button>
+                </div>
+            `;
+                });
+
+                initScrollAnimations();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando pacientes");
+            }
+        }
+
+        async function loadDoctorPending() {
+            const doctorId = localStorage.getItem("doctor_id");
+
+            const res = await fetch(`${API}/doctor/pending?id_doctor=${doctorId}`);
+            const cases = await res.json();
+
+            const list = document.getElementById("doctorPendingList");
             list.innerHTML = "";
 
             cases.forEach(c => {
@@ -360,20 +398,77 @@
                 else if (c.urgency > 40) { badgeClass = 'badge-medium'; cardClass = 'urgency-medium'; }
 
                 list.innerHTML += `
-                <div class="case-card reveal-on-scroll ${cardClass}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>${c.name}</h3>
-                        <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
-                    </div>
-                    <img src="${c.img}" style="height:120px;">
-                    <p style="margin-top:15px; color:#1d1d1f;"><b>IA Detectó:</b> ${c.dx}</p>
-                    
-                    <textarea placeholder="Escribe tu diagnóstico clínico aquí..." rows="3"></textarea>
-                    
-                    <button style="margin-top:10px;">Enviar Informe</button>
+            <div class="case-card reveal-on-scroll ${cardClass}">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>${c.name}</h3>
+                    <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
+                </div>
+                <img src="${c.file_path}" style="height:120px;">
+                <textarea placeholder="Diagnóstico..." rows="3"></textarea>
+                <button>Enviar Informe</button>
+            </div>
+        `;
+            });
+
+            initScrollAnimations();
+        }
+
+
+        async function loadDoctorAppointments() {
+            const doctorId = localStorage.getItem("doctor_id");
+
+            try {
+                const res = await fetch(`${API}/doctor/appointments?id_doctor=${doctorId}`);
+                const citas = await res.json();
+
+                const list = document.getElementById("d-citas");
+                list.innerHTML = "";
+
+                if (!citas.length) {
+                    list.innerHTML = `
+                <div class="case-card reveal-on-scroll">
+                    <p style="color:#888;">No hay citas programadas.</p>
                 </div>
             `;
-            });
+                    return;
+                }
+
+                citas.forEach(c => {
+                    const fecha = new Date(c.date);
+
+                    const dia = fecha.getDate().toString().padStart(2, '0');
+                    const mes = fecha.toLocaleString('es-ES', { month: 'short' }).toUpperCase();
+                    const hora = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                    let estadoColor = "#999";
+                    if (c.status === 'pendiente') estadoColor = "#d39e00";
+                    if (c.status === 'realizada') estadoColor = "#28a745";
+                    if (c.status === 'cancelada') estadoColor = "#dc3545";
+
+                    list.innerHTML += `
+                <div class="case-card reveal-on-scroll">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${c.patient_name}</strong><br>
+                            <span style="font-size:14px; color:#888;">Estado:
+                                <b style="color:${estadoColor};">${c.status}</b>
+                            </span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-weight:bold; color:var(--sk-blue-dark);">${dia} ${mes}</span><br>
+                            <span style="font-size:14px;">${hora}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+                });
+
+                initScrollAnimations();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando las citas.");
+            }
         }
     </script>
 

@@ -19,8 +19,8 @@ CREATE TABLE clinics (
 );
 
 INSERT INTO clinics (name, address) VALUES
-('Clínica Dermatológica Central', 'Av. Salud 123'),
-('Clínica Especialistas del Sur', 'Calle Medicina 45');
+('Clinica Dermatologica Central', 'Av. Salud 123'),
+('Clinica Especialistas del Sur', 'Calle Medicina 45');
 
 
 /* ===========================================================
@@ -58,8 +58,8 @@ CREATE TABLE doctors (
 );
 
 INSERT INTO doctors (doctor_code, name, email, password, id_clinic) VALUES
-('MED001', 'Dr. Juan Pérez', 'jperez@clinic.com', SHA2('med123',256), 1),
-('MED002', 'Dra. Laura Gómez', 'lgomez@clinic.com', SHA2('med123',256), 1),
+('MED001', 'Dr. Juan Perez', 'jperez@clinic.com', SHA2('med123',256), 1),
+('MED002', 'Dra. Laura Gomez', 'lgomez@clinic.com', SHA2('med123',256), 1),
 ('MED003', 'Dr. Carlos Ruiz', 'cruiz@clinic.com', SHA2('med123',256), 2);
 
 
@@ -81,8 +81,8 @@ CREATE TABLE patients (
 );
 
 INSERT INTO patients (dni, name, email, password, id_doctor) VALUES
-('12345678A', 'Ana Martínez', 'ana@example.com', SHA2('ana123',256), 1),
-('87654321B', 'Pedro López', 'pedro@example.com', SHA2('pedro123',256), 1),
+('12345678A', 'Ana Martinez', 'ana@example.com', SHA2('ana123',256), 1),
+('87654321B', 'Pedro Lopez', 'pedro@example.com', SHA2('pedro123',256), 1),
 ('11223344C', 'Carla Torres', 'carla@example.com', SHA2('carla123',256), 2);
 
 
@@ -105,9 +105,9 @@ CREATE TABLE appointments (
 );
 
 INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES
-(1, 1, '2025-02-15 10:00:00', 'pendiente', 'Revisión inicial'),
-(2, 1, '2025-02-16 12:00:00', 'realizada', 'Control de evolución'),
-(3, 2, '2025-02-20 09:30:00', 'pendiente', 'Estudio de lesión');
+(1, 1, '2025-02-15 10:00:00', 'pendiente', 'Revision inicial'),
+(2, 1, '2025-02-16 12:00:00', 'realizada', 'Control de evolucion'),
+(3, 2, '2025-02-20 09:30:00', 'pendiente', 'Estudio de lesion');
 
 
 /* ===========================================================
@@ -404,7 +404,7 @@ CREATE TABLE diagnoses (
 );
 
 INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) VALUES
-(1, 1, 1, 1, 87.5, 'Lesión compatible con acné leve.'),
+(1, 1, 1, 1, 87.5, 'Lesion compatible con acne leve.'),
 (2, 1, 2, 2, 92.3, 'Dermatitis en fase activa.'),
 (3, 2, 3, 3, 75.0, 'Placas compatibles con psoriasis.');
 
