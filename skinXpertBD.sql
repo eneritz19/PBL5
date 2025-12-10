@@ -1,7 +1,3 @@
-/* ===========================================================
-   SCHEMA
-   =========================================================== */
-
 DROP SCHEMA IF EXISTS skinXpert;
 CREATE SCHEMA skinXpert;
 USE skinXpert;
@@ -19,7 +15,11 @@ CREATE TABLE clinics (
 );
 
 INSERT INTO clinics (name, address) VALUES
+<<<<<<< HEAD
+('Clinica Dermatológica Central', 'Av. Salud 123'),
+=======
 ('Clinica Dermatologica Central', 'Av. Salud 123'),
+>>>>>>> a1974f64ffc2bf4e990c58a5054cc23bfea6a719
 ('Clinica Especialistas del Sur', 'Calle Medicina 45');
 
 
@@ -41,7 +41,7 @@ INSERT INTO admin (name, email, password) VALUES
 
 
 /* ===========================================================
-   3. MÉDICOS
+   3. MEDICOS
    =========================================================== */
 
 DROP TABLE IF EXISTS doctors;
@@ -87,7 +87,7 @@ INSERT INTO patients (dni, name, email, password, id_doctor) VALUES
 
 
 /* ===========================================================
-   5. CITAS (Médico <-> Paciente)
+   5. CITAS (Medico <-> Paciente)
    =========================================================== */
 
 DROP TABLE IF EXISTS appointments;
@@ -132,7 +132,7 @@ INSERT INTO photo_requests (id_patient, urgency, status) VALUES
 
 
 /* ===========================================================
-   7. IMÁGENES
+   7. IMAGENES
    =========================================================== */
 
 DROP TABLE IF EXISTS images;
@@ -152,7 +152,7 @@ INSERT INTO images (id_request, file_path) VALUES
 
 
 /* ===========================================================
-   8. ENFERMEDADES (ICD)
+   8. ENFERMEDADES 
    =========================================================== */
 
 DROP TABLE IF EXISTS skin_diseases;
@@ -380,7 +380,7 @@ VALUES
 
 
 /* ===========================================================
-   9. DIAGNÓSTICOS MÉDICOS
+   9. DIAGNOSTICOS MEDICOS
    =========================================================== */
 
 DROP TABLE IF EXISTS diagnoses;
@@ -408,8 +408,4 @@ INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confi
 (2, 1, 2, 2, 92.3, 'Dermatitis en fase activa.'),
 (3, 2, 3, 3, 75.0, 'Placas compatibles con psoriasis.');
 
-
-/* ===========================================================
-   FIN DEL SCRIPT
-   =========================================================== */
    
