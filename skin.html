@@ -280,60 +280,45 @@
         }
 
         async function uploadCase() {
-            // ID del input de tipo file
             const file = document.getElementById("uploadImage").files[0];
             if (!file) return alert("Selecciona una imagen antes de enviar.");
 
-            // Usamos una Promesa para esperar que la conversión a Base64 termine
             const base64Data = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
-
-                reader.onload = function (e) {
-                    // Elimina el prefijo 'data:image/jpeg;base64,' y resuelve solo con la cadena Base64 pura
-                    const base64String = e.target.result.split(',')[1];
-                    resolve(base64String);
-                };
-
+                reader.onload = e => resolve(e.target.result.split(",")[1]); // solo base64
                 reader.onerror = reject;
-
-                // Lee el archivo como una URL de datos Base64
                 reader.readAsDataURL(file);
             });
 
-            if (!base64Data) {
-                return alert("Fallo en la lectura de la imagen.");
-            }
+            const id_patient = localStorage.getItem("patient_id");
+            if (!id_patient) return alert("No se encontró el ID del paciente.");
 
-            // 1. Preparamos el objeto JSON para enviar a Node-RED
             const dataToSend = {
-                image_base64: base64Data,
-                // Asumiendo que has guardado el rol y el token en localStorage al loguearte
-                token: localStorage.getItem("token")
+                id_patient,
+                image_base64: base64Data
             };
 
-            // 2. Usamos fetch para enviar los datos a Node-RED
             try {
-                const res = await fetch(`${API}/analyze_image`, {
+                const res = await fetch(`${API}/patient/upload_image`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(dataToSend)
                 });
 
-                const resultData = await res.json();
+                const result = await res.json();
 
                 if (!res.ok) {
-                    return alert("Error de Node-RED: " + (resultData.error || res.statusText));
+                    return alert("Error: " + (result.error || "Error desconocido"));
                 }
 
-                // Muestra las conclusiones simuladas de la IA
-                console.log("Respuesta de Simulación:", resultData);
-                alert(`Consulta enviada con éxito. Mensaje de simulación: ${resultData.message}\nConclusiones principales: ${JSON.stringify(resultData.ai_conclusions[0])}`);
+                alert("Imagen enviada correctamente. Request ID: " + result.request_id);
 
-            } catch (error) {
-                console.error("Error de red:", error);
-                alert("Error de conexión al endpoint de Node-RED.");
+            } catch (err) {
+                console.error(err);
+                alert("Error enviando la imagen al servidor.");
             }
         }
+
 
         let stream = null;
         async function toggleCamera() {
