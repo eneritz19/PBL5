@@ -15,11 +15,8 @@ CREATE TABLE clinics (
 );
 
 INSERT INTO clinics (name, address) VALUES
-<<<<<<< HEAD
 ('Clinica Dermatológica Central', 'Av. Salud 123'),
-=======
 ('Clinica Dermatologica Central', 'Av. Salud 123'),
->>>>>>> a1974f64ffc2bf4e990c58a5054cc23bfea6a719
 ('Clinica Especialistas del Sur', 'Calle Medicina 45');
 
 
