@@ -10,10 +10,10 @@
         "id": "3cc11d24.ff01a2",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "WARNING: Asegúrate de usar un volumen montado en /data para conservar los flujos",
+        "name": "Para la base de datos",
         "info": "",
-        "x": 350,
-        "y": 80,
+        "x": 160,
+        "y": 140,
         "wires": []
     },
     {
@@ -39,6 +39,11 @@
         "name": "Prepare Login Query",
         "func": "// Extraer email y password\nconst email = msg.payload?.email?.trim();\nconst password = msg.payload?.password?.trim();\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan email o password' };\n    return msg;\n}\n\nmsg.loginEmail = email;\nmsg.loginPassword = password;\n\n// Query inicial para pacientes\nmsg.topic = `SELECT id_patient AS id_user, dni, name, email \n             FROM patients \n             WHERE email='${email}' AND password=SHA2('${password}',256) \n             LIMIT 1`;\nmsg.step = 'check_patient';\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 380,
         "y": 240,
         "wires": [
@@ -114,8 +119,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 160,
-        "y": 520,
+        "x": 200,
+        "y": 920,
         "wires": [
             [
                 "e31f6c10ea47e53c"
@@ -134,8 +139,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 460,
-        "y": 520,
+        "x": 500,
+        "y": 920,
         "wires": [
             [
                 "b67e23f226a00738"
@@ -154,8 +159,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 680,
-        "y": 520,
+        "x": 720,
+        "y": 920,
         "wires": [
             [
                 "6e9806f88e0586c5",
@@ -176,8 +181,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 940,
-        "y": 620,
+        "x": 980,
+        "y": 1020,
         "wires": []
     },
     {
@@ -187,8 +192,197 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 930,
+        "x": 970,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "b8a0ead1637ea4b7",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/doctor/patients",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 380,
+        "wires": [
+            [
+                "4b9af06fe6d2871a"
+            ]
+        ]
+    },
+    {
+        "id": "4b9af06fe6d2871a",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 1",
+        "func": "msg.topic = `\nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n`;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 380,
+        "wires": [
+            [
+                "60487c38eaaeda68"
+            ]
+        ]
+    },
+    {
+        "id": "60487c38eaaeda68",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "",
+        "x": 580,
+        "y": 380,
+        "wires": [
+            [
+                "6bf71425ed6fc4d1"
+            ]
+        ]
+    },
+    {
+        "id": "6bf71425ed6fc4d1",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 770,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "980e17674fcde667",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/doctor/pending",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 170,
         "y": 520,
+        "wires": [
+            [
+                "d8e4286ca87f6aa0"
+            ]
+        ]
+    },
+    {
+        "id": "d8e4286ca87f6aa0",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 2",
+        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    i.file_path\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE p.id_doctor = ?\nORDER BY pr.urgency DESC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 520,
+        "wires": [
+            [
+                "843a7ca03e63f3f1"
+            ]
+        ]
+    },
+    {
+        "id": "843a7ca03e63f3f1",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "",
+        "x": 600,
+        "y": 520,
+        "wires": [
+            [
+                "207665b27bf8a7f8"
+            ]
+        ]
+    },
+    {
+        "id": "207665b27bf8a7f8",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 770,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "d87e923c38b0e254",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/doctor/appointments",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 190,
+        "y": 640,
+        "wires": [
+            [
+                "9fc204c65907d22e"
+            ]
+        ]
+    },
+    {
+        "id": "9fc204c65907d22e",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 5",
+        "func": "msg.topic = `\nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 640,
+        "wires": [
+            [
+                "dfa6782946514963"
+            ]
+        ]
+    },
+    {
+        "id": "dfa6782946514963",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "",
+        "x": 660,
+        "y": 640,
+        "wires": [
+            [
+                "ff57e9ef8709d623"
+            ]
+        ]
+    },
+    {
+        "id": "ff57e9ef8709d623",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 850,
+        "y": 640,
         "wires": []
     },
     {
@@ -202,7 +396,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "def72bcccd53852e",
+        "id": "71c6def8fe10e6b3",
         "type": "global-config",
         "env": [],
         "modules": {
