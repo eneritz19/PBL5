@@ -238,7 +238,12 @@
                 if (role === "patient" || role === "patients") {
                     document.getElementById("patientDashboard").classList.remove("hidden");
                     document.getElementById("p_name").innerText = data.user.name;
-                    loadPatientMockData();
+
+                    localStorage.setItem("patient_id", data.user.id);
+                    localStorage.setItem("token", data.token);
+
+                    loadPatientHistory();
+                    loadPatientAppointments();
 
                 } else if (role === "doctor" || role === "doctors") {
                     document.getElementById("doctorDashboard").classList.remove("hidden");
@@ -351,21 +356,99 @@
             }
         }
 
-        // --- 5. DATOS ---
-        function loadPatientMockData() {
-            document.getElementById('patientHistoryList').innerHTML = `
+        // --- 5. DATOS PACIENTES---
+        async function loadPatientHistory() {
+            const patientId = localStorage.getItem("patient_id");
+
+            try {
+                const res = await fetch(`${API}/patient/history?id_patient=${patientId}`);
+                const history = await res.json();
+
+                const list = document.getElementById("patientHistoryList");
+                list.innerHTML = "";
+
+                if (!history.length) {
+                    list.innerHTML = `<p style="color:#888;">Sin historial aún.</p>`;
+                    return;
+                }
+
+                history.forEach(h => {
+                    const fecha = new Date(h.diagnosis_date).toLocaleDateString("es-ES");
+
+                    list.innerHTML += `
             <div class="case-card reveal-on-scroll urgency-low">
-                <p style="font-size:14px; color:#888;">10 OCT 2023</p>
+                <p style="font-size:14px; color:#888;">${fecha}</p>
                 <div style="display:flex; gap:15px; margin-top:10px;">
-                    <img src="https://via.placeholder.com/100" style="width:80px; height:80px; border-radius:8px; margin:0;">
+                    <img src="${h.file_path || 'https://via.placeholder.com/100'}"
+                         style="width:80px; height:80px; border-radius:8px;">
                     <div>
-                        <strong>Dermatitis Atópica</strong>
-                        <p style="margin-top:5px; font-size:14px;">Tratamiento: Hidratación...</p>
+                        <strong>${h.disease}</strong>
+                        <p style="margin-top:5px; font-size:14px;">
+                            ${h.doctor_notes || ''}
+                        </p>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
+                });
+
+                initScrollAnimations();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando historial");
+            }
         }
+
+        async function loadPatientAppointments() {
+            const patientId = localStorage.getItem("patient_id");
+
+            try {
+                const res = await fetch(`${API}/patient/appointments?id_patient=${patientId}`);
+                const citas = await res.json();
+
+                const list = document.getElementById("p-citas");
+                list.innerHTML = "";
+
+                if (!citas.length) {
+                    list.innerHTML = `
+                <div class="case-card reveal-on-scroll">
+                    <p style="color:#888;">No tienes citas.</p>
+                </div>`;
+                    return;
+                }
+
+                citas.forEach(c => {
+                    const fecha = new Date(c.date);
+                    const dia = fecha.getDate().toString().padStart(2, '0');
+                    const mes = fecha.toLocaleString('es-ES', { month: 'short' }).toUpperCase();
+                    const hora = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                    list.innerHTML += `
+            <div class="case-card reveal-on-scroll urgency-medium">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h4 style="margin:0;">Cita con ${c.doctor_name}</h4>
+                        <p style="margin:5px 0 0 0; color:var(--text-secondary);">
+                            Estado: ${c.status}
+                        </p>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-weight:bold; color:var(--sk-blue-dark);">${dia} ${mes}</span><br>
+                        <span style="font-size:14px;">${hora}</span>
+                    </div>
+                </div>
+            </div>`;
+                });
+
+                initScrollAnimations();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando citas");
+            }
+        }
+
+
 
         // CARGA DE CASOS DOCTOR
         async function loadDoctorPatients() {

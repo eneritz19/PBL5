@@ -10,9 +10,9 @@
         "id": "3cc11d24.ff01a2",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "Para la base de datos",
+        "name": "LOGIN - Para la base de datos ",
         "info": "",
-        "x": 160,
+        "x": 190,
         "y": 140,
         "wires": []
     },
@@ -119,8 +119,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 200,
-        "y": 920,
+        "x": 160,
+        "y": 1160,
         "wires": [
             [
                 "e31f6c10ea47e53c"
@@ -139,8 +139,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 500,
-        "y": 920,
+        "x": 460,
+        "y": 1160,
         "wires": [
             [
                 "b67e23f226a00738"
@@ -159,8 +159,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 720,
-        "y": 920,
+        "x": 680,
+        "y": 1160,
         "wires": [
             [
                 "6e9806f88e0586c5",
@@ -181,8 +181,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 980,
-        "y": 1020,
+        "x": 940,
+        "y": 1260,
         "wires": []
     },
     {
@@ -192,8 +192,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 970,
-        "y": 920,
+        "x": 930,
+        "y": 1160,
         "wires": []
     },
     {
@@ -206,8 +206,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 170,
-        "y": 380,
+        "x": 150,
+        "y": 420,
         "wires": [
             [
                 "4b9af06fe6d2871a"
@@ -226,8 +226,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 380,
-        "y": 380,
+        "x": 360,
+        "y": 420,
         "wires": [
             [
                 "60487c38eaaeda68"
@@ -240,8 +240,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "",
-        "x": 580,
-        "y": 380,
+        "x": 560,
+        "y": 420,
         "wires": [
             [
                 "6bf71425ed6fc4d1"
@@ -255,8 +255,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 770,
-        "y": 380,
+        "x": 750,
+        "y": 420,
         "wires": []
     },
     {
@@ -269,8 +269,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 170,
-        "y": 520,
+        "x": 150,
+        "y": 560,
         "wires": [
             [
                 "d8e4286ca87f6aa0"
@@ -289,8 +289,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 400,
-        "y": 520,
+        "x": 380,
+        "y": 560,
         "wires": [
             [
                 "843a7ca03e63f3f1"
@@ -303,8 +303,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "",
-        "x": 600,
-        "y": 520,
+        "x": 580,
+        "y": 560,
         "wires": [
             [
                 "207665b27bf8a7f8"
@@ -318,8 +318,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 770,
-        "y": 520,
+        "x": 750,
+        "y": 560,
         "wires": []
     },
     {
@@ -332,8 +332,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 190,
-        "y": 640,
+        "x": 170,
+        "y": 680,
         "wires": [
             [
                 "9fc204c65907d22e"
@@ -352,8 +352,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 420,
-        "y": 640,
+        "x": 400,
+        "y": 680,
         "wires": [
             [
                 "dfa6782946514963"
@@ -366,8 +366,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "",
-        "x": 660,
-        "y": 640,
+        "x": 640,
+        "y": 680,
         "wires": [
             [
                 "ff57e9ef8709d623"
@@ -381,8 +381,154 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 850,
-        "y": 640,
+        "x": 830,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "5631dba213510e33",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "DOCTORS - base de datos",
+        "info": "",
+        "x": 170,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "042a781ea857a9cc",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "PACIENTS - base de datos",
+        "info": "",
+        "x": 170,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "7bb9ad204c72d6c8",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/patient/history",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 860,
+        "wires": [
+            [
+                "fefb969c68584b8d"
+            ]
+        ]
+    },
+    {
+        "id": "fefb969c68584b8d",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 6",
+        "func": "msg.topic = `\nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nORDER BY d.diagnosis_date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 860,
+        "wires": [
+            [
+                "06d628376f115224"
+            ]
+        ]
+    },
+    {
+        "id": "06d628376f115224",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "",
+        "x": 620,
+        "y": 860,
+        "wires": [
+            [
+                "d110b010bc68b2cc"
+            ]
+        ]
+    },
+    {
+        "id": "d110b010bc68b2cc",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 810,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "e59ed9ea10b6f55c",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/patient/appointments",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 980,
+        "wires": [
+            [
+                "0024f9ae07951d53"
+            ]
+        ]
+    },
+    {
+        "id": "0024f9ae07951d53",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "function 7",
+        "func": "msg.topic = `\nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 980,
+        "wires": [
+            [
+                "e0204d8eede6034d"
+            ]
+        ]
+    },
+    {
+        "id": "e0204d8eede6034d",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "",
+        "x": 680,
+        "y": 980,
+        "wires": [
+            [
+                "2e54fb88cf5d4c48"
+            ]
+        ]
+    },
+    {
+        "id": "2e54fb88cf5d4c48",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 910,
+        "y": 980,
         "wires": []
     },
     {
@@ -396,7 +542,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "71c6def8fe10e6b3",
+        "id": "1d0786f4d1f1091f",
         "type": "global-config",
         "env": [],
         "modules": {
