@@ -26,7 +26,7 @@
         <div style="margin-bottom: 20px;">
             <img src="logo_pequeño2.png" alt="Logo SkinXpert" style="width: 80px; height: auto;">
         </div>
-
+        path
         <h2 style="margin-top: 0;">Skin<span class="brand-x">X</span>pert</h2>
         <p style="font-size: 19px; margin-bottom: 30px;">Inicia sesion para continuar.</p>
 
@@ -61,6 +61,8 @@
                 <button onclick="uploadCase()">Enviar Consulta</button>
             </div>
         </div>
+
+        
 
         <div id="p-citas" class="tab-content">
             <div class="case-card reveal-on-scroll urgency-medium">
@@ -266,7 +268,6 @@
             }
         }
 
-
         function logout() { location.reload(); }
 
         // --- 4. INTERFAZ ---
@@ -279,47 +280,7 @@
             setTimeout(initScrollAnimations, 50);
         }
 
-        async function uploadCase() {
-            const file = document.getElementById("uploadImage").files[0];
-            if (!file) return alert("Selecciona una imagen antes de enviar.");
-
-            const base64Data = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve(e.target.result.split(",")[1]); // solo base64
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-
-            const id_patient = localStorage.getItem("patient_id");
-            if (!id_patient) return alert("No se encontró el ID del paciente.");
-
-            const dataToSend = {
-                id_patient,
-                image_base64: base64Data
-            };
-
-            try {
-                const res = await fetch(`${API}/patient/upload_image`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dataToSend)
-                });
-
-                const result = await res.json();
-
-                if (!res.ok) {
-                    return alert("Error: " + (result.error || "Error desconocido"));
-                }
-
-                alert("Imagen enviada correctamente. Request ID: " + result.request_id);
-
-            } catch (err) {
-                console.error(err);
-                alert("Error enviando la imagen al servidor.");
-            }
-        }
-
-
+        
         let stream = null;
         async function toggleCamera() {
             const video = document.getElementById('camera-preview');
@@ -433,8 +394,8 @@
             }
         }
 
-
-
+    
+       
         // CARGA DE CASOS DOCTOR
         async function loadDoctorPatients() {
             const doctorId = localStorage.getItem("doctor_id");

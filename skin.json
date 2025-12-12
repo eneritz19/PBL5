@@ -17,99 +17,6 @@
         "wires": []
     },
     {
-        "id": "d3c09b79c40da40c",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "Login Endpoint",
-        "url": "/login",
-        "method": "post",
-        "swaggerDoc": "",
-        "x": 140,
-        "y": 240,
-        "wires": [
-            [
-                "0609af0ceba2e7ba"
-            ]
-        ]
-    },
-    {
-        "id": "0609af0ceba2e7ba",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Prepare Login Query",
-        "func": "// Extraer email y password\nconst email = msg.payload?.email?.trim();\nconst password = msg.payload?.password?.trim();\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan email o password' };\n    return msg;\n}\n\nmsg.loginEmail = email;\nmsg.loginPassword = password;\n\n// Query inicial para pacientes\nmsg.topic = SELECT id_patient AS id_user, dni, name, email \n             FROM patients \n             WHERE email='${email}' AND password=SHA2('${password}',256) \n             LIMIT 1;\nmsg.step = 'check_patient';\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 380,
-        "y": 240,
-        "wires": [
-            [
-                "6f57fcf9fb87d6d8"
-            ]
-        ]
-    },
-    {
-        "id": "6f57fcf9fb87d6d8",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Check Patients",
-        "x": 630,
-        "y": 240,
-        "wires": [
-            [
-                "49976fcb4b4f2abc"
-            ]
-        ]
-    },
-    {
-        "id": "aa25bdec252b2128",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Check Doctors",
-        "x": 1130,
-        "y": 240,
-        "wires": [
-            [
-                "49976fcb4b4f2abc"
-            ]
-        ]
-    },
-    {
-        "id": "49976fcb4b4f2abc",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Process Login Result",
-        "func": "if (msg.step === 'check_patient') {\n    if (msg.payload.length > 0) {\n        const u = msg.payload[0];\n        msg.payload = {\n            success: true,\n            role: 'Patient',\n            user: { id: u.id_user, dni: u.dni, name: u.name, email: u.email },\n            token: 'fake-token-patient'\n        };\n        return [msg, null];\n    }\n\n    // No encontrado → buscar doctor usando email/password originales\n    msg.step = 'check_doctor';\n    msg.topic = SELECT id_doctor, doctor_code, name, email, id_clinic \n                 FROM doctors \n                 WHERE email='${msg.loginEmail}' AND password=SHA2('${msg.loginPassword}',256) \n                 LIMIT 1;\n    return [null, msg];\n}\n\nif (msg.step === 'check_doctor') {\n    if (msg.payload.length > 0) {\n        const d = msg.payload[0];\n        msg.payload = {\n            success: true,\n            role: 'Doctor',\n            user: { id: d.id_doctor, doctor_code: d.doctor_code, name: d.name, email: d.email, clinic_id: d.id_clinic },\n            token: 'fake-token-doctor'\n        };\n        return msg;\n    }\n\n    // No encontrado ni paciente ni doctor\n    msg.statusCode = 401;\n    msg.payload = { error: 'Usuario o contraseña incorrectos' };\n    return msg;\n}",
-        "outputs": 2,
-        "x": 880,
-        "y": 240,
-        "wires": [
-            [
-                "d5c43fb1bc46df34"
-            ],
-            [
-                "aa25bdec252b2128"
-            ]
-        ]
-    },
-    {
-        "id": "d5c43fb1bc46df34",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "statusCode": "",
-        "headers": {},
-        "x": 1130,
-        "y": 340,
-        "wires": []
-    },
-    {
         "id": "7ebbad7f8b4750a0",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
@@ -132,7 +39,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 3",
-        "func": "// Este nodo confirma que recibimos el Base64 y el token.\nconst base64Image = msg.payload.image_base64;\nconst token = msg.payload.token;\n\nif (!base64Image) {\n    // Si no hay imagen, salta un error y cancela el flujo\n    node.error(\"Error: No se encontró la imagen Base64 en el payload.\");\n    return null;\n}\n\n// 1. *Saltamos la llamada a la IA*\n// 2. Creamos una respuesta SIMULADA, como si la IA hubiera respondido\nmsg.payload = {\n    \"responses\": [\n        {\n            \"labelAnnotations\": [\n                { \"description\": \"Dermatitis\", \"score\": 0.95 },\n                { \"description\": \"Psoriasis\", \"score\": 0.60 },\n                { \"description\": \"Piel sana\", \"score\": 0.05 }\n            ]\n        }\n    ]\n};\n\n// Guardamos datos que podríamos necesitar\nmsg.client_token = token;\n\n// Imprimimos una confirmación de la recepción\nnode.warn([SIMULACIÓN] Imagen Base64 recibida. Longitud: ${base64Image.length} caracteres.);\n\nreturn msg;",
+        "func": "// Este nodo confirma que recibimos el Base64 y el token.\nconst base64Image = msg.payload.image_base64;\nconst token = msg.payload.token;\n\nif (!base64Image) {\n    // Si no hay imagen, salta un error y cancela el flujo\n    node.error(\"Error: No se encontró la imagen Base64 en el payload.\");\n    return null;\n}\n\n// 1. **Saltamos la llamada a la IA**\n// 2. Creamos una respuesta SIMULADA, como si la IA hubiera respondido\nmsg.payload = {\n    \"responses\": [\n        {\n            \"labelAnnotations\": [\n                { \"description\": \"Dermatitis\", \"score\": 0.95 },\n                { \"description\": \"Psoriasis\", \"score\": 0.60 },\n                { \"description\": \"Piel sana\", \"score\": 0.05 }\n            ]\n        }\n    ]\n};\n\n// Guardamos datos que podríamos necesitar\nmsg.client_token = token;\n\n// Imprimimos una confirmación de la recepción\nnode.warn(`[SIMULACIÓN] Imagen Base64 recibida. Longitud: ${base64Image.length} caracteres.`);\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -219,7 +126,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 1",
-        "func": "msg.topic = \nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n`;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -282,7 +189,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 2",
-        "func": "msg.topic = \nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    i.file_path\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE p.id_doctor = ?\nORDER BY pr.urgency DESC\n;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    i.file_path\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE p.id_doctor = ?\nORDER BY pr.urgency DESC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -345,7 +252,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 5",
-        "func": "msg.topic = \nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -428,7 +335,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 6",
-        "func": "msg.topic = \nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nORDER BY d.diagnosis_date DESC\n;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nORDER BY d.diagnosis_date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -491,7 +398,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 7",
-        "func": "msg.topic = \nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -532,6 +439,206 @@
         "wires": []
     },
     {
+        "id": "f49f5bad8a1fd43e",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Upload Photo Endpoint",
+        "url": "/patient/upload_photo",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 280,
+        "y": 2620,
+        "wires": [
+            [
+                "0b92433da495ceb6"
+            ]
+        ]
+    },
+    {
+        "id": "0b92433da495ceb6",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Upload",
+        "func": "const id_patient = msg.payload.id_patient;\nconst urgency = msg.payload.urgency || 1;\nconst image_base64 = msg.payload.image_base64;\nconst file_name = msg.payload.file_name;\n\nif (!id_patient || !image_base64 || !file_name) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan datos obligatorios' };\n    return msg;\n}\n\n// Guardamos datos para siguiente paso\nmsg.temp = { image_base64, file_name };\n\n// Crear solicitud de foto\nmsg.topic = \"INSERT INTO photo_requests (id_patient, urgency, status) VALUES (?, ?, 'pendiente')\";\nmsg.payload = [id_patient, urgency];\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 2620,
+        "wires": [
+            [
+                "f8e5151a208a1876"
+            ]
+        ]
+    },
+    {
+        "id": "f8e5151a208a1876",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Insert Photo Request",
+        "x": 780,
+        "y": 2620,
+        "wires": [
+            [
+                "dfb5c8764ae3b85d"
+            ]
+        ]
+    },
+    {
+        "id": "dfb5c8764ae3b85d",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Insert Image Record",
+        "func": "// Obtener el ID de la solicitud recién insertada\nconst id_request = msg.payload.insertId;\nconst { image_base64, file_name } = msg.temp;\n\n// Convertir base64 a buffer para MySQL\nmsg.payload = [id_request, Buffer.from(image_base64, 'base64'), file_name];\n\n// Consulta para guardar la imagen directamente en la base de datos\nmsg.topic = \"INSERT INTO images (id_request, image_data, file_name) VALUES (?, ?, ?)\";\n\n// Preparamos respuesta para el frontend\nmsg.response = { success: true, message: 'Foto subida correctamente', request_id: id_request };\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1030,
+        "y": 2620,
+        "wires": [
+            [
+                "fe6e7a756ff59069"
+            ]
+        ]
+    },
+    {
+        "id": "fe6e7a756ff59069",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Insert Image",
+        "x": 1280,
+        "y": 2620,
+        "wires": [
+            [
+                "c751aa81ea4ec562"
+            ]
+        ]
+    },
+    {
+        "id": "c751aa81ea4ec562",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send Response",
+        "func": "msg.payload = msg.response;\nmsg.statusCode = 200;\nreturn msg;",
+        "outputs": 1,
+        "x": 1530,
+        "y": 2620,
+        "wires": [
+            [
+                "dacc7cdddd435e99"
+            ]
+        ]
+    },
+    {
+        "id": "dacc7cdddd435e99",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "HTTP Response",
+        "statusCode": 200,
+        "headers": {},
+        "x": 1720,
+        "y": 2620,
+        "wires": []
+    },
+    {
+        "id": "248d04bd4c0be704",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Login Endpoint",
+        "url": "/login",
+        "method": "post",
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 200,
+        "wires": [
+            [
+                "7c306ea0a75729e7"
+            ]
+        ]
+    },
+    {
+        "id": "7c306ea0a75729e7",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Login Query",
+        "func": "const email = msg.payload?.email?.trim();\nconst password = msg.payload?.password?.trim();\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan email o password' };\n    return msg;\n}\nmsg.loginEmail = email;\nmsg.loginPassword = password;\nmsg.topic = `SELECT id_patient AS id_user, dni, name, email FROM patients WHERE email='${email}' AND password=SHA2('${password}',256) LIMIT 1`;\nmsg.step = 'check_patient';\nreturn msg;",
+        "outputs": 1,
+        "x": 380,
+        "y": 200,
+        "wires": [
+            [
+                "8d5d8beb19c39255"
+            ]
+        ]
+    },
+    {
+        "id": "8d5d8beb19c39255",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Check Patients",
+        "x": 630,
+        "y": 200,
+        "wires": [
+            [
+                "fedfe4add5101d70"
+            ]
+        ]
+    },
+    {
+        "id": "22e63ba64c53a651",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Check Doctors",
+        "x": 1130,
+        "y": 200,
+        "wires": [
+            [
+                "fedfe4add5101d70"
+            ]
+        ]
+    },
+    {
+        "id": "fedfe4add5101d70",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Process Login Result",
+        "func": "if (msg.step === 'check_patient') {\n    if (msg.payload.length > 0) {\n        const u = msg.payload[0];\n        msg.payload = { success: true, role: 'Patient', user: { id: u.id_user, dni: u.dni, name: u.name, email: u.email }, token: 'fake-token-patient' };\n        return [msg, null];\n    }\n    msg.step = 'check_doctor';\n    msg.topic = `SELECT id_doctor, doctor_code, name, email, id_clinic FROM doctors WHERE email='${msg.loginEmail}' AND password=SHA2('${msg.loginPassword}',256) LIMIT 1`;\n    return [null, msg];\n}\nif (msg.step === 'check_doctor') {\n    if (msg.payload.length > 0) {\n        const d = msg.payload[0];\n        msg.payload = { success: true, role: 'Doctor', user: { id: d.id_doctor, doctor_code: d.doctor_code, name: d.name, email: d.email, clinic_id: d.id_clinic }, token: 'fake-token-doctor' };\n        return msg;\n    }\n    msg.statusCode = 401;\n    msg.payload = { error: 'Usuario o contraseña incorrectos' };\n    return msg;\n}",
+        "outputs": 2,
+        "x": 880,
+        "y": 200,
+        "wires": [
+            [
+                "21758efbae42c621"
+            ],
+            [
+                "22e63ba64c53a651"
+            ]
+        ]
+    },
+    {
+        "id": "21758efbae42c621",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1130,
+        "y": 300,
+        "wires": []
+    },
+    {
         "id": "9c12c0e15685ca58",
         "type": "MySQLdatabase",
         "name": "skinxpert_mysql",
@@ -542,7 +649,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "1d0786f4d1f1091f",
+        "id": "1fbbad133f41fa17",
         "type": "global-config",
         "env": [],
         "modules": {
