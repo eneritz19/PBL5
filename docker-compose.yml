@@ -40,8 +40,7 @@ services:
       ports:
         - "8080:80"
       volumes:
-        - "./skin.html:/usr/share/nginx/html/index.html:ro"
-        - "./styles.css:/usr/share/nginx/html/styles.css:ro"
+        - "./:/usr/share/nginx/html:ro"
       networks:
         - skinxpert_network
       depends_on:
