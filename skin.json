@@ -189,7 +189,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 2",
-        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    i.file_path\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE p.id_doctor = ?\nORDER BY pr.urgency DESC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    p.id_patient,\n    i.file_path\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE p.id_doctor = ?\nAND pr.status != 'diagnosticada'\nORDER BY pr.urgency DESC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -439,118 +439,6 @@
         "wires": []
     },
     {
-        "id": "f49f5bad8a1fd43e",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "Upload Photo Endpoint",
-        "url": "/patient/upload_photo",
-        "method": "post",
-        "upload": false,
-        "skipBodyParsing": false,
-        "swaggerDoc": "",
-        "x": 280,
-        "y": 2620,
-        "wires": [
-            [
-                "0b92433da495ceb6"
-            ]
-        ]
-    },
-    {
-        "id": "0b92433da495ceb6",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Prepare Upload",
-        "func": "const id_patient = msg.payload.id_patient;\nconst urgency = msg.payload.urgency || 1;\nconst image_base64 = msg.payload.image_base64;\nconst file_name = msg.payload.file_name;\n\nif (!id_patient || !image_base64 || !file_name) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan datos obligatorios' };\n    return msg;\n}\n\n// Guardamos datos para siguiente paso\nmsg.temp = { image_base64, file_name };\n\n// Crear solicitud de foto\nmsg.topic = \"INSERT INTO photo_requests (id_patient, urgency, status) VALUES (?, ?, 'pendiente')\";\nmsg.payload = [id_patient, urgency];\n\nreturn msg;\n",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 530,
-        "y": 2620,
-        "wires": [
-            [
-                "f8e5151a208a1876"
-            ]
-        ]
-    },
-    {
-        "id": "f8e5151a208a1876",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Insert Photo Request",
-        "x": 780,
-        "y": 2620,
-        "wires": [
-            [
-                "dfb5c8764ae3b85d"
-            ]
-        ]
-    },
-    {
-        "id": "dfb5c8764ae3b85d",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Insert Image Record",
-        "func": "// Obtener el ID de la solicitud recién insertada\nconst id_request = msg.payload.insertId;\nconst { image_base64, file_name } = msg.temp;\n\n// Convertir base64 a buffer para MySQL\nmsg.payload = [id_request, Buffer.from(image_base64, 'base64'), file_name];\n\n// Consulta para guardar la imagen directamente en la base de datos\nmsg.topic = \"INSERT INTO images (id_request, image_data, file_name) VALUES (?, ?, ?)\";\n\n// Preparamos respuesta para el frontend\nmsg.response = { success: true, message: 'Foto subida correctamente', request_id: id_request };\n\nreturn msg;\n",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1030,
-        "y": 2620,
-        "wires": [
-            [
-                "fe6e7a756ff59069"
-            ]
-        ]
-    },
-    {
-        "id": "fe6e7a756ff59069",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Insert Image",
-        "x": 1280,
-        "y": 2620,
-        "wires": [
-            [
-                "c751aa81ea4ec562"
-            ]
-        ]
-    },
-    {
-        "id": "c751aa81ea4ec562",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Send Response",
-        "func": "msg.payload = msg.response;\nmsg.statusCode = 200;\nreturn msg;",
-        "outputs": 1,
-        "x": 1530,
-        "y": 2620,
-        "wires": [
-            [
-                "dacc7cdddd435e99"
-            ]
-        ]
-    },
-    {
-        "id": "dacc7cdddd435e99",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "HTTP Response",
-        "statusCode": 200,
-        "headers": {},
-        "x": 1720,
-        "y": 2620,
-        "wires": []
-    },
-    {
         "id": "248d04bd4c0be704",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
@@ -639,6 +527,313 @@
         "wires": []
     },
     {
+        "id": "e6a0c5f2.1b3b38",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "NUEVO: DOCTOR - ENVIAR INFORME",
+        "info": "",
+        "x": 200,
+        "y": 1360,
+        "wires": []
+    },
+    {
+        "id": "5a50785059eb09d8",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Upload Photo Endpoint",
+        "url": "/patient/upload_photo",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 200,
+        "y": 1580,
+        "wires": [
+            [
+                "898d0ec7a26f9065"
+            ]
+        ]
+    },
+    {
+        "id": "898d0ec7a26f9065",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "1. Preparar Solicitud",
+        "func": "// Recibimos: id_patient, urgency, image_base64, file_name\nconst { id_patient, urgency, image_base64, file_name } = msg.payload;\n\n// Validación\nif (!id_patient || !image_base64) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan datos obligatorios (paciente o foto)' };\n    return [null, msg]; // Salida 2 es error\n}\n\n// Limpiamos el Base64 por si viene con cabecera (data:image/jpeg;base64,...)\nlet cleanBase64 = image_base64;\nif (cleanBase64.includes(\"base64,\")) {\n    cleanBase64 = cleanBase64.split(\"base64,\")[1];\n}\n\n// Guardamos los datos de la imagen en msg.temp para usarlos DESPUÉS de insertar la solicitud\nmsg.temp = {\n    cleanBase64: cleanBase64,\n    file_name: file_name || 'sin_nombre.jpg'\n};\n\n// Paso 1: Insertar en photo_requests\nmsg.topic = \"INSERT INTO photo_requests (id_patient, urgency, status) VALUES (?, ?, 'pendiente')\";\nmsg.payload = [id_patient, urgency || 1];\n\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 1580,
+        "wires": [
+            [
+                "9486beedcaa45873"
+            ],
+            [
+                "cdbaa77c3c1008bf"
+            ]
+        ]
+    },
+    {
+        "id": "9486beedcaa45873",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "DB: Crear Request",
+        "x": 710,
+        "y": 1580,
+        "wires": [
+            [
+                "b9d645372e37eac3"
+            ]
+        ]
+    },
+    {
+        "id": "b9d645372e37eac3",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "2. Preparar Imagen",
+        "func": "// Recuperamos el ID de la solicitud que acabamos de crear\nconst id_request = msg.payload.insertId;\n\n// Recuperamos la imagen limpia que guardamos en msg.temp\nconst { cleanBase64, file_name } = msg.temp;\n\nif (!id_request) {\n    node.error(\"No se generó ID de solicitud\");\n    throw new Error(\"Error al insertar solicitud\");\n}\n\n// Paso 2: Insertar la imagen vinculada a esa solicitud\n// Usamos la columna 'image_data' que añadimos a la base de datos\nmsg.topic = \"INSERT INTO images (id_request, image_data, file_path, file_name) VALUES (?, ?, ?, ?)\";\n\n// Nota: Guardamos image_data (el contenido) y file_path (una ruta ficticia o vacía por compatibilidad)\nconst dummyPath = '/uploads/' + file_name;\n\nmsg.payload = [\n    id_request, \n    cleanBase64, // Guardamos el string base64 directo (tipo LONGTEXT)\n    dummyPath,\n    file_name\n];\n\n// Preparamos el mensaje de éxito final\nmsg.finalResponse = {\n    success: true,\n    message: 'Foto subida correctamente',\n    request_id: id_request\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 1580,
+        "wires": [
+            [
+                "673ead412a4c1ec1"
+            ]
+        ]
+    },
+    {
+        "id": "673ead412a4c1ec1",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "DB: Guardar Imagen",
+        "x": 1200,
+        "y": 1580,
+        "wires": [
+            [
+                "ae786ce879188fb4"
+            ]
+        ]
+    },
+    {
+        "id": "ae786ce879188fb4",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Respuesta OK",
+        "func": "msg.payload = msg.finalResponse;\nmsg.statusCode = 200;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1420,
+        "y": 1580,
+        "wires": [
+            [
+                "cdbaa77c3c1008bf"
+            ]
+        ]
+    },
+    {
+        "id": "cdbaa77c3c1008bf",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Respuesta HTTP",
+        "statusCode": "",
+        "headers": {},
+        "x": 1650,
+        "y": 1580,
+        "wires": []
+    },
+    {
+        "id": "http_in_report",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/doctor/send_report",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 230,
+        "y": 1820,
+        "wires": [
+            [
+                "debug_raw_input",
+                "func_prepare_simple"
+            ]
+        ]
+    },
+    {
+        "id": "debug_raw_input",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "1. LLEGA ESTO",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 1760,
+        "wires": []
+    },
+    {
+        "id": "func_prepare_simple",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Preparar SQL (Forzado)",
+        "func": "const d = msg.payload;\n\n// Valores por defecto para que NO FALLE si falta algo\n// Si no viene id_skindiseases, ponemos 1. \n// Si no viene confidence, ponemos 100.\nconst id_req = d.id_request || d.requestId || 0;\nconst id_doc = d.id_doctor || d.doctorId || 1;\nconst id_pat = d.id_patient || d.patientId || 1;\nconst id_dis = d.id_skindiseases || 1; // <--- OJO AQUÍ\nconst conf = d.confidence || 100;\nconst notes = d.doctor_notes || d.notes || \"Diagnostico guardado\";\n\nnode.warn(\"Intentando guardar: \" + JSON.stringify({id_req, id_doc, id_pat, id_dis}));\n\nmsg.topic = `INSERT INTO diagnoses \n(id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) \nVALUES (?, ?, ?, ?, ?, ?)`;\n\nmsg.payload = [id_req, id_doc, id_pat, id_dis, conf, notes];\n\n// Guardamos ID para actualizar estado luego\nmsg.request_id = id_req;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 1820,
+        "wires": [
+            [
+                "mysql_insert_diag"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_insert_diag",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Guardar Diagnosis",
+        "x": 770,
+        "y": 1820,
+        "wires": [
+            [
+                "func_update_req_simple",
+                "debug_success"
+            ]
+        ]
+    },
+    {
+        "id": "debug_success",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "2. GUARDADO OK",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 990,
+        "y": 1760,
+        "wires": []
+    },
+    {
+        "id": "func_update_req_simple",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Update Request",
+        "func": "msg.topic = \"UPDATE photo_requests SET status = 'diagnosticada' WHERE id_request = ?\";\nmsg.payload = [msg.request_id];\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 980,
+        "y": 1820,
+        "wires": [
+            [
+                "mysql_update_status"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_update_status",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Update Status",
+        "x": 1180,
+        "y": 1820,
+        "wires": [
+            [
+                "http_response_ok"
+            ]
+        ]
+    },
+    {
+        "id": "http_response_ok",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "OK",
+        "statusCode": "200",
+        "headers": {},
+        "x": 1350,
+        "y": 1820,
+        "wires": []
+    },
+    {
+        "id": "catch_errors",
+        "type": "catch",
+        "z": "f6f2187d.f17ca8",
+        "name": "Capturar Errores",
+        "scope": null,
+        "uncaught": false,
+        "x": 760,
+        "y": 1900,
+        "wires": [
+            [
+                "debug_error_critico",
+                "http_response_error"
+            ]
+        ]
+    },
+    {
+        "id": "debug_error_critico",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "🔴 ERROR",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "error",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 970,
+        "y": 1900,
+        "wires": []
+    },
+    {
+        "id": "http_response_error",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Error",
+        "statusCode": "500",
+        "headers": {},
+        "x": 970,
+        "y": 1940,
+        "wires": []
+    },
+    {
         "id": "9c12c0e15685ca58",
         "type": "MySQLdatabase",
         "name": "skinxpert_mysql",
@@ -649,7 +844,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "1fbbad133f41fa17",
+        "id": "d1ac9423e989b1eb",
         "type": "global-config",
         "env": [],
         "modules": {

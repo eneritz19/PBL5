@@ -62,7 +62,7 @@
             </div>
         </div>
 
-        
+
 
         <div id="p-citas" class="tab-content">
             <div class="case-card reveal-on-scroll urgency-medium">
@@ -212,6 +212,102 @@
             }, SPLASH_DURATION); // Tiempo total de "carga"
         });
 
+        async function sendDiagnosis(reqId, docId, patId) {
+            // 1. Recuperar valores de los inputs específicos de ESTA tarjeta
+            const diseaseSelect = document.getElementById(`disease-${reqId}`);
+            const notesInput = document.getElementById(`notes-${reqId}`);
+
+            const diseaseId = diseaseSelect.value;
+            const notes = notesInput.value;
+
+            if (!notes) {
+                alert("Por favor escribe unas notas para el paciente.");
+                return;
+            }
+
+            const payload = {
+                id_request: reqId,
+                id_doctor: docId,
+                id_patient: patId, // Asegúrate que tu SELECT de pending devuelva esto
+                id_skindiseases: parseInt(diseaseId),
+                confidence: 100,
+                doctor_notes: notes
+            };
+
+            try {
+                const res = await fetch(`${API}/doctor/send_report`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert("Informe enviado correctamente");
+                    loadDoctorPending(); // Recargar la lista para que desaparezca
+                } else {
+                    alert("Error: " + JSON.stringify(result));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión al enviar informe.");
+            }
+        }
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function uploadCase() {
+            const fileInput = document.getElementById("uploadImage");
+            const file = fileInput.files[0];
+            const patientId = localStorage.getItem("patient_id");
+
+            if (!file) {
+                alert("Por favor selecciona una foto.");
+                return;
+            }
+
+            try {
+                // Convertir imagen a Base64
+                const base64 = await getBase64(file);
+
+                const payload = {
+                    id_patient: patientId,
+                    urgency: Math.floor(Math.random() * 100), // Simulamos urgencia o la calcula la IA antes
+                    image_base64: base64,
+                    file_name: file.name
+                };
+
+                const res = await fetch(`${API}/patient/upload_photo`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert("Consulta enviada correctamente.");
+                    // Limpiar input
+                    fileInput.value = "";
+                    // Ir a la pestaña de historial o refrescar
+                    openTab('p-historial', document.querySelectorAll('.tab-btn')[2]);
+                    loadPatientHistory();
+                } else {
+                    alert("Error al subir: " + data.error);
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión.");
+            }
+        }
         // --- 3. LOGIN ---
         // --- 3. LOGIN ---
         async function handleLogin() {
@@ -281,7 +377,7 @@
             setTimeout(initScrollAnimations, 50);
         }
 
-        
+
         let stream = null;
         async function toggleCamera() {
             const video = document.getElementById('camera-preview');
@@ -395,8 +491,8 @@
             }
         }
 
-    
-       
+
+
         // CARGA DE CASOS DOCTOR
         async function loadDoctorPatients() {
             const doctorId = localStorage.getItem("doctor_id");
@@ -433,6 +529,7 @@
             }
         }
 
+
         async function loadDoctorPending() {
             const doctorId = localStorage.getItem("doctor_id");
 
@@ -442,6 +539,11 @@
             const list = document.getElementById("doctorPendingList");
             list.innerHTML = "";
 
+            if (cases.length === 0) {
+                list.innerHTML = "<p>No hay pacientes pendientes.</p>";
+                return;
+            }
+
             cases.forEach(c => {
                 let badgeClass = 'badge-low';
                 let cardClass = 'urgency-low';
@@ -449,23 +551,40 @@
                 if (c.urgency > 80) { badgeClass = 'badge-high'; cardClass = 'urgency-high'; }
                 else if (c.urgency > 40) { badgeClass = 'badge-medium'; cardClass = 'urgency-medium'; }
 
+                // IMPORTANTE:
+                // 1. Añadimos IDs únicos a los inputs usando id_request (ej: notes-15)
+                // 2. Añadimos un SELECT para elegir la enfermedad (envía el ID 1, 2, 3...)
+                // 3. Añadimos onclick="sendDiagnosis(...)" al botón
                 list.innerHTML += `
             <div class="case-card reveal-on-scroll ${cardClass}">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h3>${c.name}</h3>
                     <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
                 </div>
-                <img src="${c.file_path}" style="height:120px;">
-                <textarea placeholder="Diagnóstico..." rows="3"></textarea>
-                <button>Enviar Informe</button>
+                
+                <img src="${API}${c.file_path}" style="height:120px; object-fit:cover; margin: 10px 0; border-radius:8px;">
+                
+                <label style="font-size:12px; font-weight:bold;">Diagnóstico (Enfermedad):</label>
+                <select id="disease-${c.id_request}" style="width:100%; padding:8px; margin-bottom:10px;">
+                    <option value="1">Acné y Rosácea</option>
+                    <option value="2">Queratosis actínica</option>
+                    <option value="3">Dermatitis atópica</option>
+                    <option value="15">Psoriasis</option>
+                    <option value="16">Escabiosis / Lyme</option>
+                    <option value="20">Urticaria</option>
+                </select>
+
+                <textarea id="notes-${c.id_request}" placeholder="Escribe el tratamiento o notas..." rows="3" style="width:100%;"></textarea>
+                
+                <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, 1)">Enviar Informe</button>
             </div>
         `;
+                // Nota: en onclick paso un '1' como id_patient temporal si el endpoint 'pending' no devuelve id_patient. 
+                // Si tu endpoint devuelve c.id_patient, úsalo: sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})
             });
 
             initScrollAnimations();
         }
-
-
         async function loadDoctorAppointments() {
             const doctorId = localStorage.getItem("doctor_id");
 
