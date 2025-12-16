@@ -1,0 +1,280 @@
+:root {
+    /* --- PALETA SKINXPERT --- */
+    --sk-blue-dark: #003366; 
+    --sk-blue-light: #0071e3; 
+    
+    /* --- ESTILO APPLE --- */
+    --bg-color: #f5f5f7;
+    --card-bg: #ffffff;
+    --text-main: #1d1d1f;
+    --text-secondary: #86868b;
+    --input-bg: rgba(120, 120, 128, 0.08); 
+    
+    /* Diseño */
+    --radius-container: 24px;
+    --radius-card: 20px;
+    --radius-pill: 980px;
+    
+    /* Animaciones */
+    --ease-apple: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-reveal: cubic-bezier(0.165, 0.84, 0.44, 1);
+    --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 14px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* --- BASE --- */
+body {
+    font-family: "SF Pro Text", "SF Pro Icons", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    font-size: 17px;
+    line-height: 1.47;
+    overflow-x: hidden;
+}
+
+/* --- SPLASH SCREEN (VIDEO) --- */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: transparent; 
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s var(--ease-apple), transform 0.8s var(--ease-apple);
+}
+
+#splash-screen.hidden-splash {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.1); /* Efecto zoom out al desaparecer */
+}
+
+/* Contenedor e imagen del rebote */
+.splash-bouncer-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.splash-bouncer {
+    width: 120px; /* Tamaño del logo al cargar */
+    height: auto;
+    /* Animación de rebote: dura 2s e infinita mientras carga */
+    animation: bounce-loading 2s infinite ease-in-out;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+}
+
+/* Keyframes del rebote */
+@keyframes bounce-loading {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-30px);
+    }
+    60% {
+        transform: translateY(-15px);
+    }
+}
+
+
+/* --- SCROLL REVEAL --- */
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    transition: opacity 1s var(--ease-reveal), transform 1s var(--ease-reveal);
+    will-change: opacity, transform;
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* --- CONTENEDOR LOGIN --- */
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 80px auto;
+    padding: 60px 50px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: var(--radius-container);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Centrar el contenedor de login en la pantalla */
+#loginPage.container {
+    margin-top: 10vh; 
+}
+
+h2 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--sk-blue-dark);
+    letter-spacing: -0.01em;
+}
+.brand-x { color: var(--sk-blue-light); }
+
+/* --- INPUTS & TEXTAREAS --- */
+input, select, textarea {
+    width: 100%;
+    padding: 18px;
+    margin-top: 20px;
+    font-family: inherit;
+    font-size: 17px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    box-sizing: border-box;
+    transition: all 0.3s var(--ease-apple);
+    resize: none;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+    transform: scale(1.01);
+}
+
+/* --- BOTONES --- */
+button {
+    width: 100%;
+    margin-top: 35px;
+    padding: 20px;
+    font-size: 17px;
+    font-weight: 600;
+    background-color: var(--sk-blue-light);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.4s var(--ease-apple);
+}
+
+button:hover {
+    background-color: #0077ED;
+    transform: scale(1.03);
+    box-shadow: 0 10px 25px rgba(0, 113, 227, 0.3);
+}
+
+.btn-secondary {
+    background-color: #e8e8ed !important;
+    color: var(--text-main) !important;
+}
+.btn-secondary:hover { background-color: #d2d2d7 !important; color:black !important;}
+
+/* --- TABS --- */
+.tabs {
+    display: flex;
+    background-color: #e3e3e8;
+    padding: 4px;
+    border-radius: 16px;
+    margin-bottom: 40px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.3s var(--ease-apple);
+}
+
+.tab-btn.active {
+    background-color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* --- CARDS --- */
+.case-card {
+    background: #fff;
+    padding: 30px;
+    margin-top: 25px;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0,0,0,0.03);
+    transition: transform 0.5s var(--ease-apple), box-shadow 0.5s var(--ease-apple);
+    overflow: hidden;
+}
+
+.case-card:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-hover);
+    z-index: 2;
+}
+
+.case-card img {
+    width: 100%;
+    border-radius: 12px;
+    margin-top: 20px;
+    object-fit: cover;
+}
+
+/* --- BADGES URGENCIA CON GLOW --- */
+.urgency-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    color: white;
+    letter-spacing: 0.02em;
+    display: inline-block;
+}
+
+.badge-high {
+    background-color: #ff3b30;
+    box-shadow: 0 4px 14px rgba(255, 59, 48, 0.5);
+}
+
+.badge-medium {
+    background-color: #ff9500;
+    box-shadow: 0 4px 14px rgba(255, 149, 0, 0.5);
+}
+
+.badge-low {
+    background-color: #34c759;
+    box-shadow: 0 4px 14px rgba(52, 199, 89, 0.5);
+}
+
+/* --- BARRA LATERAL (CASO PACIENTE) --- */
+.case-card.urgency-high::before { content:''; position:absolute; left:0; top:0; bottom:0; width:6px; background:#ff3b30; }
+.case-card.urgency-medium::before { content:''; position:absolute; left:0; top:0; bottom:0; width:6px; background:#ff9500; }
+.case-card.urgency-low::before { content:''; position:absolute; left:0; top:0; bottom:0; width:6px; background:#34c759; }
+.case-card { position: relative; }
+
+/* --- UTILIDADES --- */
+.hidden { display: none !important; }
+.header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #e5e5e5; }
+.role-badge { 
+    background: rgba(0, 113, 227, 0.1); 
+    color: var(--sk-blue-light); 
+    padding: 6px 14px; 
+    border-radius: 20px; 
+    font-size: 13px; 
+    font-weight: 700; 
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
