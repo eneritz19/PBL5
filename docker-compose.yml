@@ -41,7 +41,8 @@ services:
     # --- CAMBIO AQUÍ ---
     # Ahora apuntamos a la carpeta donde moviste el index.html
     volumes:
-      - "./src/main/webapp:/usr/share/nginx/html:ro"
+      - "./src/main/webapp:/usr/share/nginx/html"
+      - "./uploads:/usr/share/nginx/html/uploads:ro"
     networks:
       - skinxpert_network
     depends_on:
@@ -77,6 +78,8 @@ services:
       - skinxpert_network
     depends_on:
       - sonar-db
+
+  
 
 volumes:
   mysql_data:
