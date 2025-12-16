@@ -575,7 +575,7 @@
 
                 <textarea id="notes-${c.id_request}" placeholder="Escribe el tratamiento o notas..." rows="3" style="width:100%;"></textarea>
                 
-                <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, 1)">Enviar Informe</button>
+                <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})">Enviar Informe</button>
             </div>
         `;
                 // Nota: en onclick paso un '1' como id_patient temporal si el endpoint 'pending' no devuelve id_patient. 
