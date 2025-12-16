@@ -28,6 +28,7 @@ services:
     volumes:
       - nodered_data:/data
       - ./skin.json:/data/flows.json
+      - "./uploads:/usr/share/nginx/html/uploads"
     networks:
       - skinxpert_network
     depends_on:
@@ -42,7 +43,7 @@ services:
     # Ahora apuntamos a la carpeta donde moviste el index.html
     volumes:
       - "./src/main/webapp:/usr/share/nginx/html"
-      - "./uploads:/usr/share/nginx/html/uploads:ro"
+      - "./uploads:/usr/share/nginx/html/uploads"
     networks:
       - skinxpert_network
     depends_on:
