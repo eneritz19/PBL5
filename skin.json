@@ -699,7 +699,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Preparar Inserción Imagen",
-        "func": "// CÓDIGO FINAL para el nodo FUNCTION: Preparar Inserción Imagen\n\n// 1. Obtener datos del mensaje anterior (msg.payload contiene el resultado de la inserción, incluyendo insertId)\nconst id_request = msg.payload.insertId;\n\n// 2. Obtener la ruta del archivo que guardamos en la variable de flujo\nconst file_path = flow.get('temp_image_path');\n\nif (id_request && file_path) {\n    // A. Define la consulta SQL completa para la tabla images\n    const sqlQueryImage = \"INSERT INTO images (id_request, file_path) VALUES (?, ?)\";\n\n    // B. Preparar mensaje para insertar en la tabla IMAGES\n    const msgImage = {\n        topic: sqlQueryImage, // ¡Aquí también!\n        payload: [id_request, file_path]\n    };\n\n    // C. Preparar mensaje para la respuesta final HTTP\n    const msgResponse = {\n        statusCode: 201, // 201 Created\n        payload: { success: true, message: \"Consulta y foto guardadas.\", file_path: file_path }\n    };\n\n    // Puerto 1 va al nodo MySQL de Imagen (msgImage), Puerto 2 va a HTTP Response (msgResponse)\n    return [msgImage, msgResponse];\n} else {\n    // Manejo de error si el ID o la ruta no se encuentran\n    node.error(\"Faltan datos para la inserción de imagen. ID de solicitud no devuelto.\");\n    // Enviaremos el error por el puerto 2 (respuesta HTTP)\n    return [null, { statusCode: 500, payload: { error: \"Error interno al procesar la inserción en DB.\" } }];\n}",
+        "func": "// Obtener el ID de la solicitud recién creada\nconst id_request = msg.payload.insertId;\nconst file_path = flow.get('temp_image_path');\n\nif (id_request && file_path) {\n    const sqlQueryImage = \"INSERT INTO images (id_request, file_path) VALUES (?, ?)\";\n\n    // Preparamos el mensaje para la base de datos (Puerto 1)\n    const msgImage = {\n        ...msg, // Mantenemos las propiedades originales de la petición HTTP\n        topic: sqlQueryImage,\n        payload: [id_request, file_path]\n    };\n    \n    // Preparamos el mensaje para la respuesta HTTP (Puerto 2)\n    const msgResponse = {\n        ...msg, // ¡IMPORTANTE! Esto copia las propiedades de respuesta necesarias\n        statusCode: 201,\n        payload: { success: true, message: \"Guardado con éxito\", file_path: file_path }\n    };\n    \n    return [msgImage, msgResponse]; \n} else {\n    node.error(\"Faltan datos para la inserción de imagen.\");\n    return [null, { ...msg, statusCode: 500, payload: { error: \"Error interno\" } }];\n}",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -739,7 +739,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "ae61a47646092a19",
+        "id": "5b3a0a21a5d4198d",
         "type": "global-config",
         "env": [],
         "modules": {

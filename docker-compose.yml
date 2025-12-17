@@ -39,8 +39,6 @@ services:
     container_name: skinxpert_web
     ports:
       - "8080:80"
-    # --- CAMBIO AQUÍ ---
-    # Ahora apuntamos a la carpeta donde moviste el index.html
     volumes:
       - "./src/main/webapp:/usr/share/nginx/html"
       - "./uploads:/usr/share/nginx/html/uploads"
