@@ -221,7 +221,7 @@
             const notes = notesInput.value;
 
             if (!notes) {
-                alert("Por favor escribe unas notas para el paciente.");
+                alert("Please write some notes for the patient.");
                 return;
             }
 
@@ -245,14 +245,14 @@
                 const result = await res.json();
 
                 if (res.ok) {
-                    alert("Informe enviado correctamente");
+                    alert("Report sent successfully");
                     loadDoctorPending(); // Recargar la lista para que desaparezca
                 } else {
                     alert("Error: " + JSON.stringify(result));
                 }
             } catch (e) {
                 console.error(e);
-                alert("Error de conexión al enviar informe.");
+                alert("Connection error while sending report.");
             }
         }
         function getBase64(file) {
@@ -270,7 +270,7 @@
             const patientId = localStorage.getItem("patient_id");
 
             if (!file) {
-                alert("Por favor selecciona una foto.");
+                alert("Please select a photo.");
                 return;
             }
 
@@ -294,19 +294,19 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert("Consulta enviada correctamente.");
+                    alert("Query sent successfully.");
                     // Limpiar input
                     fileInput.value = "";
                     // Ir a la pestaña de historial o refrescar
                     openTab('p-historial', document.querySelectorAll('.tab-btn')[2]);
                     loadPatientHistory();
                 } else {
-                    alert("Error al subir: " + data.error);
+                    alert("Error uploading: " + data.error);
                 }
 
             } catch (error) {
                 console.error(error);
-                alert("Error de conexión.");
+                alert("Connection error.");
             }
         }
         // --- 3. LOGIN ---
@@ -315,7 +315,7 @@
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
 
-            if (!email || !password) return alert("Por favor, rellena todos los campos.");
+            if (!email || !password) return alert("Please fill in all fields.");
 
             try {
                 const res = await fetch(`${API}/login`, {
@@ -327,7 +327,7 @@
                 const data = await res.json();
 
                 if (!data.success) {
-                    alert("Usuario o contraseña incorrectos.");
+                    alert("Incorrect username or password.");
                     return;
                 }
 
@@ -362,7 +362,7 @@
 
             } catch (error) {
                 console.error(error);
-                alert("Error de conexión con el servidor.");
+                alert("Server connection error.");
             }
         }
 
@@ -391,7 +391,7 @@
                     video.style.display = 'block';
                     btn.innerText = "Detener";
                     btn.style.color = "red";
-                } catch (e) { alert("Cámara no disponible"); }
+                } catch (e) { alert("Camera not available"); }
             } else {
                 if (stream) stream.getTracks().forEach(t => t.stop());
                 video.style.display = 'none';
@@ -439,7 +439,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error cargando historial");
+                alert("Error loading history");
             }
         }
 
@@ -488,7 +488,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error cargando citas");
+                alert("Error loading quotes");
             }
         }
 
@@ -526,7 +526,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error cargando pacientes");
+                alert("Error loading patients");
             }
         }
 
@@ -541,7 +541,7 @@
             list.innerHTML = "";
 
             if (cases.length === 0) {
-                list.innerHTML = "<p>No hay pacientes pendientes.</p>";
+                list.innerHTML = "<p>There are no pending patients.</p>";
                 return;
             }
 
@@ -552,40 +552,34 @@
                 if (c.urgency > 80) { badgeClass = 'badge-high'; cardClass = 'urgency-high'; }
                 else if (c.urgency > 40) { badgeClass = 'badge-medium'; cardClass = 'urgency-medium'; }
 
-                // IMPORTANTE:
-                // 1. Añadimos IDs únicos a los inputs usando id_request (ej: notes-15)
-                // 2. Añadimos un SELECT para elegir la enfermedad (envía el ID 1, 2, 3...)
-                // 3. Añadimos onclick="sendDiagnosis(...)" al botón
                 list.innerHTML += `
         <div class="case-card reveal-on-scroll ${cardClass}">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3>${c.name}</h3>
-                <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
+                <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCY</span>
             </div>
             
             <img src="${API}${c.file_path}" style="height:120px; object-fit:cover; margin: 10px 0; border-radius:8px;">
             
-            <label style="font-size:12px; font-weight:bold;">Diagnóstico (Enfermedad):</label>
+            <label style="font-size:12px; font-weight:bold;">Diagnostic (ilness):</label>
             <select id="disease-${c.id_request}" style="width:100%; padding:8px; margin-bottom:10px;">
-                <option value="1">Acné y Rosácea</option>
-                <option value="2">Queratosis actínica</option>
-                <option value="3">Dermatitis atópica</option>
+                <option value="1">Acne and Rosacea</option>
+                <option value="2">Actinic keratosis</option>
+                <option value="3">Atopic dermatitis</option>
                 <option value="15">Psoriasis</option>
-                <option value="16">Escabiosis / Lyme</option>
+                <option value="16">Scabies / Lyme</option>
                 <option value="20">Urticaria</option>
             </select>
 
-            <label style="font-size:12px; font-weight:bold;">Programar Cita (Opcional):</label>
+            <label style="font-size:12px; font-weight:bold;">Schedule an Appointment (Optional):</label>
             <input type="datetime-local" id="appointment-${c.id_request}" 
                    style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ddd; border-radius:4px;">
 
-            <textarea id="notes-${c.id_request}" placeholder="Escribe el tratamiento o notas..." rows="3" style="width:100%;"></textarea>
+            <textarea id="notes-${c.id_request}" placeholder="Write the treatment or notes..." rows="3" style="width:100%;"></textarea>
             
-            <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})">Enviar Informe</button>
+            <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})">Send Report</button>
         </div>
     `;
-                // Nota: en onclick paso un '1' como id_patient temporal si el endpoint 'pending' no devuelve id_patient. 
-                // Si tu endpoint devuelve c.id_patient, úsalo: sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})
             });
 
             initScrollAnimations();
@@ -603,7 +597,7 @@
                 if (!citas.length) {
                     list.innerHTML = `
                 <div class="case-card reveal-on-scroll">
-                    <p style="color:#888;">No hay citas programadas.</p>
+                    <p style="color:#888;">There are no scheduled appointments.</p>
                 </div>
             `;
                     return;
@@ -617,9 +611,9 @@
                     const hora = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
                     let estadoColor = "#999";
-                    if (c.status === 'pendiente') estadoColor = "#d39e00";
-                    if (c.status === 'realizada') estadoColor = "#28a745";
-                    if (c.status === 'cancelada') estadoColor = "#dc3545";
+                    if (c.status === 'pending') estadoColor = "#d39e00";
+                    if (c.status === 'done') estadoColor = "#28a745";
+                    if (c.status === 'cancel') estadoColor = "#dc3545";
 
                     list.innerHTML += `
                 <div class="case-card reveal-on-scroll">
@@ -643,7 +637,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Error cargando las citas.");
+                alert("Error loading appointments.");
             }
         }
     </script>

@@ -605,7 +605,7 @@
         "id": "debug_error_critico",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
-        "name": "🔴 ERROR",
+        "name": "ERROR",
         "active": true,
         "tosidebar": true,
         "console": false,
@@ -614,7 +614,7 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1250,
+        "x": 1240,
         "y": 1900,
         "wires": []
     },
@@ -754,7 +754,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "9776967ac02f177c",
+        "id": "d377be8d9d778145",
         "type": "global-config",
         "env": [],
         "modules": {
