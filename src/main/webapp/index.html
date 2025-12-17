@@ -215,6 +215,7 @@
             // 1. Recuperar valores de los inputs específicos de ESTA tarjeta
             const diseaseSelect = document.getElementById(`disease-${reqId}`);
             const notesInput = document.getElementById(`notes-${reqId}`);
+            const appointmentInput = document.getElementById(`appointment-${reqId}`);
 
             const diseaseId = diseaseSelect.value;
             const notes = notesInput.value;
@@ -230,7 +231,8 @@
                 id_patient: patId, // Asegúrate que tu SELECT de pending devuelva esto
                 id_skindiseases: parseInt(diseaseId),
                 confidence: 100,
-                doctor_notes: notes
+                doctor_notes: notes,
+                appointment_date: appointmentInput.value
             };
 
             try {
@@ -555,29 +557,33 @@
                 // 2. Añadimos un SELECT para elegir la enfermedad (envía el ID 1, 2, 3...)
                 // 3. Añadimos onclick="sendDiagnosis(...)" al botón
                 list.innerHTML += `
-            <div class="case-card reveal-on-scroll ${cardClass}">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h3>${c.name}</h3>
-                    <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
-                </div>
-                
-                <img src="${API}${c.file_path}" style="height:120px; object-fit:cover; margin: 10px 0; border-radius:8px;">
-                
-                <label style="font-size:12px; font-weight:bold;">Diagnóstico (Enfermedad):</label>
-                <select id="disease-${c.id_request}" style="width:100%; padding:8px; margin-bottom:10px;">
-                    <option value="1">Acné y Rosácea</option>
-                    <option value="2">Queratosis actínica</option>
-                    <option value="3">Dermatitis atópica</option>
-                    <option value="15">Psoriasis</option>
-                    <option value="16">Escabiosis / Lyme</option>
-                    <option value="20">Urticaria</option>
-                </select>
-
-                <textarea id="notes-${c.id_request}" placeholder="Escribe el tratamiento o notas..." rows="3" style="width:100%;"></textarea>
-                
-                <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})">Enviar Informe</button>
+        <div class="case-card reveal-on-scroll ${cardClass}">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>${c.name}</h3>
+                <span class="urgency-badge ${badgeClass}">${c.urgency}% URGENCIA</span>
             </div>
-        `;
+            
+            <img src="${API}${c.file_path}" style="height:120px; object-fit:cover; margin: 10px 0; border-radius:8px;">
+            
+            <label style="font-size:12px; font-weight:bold;">Diagnóstico (Enfermedad):</label>
+            <select id="disease-${c.id_request}" style="width:100%; padding:8px; margin-bottom:10px;">
+                <option value="1">Acné y Rosácea</option>
+                <option value="2">Queratosis actínica</option>
+                <option value="3">Dermatitis atópica</option>
+                <option value="15">Psoriasis</option>
+                <option value="16">Escabiosis / Lyme</option>
+                <option value="20">Urticaria</option>
+            </select>
+
+            <label style="font-size:12px; font-weight:bold;">Programar Cita (Opcional):</label>
+            <input type="datetime-local" id="appointment-${c.id_request}" 
+                   style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ddd; border-radius:4px;">
+
+            <textarea id="notes-${c.id_request}" placeholder="Escribe el tratamiento o notas..." rows="3" style="width:100%;"></textarea>
+            
+            <button onclick="sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})">Enviar Informe</button>
+        </div>
+    `;
                 // Nota: en onclick paso un '1' como id_patient temporal si el endpoint 'pending' no devuelve id_patient. 
                 // Si tu endpoint devuelve c.id_patient, úsalo: sendDiagnosis(${c.id_request}, ${doctorId}, ${c.id_patient})
             });
