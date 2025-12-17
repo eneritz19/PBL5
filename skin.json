@@ -490,8 +490,8 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Preparar SQL (Forzado)",
-        "func": "const d = msg.payload;\n\n// Valores por defecto para que NO FALLE si falta algo\n// Si no viene id_skindiseases, ponemos 1. \n// Si no viene confidence, ponemos 100.\nconst id_req = d.id_request || d.requestId || 0;\nconst id_doc = d.id_doctor || d.doctorId || 1;\nconst id_pat = d.id_patient || d.patientId || 1;\nconst id_dis = d.id_skindiseases || 1; // <--- OJO AQUÍ\nconst conf = d.confidence || 100;\nconst notes = d.doctor_notes || d.notes || \"Diagnostico guardado\";\n\nnode.warn(\"Intentando guardar: \" + JSON.stringify({id_req, id_doc, id_pat, id_dis}));\n\nmsg.topic = `INSERT INTO diagnoses \n(id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) \nVALUES (?, ?, ?, ?, ?, ?)`;\n\nmsg.payload = [id_req, id_doc, id_pat, id_dis, conf, notes];\n\n// Guardamos ID para actualizar estado luego\nmsg.request_id = id_req;\n\nreturn msg;",
-        "outputs": 1,
+        "func": "const d = msg.payload;\n\n// 1. Extraer datos con valores por defecto para seguridad\nconst id_req = d.id_request || d.requestId || 0;\nconst id_doc = d.id_doctor || d.doctorId || 1;\nconst id_pat = d.id_patient || d.patientId || 1;\nconst id_dis = d.id_skindiseases || 1;\nconst conf = d.confidence || 100;\nconst notes = d.doctor_notes || d.notes || \"Diagnostico guardado\";\n// Esto quita la 'T' del formato HTML y asegura que MySQL lo lea como texto plano sin zonas horarias\nconst app_date = d.appointment_date ? d.appointment_date.substring(0, 16).replace('T', ' ') : null;\n\n// 2. Mensaje para el Puerto 1 (Tabla diagnoses)\nconst msgDiagnosis = {\n    ...msg,\n    topic: `INSERT INTO diagnoses \n            (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) \n            VALUES (?, ?, ?, ?, ?, ?)`,\n    payload: [id_req, id_doc, id_pat, id_dis, conf, notes],\n    request_id: id_req // Para el siguiente nodo Update Status\n};\n\n// 3. Mensaje para el Puerto 2 (Tabla appointments)\nlet msgAppointment = null;\nif (app_date && app_date !== \"\") {\n    msgAppointment = {\n        topic: `INSERT INTO appointments (id_patient, id_doctor, date, status, comments) \n                VALUES (?, ?, ?, 'pendiente', ?)`,\n        payload: [id_pat, id_doc, app_date, \"Cita programada tras informe médico\"]\n    };\n}\n\n// 4. Retornar los dos mensajes por sus respectivos puertos\nreturn [msgDiagnosis, msgAppointment];",
+        "outputs": 2,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
@@ -502,6 +502,9 @@
         "wires": [
             [
                 "mysql_insert_diag"
+            ],
+            [
+                "2201348d70eabd60"
             ]
         ]
     },
@@ -589,7 +592,7 @@
         "name": "Capturar Errores",
         "scope": null,
         "uncaught": false,
-        "x": 760,
+        "x": 1040,
         "y": 1900,
         "wires": [
             [
@@ -611,7 +614,7 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 970,
+        "x": 1250,
         "y": 1900,
         "wires": []
     },
@@ -622,7 +625,7 @@
         "name": "Error",
         "statusCode": "500",
         "headers": {},
-        "x": 970,
+        "x": 1250,
         "y": 1940,
         "wires": []
     },
@@ -729,17 +732,29 @@
         ]
     },
     {
+        "id": "2201348d70eabd60",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Guardar citas",
+        "x": 760,
+        "y": 1920,
+        "wires": [
+            []
+        ]
+    },
+    {
         "id": "9c12c0e15685ca58",
         "type": "MySQLdatabase",
         "name": "skinxpert_mysql",
         "host": "db",
         "port": "3306",
         "db": "skinXpert",
-        "tz": "",
+        "tz": "+01:00",
         "charset": "UTF8"
     },
     {
-        "id": "5b3a0a21a5d4198d",
+        "id": "9776967ac02f177c",
         "type": "global-config",
         "env": [],
         "modules": {
