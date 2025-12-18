@@ -182,7 +182,7 @@
             const splash = document.getElementById('splash-screen');
             const video = document.getElementById('splashVideo'); // Obtenemos la referencia al video
 
-            // **Nueva lógica de video:**
+            // *Nueva lógica de video:*
             // Asegura que el video comienza a reproducirse tan pronto como sea posible
             if (video) {
                 // Intenta forzar la reproducción (necesario en algunos entornos)
@@ -412,7 +412,7 @@
                 list.innerHTML = "";
 
                 if (!history.length) {
-                    list.innerHTML = `<p style="color:#888;">Sin historial aún.</p>`;
+                    list.innerHTML = <p style="color:#888;">Sin historial aún.</p>;
                     return;
                 }
 
