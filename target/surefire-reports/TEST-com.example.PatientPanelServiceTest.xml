@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.example.HtmlRenderTest" time="0.259" tests="1" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.example.PatientPanelServiceTest" time="0.474" tests="10" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="22"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -58,5 +58,14 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="66.0"/>
   </properties>
-  <testcase name="indexContainsLoginForm" classname="com.example.HtmlRenderTest" time="0.256"/>
+  <testcase name="inquiryFailsWhenNoImageProvided" classname="com.example.PatientPanelServiceTest" time="0.058"/>
+  <testcase name="appointmentsLoadCorrectlyWhenAppointmentExists" classname="com.example.PatientPanelServiceTest" time="0.018"/>
+  <testcase name="diagnosisIsSavedSuccessfully" classname="com.example.PatientPanelServiceTest" time="0.011"/>
+  <testcase name="diagnosisFailsWhenNotesAreEmpty" classname="com.example.PatientPanelServiceTest" time="0.011"/>
+  <testcase name="appointmentsEndpointReturnsData" classname="com.example.PatientPanelServiceTest" time="0.019"/>
+  <testcase name="historyEndpointReturnsData" classname="com.example.PatientPanelServiceTest" time="0.012"/>
+  <testcase name="historyLoadsCorrectlyWhenDiagnosisExists" classname="com.example.PatientPanelServiceTest" time="0.01"/>
+  <testcase name="inquirySucceedsWhenImageIsProvided" classname="com.example.PatientPanelServiceTest" time="0.011"/>
+  <testcase name="historyIsEmptyWhenPatientHasNoDiagnoses" classname="com.example.PatientPanelServiceTest" time="0.008"/>
+  <testcase name="appointmentsIsEmptyWhenPatientHasNoAppointments" classname="com.example.PatientPanelServiceTest" time="0.009"/>
 </testsuite>
