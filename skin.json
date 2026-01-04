@@ -7,6 +7,24 @@
         "info": ""
     },
     {
+        "id": "9c12c0e15685ca58",
+        "type": "MySQLdatabase",
+        "name": "skinxpert_mysql",
+        "host": "db",
+        "port": "3306",
+        "db": "skinXpert",
+        "tz": "+01:00",
+        "charset": "UTF8"
+    },
+    {
+        "id": "f6c96ef87a48cd3f",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-mysql": "2.0.0"
+        }
+    },
+    {
         "id": "3cc11d24.ff01a2",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
@@ -352,94 +370,6 @@
         "wires": []
     },
     {
-        "id": "248d04bd4c0be704",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "Login Endpoint",
-        "url": "/login",
-        "method": "post",
-        "swaggerDoc": "",
-        "x": 140,
-        "y": 200,
-        "wires": [
-            [
-                "7c306ea0a75729e7"
-            ]
-        ]
-    },
-    {
-        "id": "7c306ea0a75729e7",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Prepare Login Query",
-        "func": "const email = msg.payload?.email?.trim();\nconst password = msg.payload?.password?.trim();\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Faltan email o password' };\n    return msg;\n}\nmsg.loginEmail = email;\nmsg.loginPassword = password;\nmsg.topic = `SELECT id_patient AS id_user, dni, name, email FROM patients WHERE email='${email}' AND password=SHA2('${password}',256) LIMIT 1`;\nmsg.step = 'check_patient';\nreturn msg;",
-        "outputs": 1,
-        "x": 380,
-        "y": 200,
-        "wires": [
-            [
-                "8d5d8beb19c39255"
-            ]
-        ]
-    },
-    {
-        "id": "8d5d8beb19c39255",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Check Patients",
-        "x": 630,
-        "y": 200,
-        "wires": [
-            [
-                "fedfe4add5101d70"
-            ]
-        ]
-    },
-    {
-        "id": "22e63ba64c53a651",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Check Doctors",
-        "x": 1130,
-        "y": 200,
-        "wires": [
-            [
-                "fedfe4add5101d70"
-            ]
-        ]
-    },
-    {
-        "id": "fedfe4add5101d70",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Process Login Result",
-        "func": "if (msg.step === 'check_patient') {\n    if (msg.payload.length > 0) {\n        const u = msg.payload[0];\n        msg.payload = { success: true, role: 'Patient', user: { id: u.id_user, dni: u.dni, name: u.name, email: u.email }, token: 'fake-token-patient' };\n        return [msg, null];\n    }\n    msg.step = 'check_doctor';\n    msg.topic = `SELECT id_doctor, doctor_code, name, email, id_clinic FROM doctors WHERE email='${msg.loginEmail}' AND password=SHA2('${msg.loginPassword}',256) LIMIT 1`;\n    return [null, msg];\n}\nif (msg.step === 'check_doctor') {\n    if (msg.payload.length > 0) {\n        const d = msg.payload[0];\n        msg.payload = { success: true, role: 'Doctor', user: { id: d.id_doctor, doctor_code: d.doctor_code, name: d.name, email: d.email, clinic_id: d.id_clinic }, token: 'fake-token-doctor' };\n        return msg;\n    }\n    msg.statusCode = 401;\n    msg.payload = { error: 'Usuario o contraseña incorrectos' };\n    return msg;\n}",
-        "outputs": 2,
-        "x": 880,
-        "y": 200,
-        "wires": [
-            [
-                "21758efbae42c621"
-            ],
-            [
-                "22e63ba64c53a651"
-            ]
-        ]
-    },
-    {
-        "id": "21758efbae42c621",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "statusCode": "",
-        "headers": {},
-        "x": 1130,
-        "y": 300,
-        "wires": []
-    },
-    {
         "id": "e6a0c5f2.1b3b38",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
@@ -745,21 +675,182 @@
         ]
     },
     {
-        "id": "9c12c0e15685ca58",
-        "type": "MySQLdatabase",
-        "name": "skinxpert_mysql",
-        "host": "db",
-        "port": "3306",
-        "db": "skinXpert",
-        "tz": "+01:00",
-        "charset": "UTF8"
+        "id": "53efef56eb1bc4ff",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET Admin Doctors",
+        "url": "/admin/doctors",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 1160,
+        "wires": [
+            [
+                "c6c69cc9da6728ee"
+            ]
+        ]
     },
     {
-        "id": "f6c96ef87a48cd3f",
-        "type": "global-config",
-        "env": [],
-        "modules": {
-            "node-red-node-mysql": "2.0.0"
-        }
+        "id": "c6c69cc9da6728ee",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Query Doctors",
+        "func": "msg.topic = `\nSELECT d.id_doctor, d.doctor_code, d.name, d.email, c.name AS clinic\nFROM doctors d\nLEFT JOIN clinics c ON d.id_clinic = c.id_clinic\n`;\nreturn msg;",
+        "outputs": 1,
+        "x": 390,
+        "y": 1160,
+        "wires": [
+            [
+                "7c0ce728b4fbd786"
+            ]
+        ]
+    },
+    {
+        "id": "b616b8cca1855feb",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET Admin Patients",
+        "url": "/admin/patients",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 1240,
+        "wires": [
+            [
+                "72cf2dd091bed0ee"
+            ]
+        ]
+    },
+    {
+        "id": "72cf2dd091bed0ee",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Query Patients",
+        "func": "msg.topic = `\nSELECT p.id_patient, p.dni, p.name, p.email, d.name AS doctor\nFROM patients p\nLEFT JOIN doctors d ON p.id_doctor = d.id_doctor\n`;\nreturn msg;",
+        "outputs": 1,
+        "x": 390,
+        "y": 1240,
+        "wires": [
+            [
+                "7c0ce728b4fbd786"
+            ]
+        ]
+    },
+    {
+        "id": "7c0ce728b4fbd786",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL",
+        "x": 650,
+        "y": 1200,
+        "wires": [
+            [
+                "aa575a03352c566a"
+            ]
+        ]
+    },
+    {
+        "id": "aa575a03352c566a",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Admin Response",
+        "statusCode": "",
+        "headers": {},
+        "x": 910,
+        "y": 1200,
+        "wires": []
+    },
+    {
+        "id": "f44f5a3b05da6447",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "Admin- base de datos",
+        "info": "",
+        "x": 160,
+        "y": 1060,
+        "wires": []
+    },
+    {
+        "id": "f8c45c60a83eb2f7",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /login",
+        "url": "/login",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 130,
+        "y": 220,
+        "wires": [
+            [
+                "dfa901d1b412ea09"
+            ]
+        ]
+    },
+    {
+        "id": "dfa901d1b412ea09",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Login Query",
+        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email y password requeridos' };\n    return msg;\n}\n\nmsg.loginEmail = email;\nmsg.loginPassword = password;\n\n// 1️⃣ ADMIN\nmsg.topic = `\nSELECT id_admin AS id, name, email\nFROM admin\nWHERE email = ?\nAND password = SHA2(?,256)\nLIMIT 1\n`;\nmsg.payload = [email, password];\nmsg.step = 'check_admin';\n\nreturn msg;",
+        "outputs": 1,
+        "x": 370,
+        "y": 220,
+        "wires": [
+            [
+                "6243665bab60a296"
+            ]
+        ]
+    },
+    {
+        "id": "6243665bab60a296",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL",
+        "x": 590,
+        "y": 220,
+        "wires": [
+            [
+                "fab8b7358c147104"
+            ]
+        ]
+    },
+    {
+        "id": "fab8b7358c147104",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Process Login Result",
+        "func": "let loginEmail = msg.loginEmail;\nlet loginPassword = msg.loginPassword;\n\n// ADMIN\nif (!msg.step) msg.step = 'check_admin';\n\nif (msg.step === 'check_admin') {\n    if (msg.payload.length > 0) {\n        msg.payload = { success: true, role: 'Admin', user: msg.payload[0] };\n        return msg; // ✅ enviar al http response\n    }\n    msg.step = 'check_patient';\n    msg.topic = `\n        SELECT id_patient AS id, dni, name, email\n        FROM patients\n        WHERE email = ?\n        AND password = SHA2(?,256)\n        LIMIT 1\n    `;\n    msg.payload = [loginEmail, loginPassword];\n    return msg; // enviar a MySQL para next check\n}\n\n// PATIENT\nif (msg.step === 'check_patient') {\n    if (msg.payload.length > 0) {\n        msg.payload = { success: true, role: 'Patient', user: msg.payload[0] };\n        return msg;\n    }\n    msg.step = 'check_doctor';\n    msg.topic = `\n        SELECT id_doctor AS id, doctor_code, name, email\n        FROM doctors\n        WHERE email = ?\n        AND password = SHA2(?,256)\n        LIMIT 1\n    `;\n    msg.payload = [loginEmail, loginPassword];\n    return msg; // enviar a MySQL\n}\n\n// DOCTOR\nif (msg.step === 'check_doctor') {\n    if (msg.payload.length > 0) {\n        msg.payload = { success: true, role: 'Doctor', user: msg.payload[0] };\n        return msg;\n    }\n    msg.statusCode = 401;\n    msg.payload = { success: false, message: 'Credenciales incorrectas' };\n    return msg;\n}",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 830,
+        "y": 220,
+        "wires": [
+            [
+                "698c1a6646da656e"
+            ],
+            [
+                "6243665bab60a296"
+            ]
+        ]
+    },
+    {
+        "id": "698c1a6646da656e",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Login Response",
+        "statusCode": "",
+        "headers": {},
+        "x": 1090,
+        "y": 200,
+        "wires": []
     }
 ]
