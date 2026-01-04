@@ -652,7 +652,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Decodificar y Guardar Foto",
-        "func": "// CÓDIGO FINAL para el nodo FUNCTION: Decodificar y Guardar Foto\n\n// 1. Obtener datos del payload enviado por el HTML\nconst id_patient = msg.payload.id_patient;\nconst urgency = msg.payload.urgency || 50;\nlet base64Image = msg.payload.image_base64;\nconst originalFileName = msg.payload.file_name;\n\n// 2. Definir rutas\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\n// Generar un nombre de archivo único\nconst extension = originalFileName.split('.').pop();\nconst uniqueFileName = `paciente_${id_patient}_${Date.now()}.${extension}`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\n// La ruta que se guardará en la DB (accesible públicamente por NGINX)\nconst webPath = `/uploads/${uniqueFileName}`;\n\n// 3. Limpiar Base64 y decodificar\nif (base64Image.startsWith('data:')) {\n    base64Image = base64Image.split(',')[1];\n}\nconst imageBuffer = Buffer.from(base64Image, 'base64');\n\n// 4. Guardar archivo en disco (fs está disponible gracias a la pestaña Configuración)\ntry {\n    fs.writeFileSync(fullPath, imageBuffer);\n    node.warn(`Imagen guardada en: ${fullPath}`);\n\n    // 5. Preparar mensajes para las inserciones en la DB\n\n    // A. Define la consulta SQL completa para la tabla photo_requests\n    const sqlQueryRequest = \"INSERT INTO photo_requests (id_patient, urgency, status) VALUES (?, ?, 'pendiente')\";\n\n    // B. Guardar la ruta web en el contexto de flujo para el siguiente nodo Function\n    flow.set('temp_image_path', webPath);\n\n    // C. Mensaje de SALIDA para el nodo MySQL (photo_requests)\n    const msgRequest = {\n        topic: sqlQueryRequest, // ¡Soluciona el ER_PARSE_ERROR!\n        payload: [id_patient, urgency]\n    };\n\n    // Envía el mensaje al Puerto 1 (que va a MySQL photo_requests)\n    return [msgRequest, null, null];\n\n} catch (e) {\n    node.error(`Error al guardar archivo: ${e.message}`);\n    // En caso de error de escritura, envía una respuesta de error HTTP\n    return [null, { statusCode: 500, payload: { error: \"Error al guardar la imagen en el servidor.\" } }, null];\n}",
+        "func": "// 1. Obtener datos del payload enviado por el HTML\nconst id_patient = msg.payload.id_patient;\nconst urgency = msg.payload.urgency || 50;\nlet base64Image = msg.payload.image_base64;\nconst originalFileName = msg.payload.file_name;\n\n// 2. Definir rutas\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst extension = originalFileName.split('.').pop();\nconst uniqueFileName = `paciente_${id_patient}_${Date.now()}.${extension}`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\n// 3. Limpiar Base64\nif (base64Image.startsWith('data:')) {\n    base64Image = base64Image.split(',')[1];\n}\n\n// 4. Guardar imagen\nconst imageBuffer = Buffer.from(base64Image, 'base64');\n\ntry {\n    fs.writeFileSync(fullPath, imageBuffer);\n    node.warn(`Imagen guardada en: ${fullPath}`);\n} catch (e) {\n    msg.statusCode = 500;\n    msg.payload = { success: false, error: \"Error al guardar la imagen\" };\n    return msg;\n}\n\n// 5. Preparar INSERT photo_requests\nmsg.topic = \"INSERT INTO photo_requests (id_patient, urgency, status) VALUES (?, ?, 'pendiente')\";\nmsg.payload = [id_patient, urgency];\n\n// Guardamos la ruta para la siguiente función\nflow.set('temp_image_path', webPath);\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -679,8 +679,8 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 1690,
-        "y": 1460,
+        "x": 1390,
+        "y": 1580,
         "wires": []
     },
     {
@@ -702,8 +702,8 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Preparar Inserción Imagen",
-        "func": "// Obtener el ID de la solicitud recién creada\nconst id_request = msg.payload.insertId;\nconst file_path = flow.get('temp_image_path');\n\nif (id_request && file_path) {\n    const sqlQueryImage = \"INSERT INTO images (id_request, file_path) VALUES (?, ?)\";\n\n    // Preparamos el mensaje para la base de datos (Puerto 1)\n    const msgImage = {\n        ...msg, // Mantenemos las propiedades originales de la petición HTTP\n        topic: sqlQueryImage,\n        payload: [id_request, file_path]\n    };\n    \n    // Preparamos el mensaje para la respuesta HTTP (Puerto 2)\n    const msgResponse = {\n        ...msg, // ¡IMPORTANTE! Esto copia las propiedades de respuesta necesarias\n        statusCode: 201,\n        payload: { success: true, message: \"Guardado con éxito\", file_path: file_path }\n    };\n    \n    return [msgImage, msgResponse]; \n} else {\n    node.error(\"Faltan datos para la inserción de imagen.\");\n    return [null, { ...msg, statusCode: 500, payload: { error: \"Error interno\" } }];\n}",
-        "outputs": 1,
+        "func": "const id_request = msg.payload.insertId;\nconst file_path = flow.get('temp_image_path');\n\nif (!id_request || !file_path) {\n    msg.statusCode = 500;\n    msg.payload = { success: false, error: \"Error interno\" };\n    return [null, msg];\n}\n\n// Mensaje para DB\nconst msgImage = {\n    ...msg,\n    topic: \"INSERT INTO images (id_request, file_path) VALUES (?, ?)\",\n    payload: [id_request, file_path]\n};\n\n// Mensaje FINAL para frontend\nconst msgResponse = {\n    ...msg,\n    statusCode: 201,\n    payload: {\n        success: true,\n        message: \"Photo uploaded successfully\",\n        file_path\n    }\n};\n\nreturn [msgImage, msgResponse];\n",
+        "outputs": 2,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
@@ -714,6 +714,9 @@
         "wires": [
             [
                 "16d2d68bcbb42eea"
+            ],
+            [
+                "0516b36f2bbd3d1e"
             ]
         ]
     },
@@ -723,12 +726,10 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "DB: Insert images",
-        "x": 1410,
+        "x": 1390,
         "y": 1460,
         "wires": [
-            [
-                "0516b36f2bbd3d1e"
-            ]
+            []
         ]
     },
     {
@@ -754,7 +755,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "d377be8d9d778145",
+        "id": "f6c96ef87a48cd3f",
         "type": "global-config",
         "env": [],
         "modules": {
