@@ -53,12 +53,38 @@
 
         <div id="p-consult" class="tab-content active">
             <div class="case-card reveal-on-scroll" style="text-align: center; padding: 50px;">
+
                 <i class="fa-solid fa-camera" style="font-size: 50px; color: #d2d2d7; margin-bottom: 20px;"></i>
+
                 <h3>New Inquiry</h3>
+
                 <p>Upload a photo of your injury so your doctor can evaluate it.</p>
-                <input type="file" id="uploadImage" accept="image/*" capture="environment">
-                <button onclick="uploadCase()">Send Inquiry</button>
+                <div id="uploadMessage" style="
+                    display:none;
+                    margin:15px 0;
+                    padding:12px;
+                    border-radius:8px;
+                    font-size:14px;
+                    font-weight:600;
+                ">
+                </div>
+
+                <img id="imagePreview" style="
+                    display:none;
+                    margin:20px auto;
+                    max-width:100%;
+                    max-height:300px;
+                    border-radius:12px;
+                    box-shadow:0 10px 25px rgba(0,0,0,0.15);
+                " />
+
+                <input type="file" id="uploadImage" accept="image/*" capture="environment"
+                    onchange="previewImage(event)" style="margin-top:15px;">
+
+                <button style="margin-top:20px;" onclick="uploadCase()">Send Inquiry</button>
+
             </div>
+
         </div>
 
 
@@ -88,7 +114,7 @@
         <div class="header-flex">
             <div>
                 <h2 style="font-size: 32px;"><span id="d_name">Doctor</span></h2>
-                <span class="role-badge">Dermatologia</span>
+                <span class="role-badge">Dermatology</span>
             </div>
             <button class="btn-secondary" style="width: auto; margin:0;" onclick="logout()">Exit</button>
         </div>
@@ -175,14 +201,11 @@
             elements.forEach(el => observer.observe(el));
         }
 
-        // --- 2. LOGICA SPLASH SCREEN (REBOTE) ---
         // --- 2. LOGICA SPLASH SCREEN (VIDEO) ---
         window.addEventListener('load', () => {
             const splash = document.getElementById('splash-screen');
             const video = document.getElementById('splashVideo'); // Obtenemos la referencia al video
 
-            // **Nueva lógica de video:**
-            // Asegura que el video comienza a reproducirse tan pronto como sea posible
             if (video) {
                 // Intenta forzar la reproducción (necesario en algunos entornos)
                 video.play().catch(e => console.log("Error al reproducir video", e));
@@ -246,6 +269,7 @@
                 if (res.ok) {
                     alert("Report sent successfully");
                     loadDoctorPending(); // Recargar la lista para que desaparezca
+                    loadDoctorAppointments(); 
                 } else {
                     alert("Error: " + JSON.stringify(result));
                 }
@@ -263,23 +287,52 @@
             });
         }
 
+        function showUploadMessage(text, success = true) {
+            const msg = document.getElementById("uploadMessage");
+            msg.innerText = text;
+            msg.style.display = "block";
+            msg.style.background = success ? "#e6fffa" : "#ffe6e6";
+            msg.style.color = success ? "#065f46" : "#991b1b";
+            msg.style.border = success
+                ? "1px solid #34d399"
+                : "1px solid #f87171";
+        }
+
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const preview = document.getElementById("imagePreview");
+
+            if (!file) {
+                preview.style.display = "none";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                preview.src = reader.result;
+                preview.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+
+
         async function uploadCase() {
             const fileInput = document.getElementById("uploadImage");
             const file = fileInput.files[0];
             const patientId = localStorage.getItem("patient_id");
 
             if (!file) {
-                alert("Please select a photo.");
+                showUploadMessage("Please select a photo first.", false);
                 return;
             }
 
             try {
-                // Convertir imagen a Base64
                 const base64 = await getBase64(file);
 
                 const payload = {
                     id_patient: patientId,
-                    urgency: Math.floor(Math.random() * 100), // Simulamos urgencia o la calcula la IA antes
+                    urgency: Math.floor(Math.random() * 100),
                     image_base64: base64,
                     file_name: file.name
                 };
@@ -293,21 +346,26 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    alert("Query sent successfully.");
-                    // Limpiar input
+                    showUploadMessage("Photo uploaded successfully!");
+
                     fileInput.value = "";
-                    // Ir a la pestaña de historial o refrescar
-                    openTab('p-historial', document.querySelectorAll('.tab-btn')[2]);
+                    const preview = document.getElementById("imagePreview");
+                    preview.style.display = "none";
+                    preview.src = "";
+
                     loadPatientHistory();
                 } else {
-                    alert("Error uploading: " + data.error);
+                    showUploadMessage("Error uploading the photo.", false);
                 }
+
 
             } catch (error) {
                 console.error(error);
-                alert("Connection error.");
+                showUploadMessage("Connection error.", false);
             }
         }
+
+
 
         // --- 3. LOGIN ---
         async function handleLogin() {
@@ -472,7 +530,7 @@
                     <div>
                         <h4 style="margin:0;">Cita con ${c.doctor_name}</h4>
                         <p style="margin:5px 0 0 0; color:var(--text-secondary);">
-                            Estado: ${c.status}
+                            Status: ${c.status}
                         </p>
                     </div>
                     <div style="text-align:right;">
@@ -511,11 +569,11 @@
                     <div>
                         <strong>${p.name}</strong><br>
                         <span style="font-size:14px; color:#888;">
-                            DNI: ${p.dni} • ${p.email}
+                            ID: ${p.dni} • ${p.email}
                         </span>
                     </div>
                     <button class="btn-secondary" style="width:auto; margin:0;">
-                        Ver Ficha
+                        View Fact Sheet
                     </button>
                 </div>
             `;
