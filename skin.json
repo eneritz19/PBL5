@@ -774,83 +774,74 @@
         "wires": []
     },
     {
-        "id": "f8c45c60a83eb2f7",
+        "id": "login_http_in",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
         "name": "POST /login",
         "url": "/login",
         "method": "post",
         "upload": false,
-        "swaggerDoc": "",
         "x": 130,
-        "y": 220,
+        "y": 240,
         "wires": [
             [
-                "dfa901d1b412ea09"
+                "login_prepare_query"
             ]
         ]
     },
     {
-        "id": "dfa901d1b412ea09",
+        "id": "login_prepare_query",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Prepare Login Query",
-        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email y password requeridos' };\n    return msg;\n}\n\nmsg.loginEmail = email;\nmsg.loginPassword = password;\n\n// 1️⃣ ADMIN\nmsg.topic = `\nSELECT id_admin AS id, name, email\nFROM admin\nWHERE email = ?\nAND password = SHA2(?,256)\nLIMIT 1\n`;\nmsg.payload = [email, password];\nmsg.step = 'check_admin';\n\nreturn msg;",
+        "name": "Preparar Query Login UNION",
+        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email y password requeridos' };\n    return msg;\n}\n\nmsg.topic = `\nSELECT 'Admin' AS role, id_admin AS id, name, email\nFROM admin\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Patient', id_patient AS id, name, email\nFROM patients\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Doctor', id_doctor AS id, name, email\nFROM doctors\nWHERE email=? AND password=SHA2(?,256)\nLIMIT 1\n`;\n\nmsg.payload = [email, password, email, password, email, password];\nreturn msg;",
         "outputs": 1,
-        "x": 370,
-        "y": 220,
+        "x": 380,
+        "y": 240,
         "wires": [
             [
-                "6243665bab60a296"
+                "login_mysql"
             ]
         ]
     },
     {
-        "id": "6243665bab60a296",
+        "id": "login_mysql",
         "type": "mysql",
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "MySQL",
-        "x": 590,
-        "y": 220,
+        "x": 630,
+        "y": 240,
         "wires": [
             [
-                "fab8b7358c147104"
+                "login_process_result"
             ]
         ]
     },
     {
-        "id": "fab8b7358c147104",
+        "id": "login_process_result",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Process Login Result",
-        "func": "let loginEmail = msg.loginEmail;\nlet loginPassword = msg.loginPassword;\n\n// ADMIN\nif (!msg.step) msg.step = 'check_admin';\n\nif (msg.step === 'check_admin') {\n    if (msg.payload.length > 0) {\n        msg.payload = { success: true, role: 'Admin', user: msg.payload[0] };\n        return msg; // ✅ enviar al http response\n    }\n    msg.step = 'check_patient';\n    msg.topic = `\n        SELECT id_patient AS id, dni, name, email\n        FROM patients\n        WHERE email = ?\n        AND password = SHA2(?,256)\n        LIMIT 1\n    `;\n    msg.payload = [loginEmail, loginPassword];\n    return msg; // enviar a MySQL para next check\n}\n\n// PATIENT\nif (msg.step === 'check_patient') {\n    if (msg.payload.length > 0) {\n        msg.payload = { success: true, role: 'Patient', user: msg.payload[0] };\n        return msg;\n    }\n    msg.step = 'check_doctor';\n    msg.topic = `\n        SELECT id_doctor AS id, doctor_code, name, email\n        FROM doctors\n        WHERE email = ?\n        AND password = SHA2(?,256)\n        LIMIT 1\n    `;\n    msg.payload = [loginEmail, loginPassword];\n    return msg; // enviar a MySQL\n}\n\n// DOCTOR\nif (msg.step === 'check_doctor') {\n    if (msg.payload.length > 0) {\n        msg.payload = { success: true, role: 'Doctor', user: msg.payload[0] };\n        return msg;\n    }\n    msg.statusCode = 401;\n    msg.payload = { success: false, message: 'Credenciales incorrectas' };\n    return msg;\n}",
-        "outputs": 2,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 830,
-        "y": 220,
+        "name": "Procesar resultado login",
+        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 401;\n    msg.payload = { success: false, message: 'Credenciales incorrectas' };\n} else {\n    const user = msg.payload[0];\n    msg.payload = { success: true, role: user.role, user: { id: user.id, name: user.name, email: user.email } };\n    msg.statusCode = 200;\n}\nreturn msg;",
+        "outputs": 1,
+        "x": 880,
+        "y": 240,
         "wires": [
             [
-                "698c1a6646da656e"
-            ],
-            [
-                "6243665bab60a296"
+                "login_http_response"
             ]
         ]
     },
     {
-        "id": "698c1a6646da656e",
+        "id": "login_http_response",
         "type": "http response",
         "z": "f6f2187d.f17ca8",
-        "name": "Login Response",
+        "name": "Respuesta Login",
         "statusCode": "",
         "headers": {},
-        "x": 1090,
-        "y": 200,
+        "x": 1130,
+        "y": 240,
         "wires": []
     }
 ]
