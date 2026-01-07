@@ -122,10 +122,14 @@
 
         <div id="admin-doctors" class="tab-content active">
             <div id="adminDoctorsList"></div>
+            <button class="btn-primary" onclick="openNewDoctor()">New</button>
+
         </div>
 
         <div id="admin-patients" class="tab-content">
             <div id="adminPatientsList"></div>
+            <button class="btn-primary" onclick="openNewPatient()">New</button>
+
         </div>
     </div>
 
@@ -322,6 +326,7 @@
             reader.readAsDataURL(file);
         }
 
+        //ADMINISTRADOR
         async function loadAdminDoctors() {
             const res = await fetch(`${API}/admin/doctors`);
             const doctors = await res.json();
@@ -338,7 +343,10 @@
             </div>
             <div>
                 <button class="btn-secondary">Edit</button>
-                <button class="btn-secondary" style="color:red;">Delete</button>
+                <button class="btn-secondary" style="color:red;"
+                        onclick="deleteDoctor(${d.id_doctor})">
+                    Delete
+                </button>   
             </div>
         </div>`;
             });
@@ -360,11 +368,178 @@
             </div>
             <div>
                 <button class="btn-secondary">Edit</button>
-                <button class="btn-secondary" style="color:red;">Delete</button>
+                <button class="btn-secondary" style="color:red;"
+                        onclick="deletePatient(${p.id_patient})">
+                    Delete
+                </button>
             </div>
         </div>`;
             });
         }
+        async function deleteDoctor(id) {
+            if (!confirm("Are you sure you want to delete this doctor and ALL related data?")) return;
+
+            const res = await fetch(`${API}/admin/doctor/${id}`, {
+                method: "DELETE"
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Doctor deleted successfully");
+                loadAdminDoctors();
+                loadAdminPatients(); // por si había pacientes asignados
+            } else {
+                alert("Error deleting doctor");
+            }
+        }
+
+        async function deletePatient(id) {
+            if (!confirm("Are you sure you want to delete this patient and ALL related data?")) return;
+
+            const res = await fetch(`${API}/admin/patient/${id}`, {
+                method: "DELETE"
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Patient deleted successfully");
+                loadAdminPatients();
+            } else {
+                alert("Error deleting patient");
+            }
+        }
+        function openNewDoctor() {
+            document.getElementById("modal-title").innerText = "New Doctor";
+            document.getElementById("modal-body").innerHTML = `
+        <input id="new_doctor_code" placeholder="Doctor Code"><br>
+        <input id="new_doctor_name" placeholder="Name"><br>
+        <input id="new_doctor_email" placeholder="Email"><br>
+        <input id="new_doctor_password" type="password" placeholder="Password"><br>
+        <input id="new_doctor_clinic" placeholder="Clinic ID">
+    `;
+            openModal("doctor");
+        }
+
+        function openNewPatient() {
+            document.getElementById("modal-title").innerText = "New Patient";
+            document.getElementById("modal-body").innerHTML = `
+        <input id="new_patient_dni" placeholder="DNI"><br>
+        <input id="new_patient_name" placeholder="Name"><br>
+        <input id="new_patient_email" placeholder="Email"><br>
+        <input id="new_patient_password" type="password" placeholder="Password"><br>
+
+        <select id="new_patient_doctor">
+            <option value="">No assigned doctor</option>
+        </select>
+    `;
+
+            openModal("patient");
+            loadDoctorsForSelect(); // 👈 CLAVE
+        }
+        async function loadDoctorsForSelect() {
+            try {
+                const res = await fetch(`${API}/admin/doctors`);
+                const doctors = await res.json();
+
+                const select = document.getElementById("new_patient_doctor");
+                if (!select) return;
+
+                doctors.forEach(d => {
+                    const option = document.createElement("option");
+                    option.value = d.id_doctor;
+                    option.textContent = `${d.name} (${d.email})`;
+                    select.appendChild(option);
+                });
+
+            } catch (err) {
+                console.error(err);
+                alert("Error loading doctors");
+            }
+        }
+
+
+
+        let currentType = null;
+
+        function openModal(type) {
+            currentType = type;
+            document.getElementById("modal").classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("modal").classList.add("hidden");
+        }
+
+
+        async function submitForm() {
+    let payload = {};
+
+    if (currentType === "doctor") {
+        payload = {
+            doctor_code: document.getElementById("new_doctor_code").value,
+            name: document.getElementById("new_doctor_name").value,
+            email: document.getElementById("new_doctor_email").value,
+            password: document.getElementById("new_doctor_password").value,
+            id_clinic: document.getElementById("new_doctor_clinic").value || null
+        };
+
+        try {
+            const res = await fetch("http://localhost:1880/admin/new/doctor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Doctor created successfully!");
+                closeModal();
+                loadAdminDoctors();
+            } else {
+                alert("Error creating doctor: " + JSON.stringify(data));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Server connection error.");
+        }
+
+    } else if (currentType === "patient") {
+        payload = {
+            dni: document.getElementById("new_patient_dni").value,
+            name: document.getElementById("new_patient_name").value,
+            email: document.getElementById("new_patient_email").value,
+            password: document.getElementById("new_patient_password").value,
+            id_doctor: document.getElementById("new_patient_doctor").value || null
+        };
+
+        try {
+            const res = await fetch("http://localhost:1880/admin/new/patient", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Patient created successfully!");
+                closeModal();
+                loadAdminPatients();
+            } else {
+                alert("Error creating patient: " + JSON.stringify(data));
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Server connection error.");
+        }
+    }
+}
+
+
+        // FIN ADMINISTRADOR
 
         async function uploadCase() {
             const fileInput = document.getElementById("uploadImage");
@@ -750,6 +925,20 @@
             }
         }
     </script>
+    <!-- MODAL NEW DOCTOR / PATIENT -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <div id="modal-body"></div>
+
+            <div class="modal-actions" style="margin-top:15px; text-align:right;">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="submitForm()">Save</button>
+            </div>
+        </div>
+    </div>
+
+
 
 </body>
 

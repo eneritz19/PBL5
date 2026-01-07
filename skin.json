@@ -17,7 +17,7 @@
         "charset": "UTF8"
     },
     {
-        "id": "f6c96ef87a48cd3f",
+        "id": "1012ca45e3b1b669",
         "type": "global-config",
         "env": [],
         "modules": {
@@ -376,7 +376,7 @@
         "name": "NUEVO: DOCTOR - ENVIAR INFORME",
         "info": "",
         "x": 200,
-        "y": 1360,
+        "y": 1820,
         "wires": []
     },
     {
@@ -389,8 +389,8 @@
         "upload": false,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 230,
-        "y": 1820,
+        "x": 170,
+        "y": 2180,
         "wires": [
             [
                 "debug_raw_input",
@@ -411,8 +411,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 480,
-        "y": 1760,
+        "x": 420,
+        "y": 2120,
         "wires": []
     },
     {
@@ -427,8 +427,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 510,
-        "y": 1820,
+        "x": 450,
+        "y": 2180,
         "wires": [
             [
                 "mysql_insert_diag"
@@ -444,8 +444,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "Guardar Diagnosis",
-        "x": 770,
-        "y": 1820,
+        "x": 710,
+        "y": 2180,
         "wires": [
             [
                 "func_update_req_simple",
@@ -466,8 +466,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 990,
-        "y": 1760,
+        "x": 930,
+        "y": 2120,
         "wires": []
     },
     {
@@ -482,8 +482,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 980,
-        "y": 1820,
+        "x": 920,
+        "y": 2180,
         "wires": [
             [
                 "mysql_update_status"
@@ -496,8 +496,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "Update Status",
-        "x": 1180,
-        "y": 1820,
+        "x": 1120,
+        "y": 2180,
         "wires": [
             [
                 "http_response_ok"
@@ -511,8 +511,8 @@
         "name": "OK",
         "statusCode": "200",
         "headers": {},
-        "x": 1350,
-        "y": 1820,
+        "x": 1290,
+        "y": 2180,
         "wires": []
     },
     {
@@ -522,8 +522,8 @@
         "name": "Capturar Errores",
         "scope": null,
         "uncaught": false,
-        "x": 1040,
-        "y": 1900,
+        "x": 980,
+        "y": 2260,
         "wires": [
             [
                 "debug_error_critico",
@@ -544,8 +544,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1240,
-        "y": 1900,
+        "x": 1180,
+        "y": 2260,
         "wires": []
     },
     {
@@ -555,8 +555,8 @@
         "name": "Error",
         "statusCode": "500",
         "headers": {},
-        "x": 1250,
-        "y": 1940,
+        "x": 1190,
+        "y": 2300,
         "wires": []
     },
     {
@@ -570,7 +570,7 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 180,
-        "y": 1460,
+        "y": 1920,
         "wires": [
             [
                 "d9c93aa684aa0527"
@@ -595,7 +595,7 @@
             }
         ],
         "x": 520,
-        "y": 1460,
+        "y": 1920,
         "wires": [
             [
                 "d5c2613c2551825f"
@@ -610,7 +610,7 @@
         "statusCode": "",
         "headers": {},
         "x": 1390,
-        "y": 1580,
+        "y": 2040,
         "wires": []
     },
     {
@@ -620,7 +620,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "photo_requests",
         "x": 840,
-        "y": 1460,
+        "y": 1920,
         "wires": [
             [
                 "352eb9406bb189ea"
@@ -640,7 +640,7 @@
         "finalize": "",
         "libs": [],
         "x": 1100,
-        "y": 1460,
+        "y": 1920,
         "wires": [
             [
                 "16d2d68bcbb42eea"
@@ -657,7 +657,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "DB: Insert images",
         "x": 1390,
-        "y": 1460,
+        "y": 1920,
         "wires": [
             []
         ]
@@ -668,8 +668,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
         "name": "Guardar citas",
-        "x": 760,
-        "y": 1920,
+        "x": 700,
+        "y": 2280,
         "wires": [
             []
         ]
@@ -842,6 +842,206 @@
         "headers": {},
         "x": 1130,
         "y": 240,
+        "wires": []
+    },
+    {
+        "id": "d35f4df5b49a028a",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "DELETE Patient",
+        "url": "/admin/patient/:id",
+        "method": "delete",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 1380,
+        "wires": [
+            [
+                "5d60b3a3e85b8150"
+            ]
+        ]
+    },
+    {
+        "id": "5d60b3a3e85b8150",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Delete patient SQL",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM patients\nWHERE id_patient = ?\n`;\n\nmsg.payload = [id];\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 360,
+        "y": 1380,
+        "wires": [
+            [
+                "eb79329ffac22ec8"
+            ]
+        ]
+    },
+    {
+        "id": "2e6fa098832bdbef",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "DELETE Doctor",
+        "url": "/admin/doctor/:id",
+        "method": "delete",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 1480,
+        "wires": [
+            [
+                "94f21896c6bd30ee"
+            ]
+        ]
+    },
+    {
+        "id": "94f21896c6bd30ee",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Delete doctor SQL",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM doctors\nWHERE id_doctor = ?\n`;\n\nmsg.payload = [id];\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 360,
+        "y": 1480,
+        "wires": [
+            [
+                "eb79329ffac22ec8"
+            ]
+        ]
+    },
+    {
+        "id": "eb79329ffac22ec8",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL skinXpert",
+        "x": 590,
+        "y": 1430,
+        "wires": [
+            [
+                "877e1e326ecfe84a"
+            ]
+        ]
+    },
+    {
+        "id": "877e1e326ecfe84a",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "HTTP Response",
+        "func": "if (msg.payload.affectedRows === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Not found\" };\n    return msg;\n}\n\nmsg.statusCode = 200;\nmsg.payload = { success: true };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 800,
+        "y": 1430,
+        "wires": [
+            [
+                "997c77a050fe2f8a"
+            ]
+        ]
+    },
+    {
+        "id": "997c77a050fe2f8a",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1020,
+        "y": 1430,
+        "wires": []
+    },
+    {
+        "id": "7c0248b0969677d3",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /admin/new/doctor",
+        "url": "/admin/new/doctor",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 1600,
+        "wires": [
+            [
+                "3535c2b9a0f6a419"
+            ]
+        ]
+    },
+    {
+        "id": "3535c2b9a0f6a419",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Doctor Insert",
+        "func": "const { doctor_code, name, email, password, id_clinic } = msg.payload;\n\nif (!doctor_code || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required doctor fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO doctors (\n  doctor_code,\n  name,\n  email,\n  password,\n  id_clinic\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n`;\n\nmsg.payload = [\n    doctor_code,\n    name,\n    email,\n    password,\n    id_clinic || null\n];\n\nreturn msg;",
+        "outputs": 1,
+        "x": 430,
+        "y": 1600,
+        "wires": [
+            [
+                "b036a34633aa7393"
+            ]
+        ]
+    },
+    {
+        "id": "5d208c4740219453",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /admin/new/patient",
+        "url": "/admin/new/patient",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 1680,
+        "wires": [
+            [
+                "aab680aaf3618346"
+            ]
+        ]
+    },
+    {
+        "id": "aab680aaf3618346",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Patient Insert",
+        "func": "const { dni, name, email, password, id_doctor } = msg.payload;\n\nif (!dni || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required patient fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO patients (\n  dni,\n  name,\n  email,\n  password,\n  id_doctor\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n`;\n\nmsg.payload = [\n    dni,\n    name,\n    email,\n    password,\n    id_doctor || null\n];\n\nreturn msg;",
+        "outputs": 1,
+        "x": 430,
+        "y": 1680,
+        "wires": [
+            [
+                "b036a34633aa7393"
+            ]
+        ]
+    },
+    {
+        "id": "b036a34633aa7393",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL skinXpert",
+        "x": 710,
+        "y": 1640,
+        "wires": [
+            [
+                "e4433715fda8fbb1"
+            ]
+        ]
+    },
+    {
+        "id": "e4433715fda8fbb1",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Response OK",
+        "statusCode": "",
+        "headers": {},
+        "x": 930,
+        "y": 1640,
         "wires": []
     }
 ]
