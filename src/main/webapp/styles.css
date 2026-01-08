@@ -278,3 +278,44 @@ button:hover {
 
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
+/* para el daministrador*/
+/* ===== MODAL ===== */
+/* Espaciado interno del formulario */
+#modal-body {
+    margin-top: 15px;
+    padding-bottom: 10px;
+}
+
+/* Margen entre inputs */
+#modal-body input,
+#modal-body select {
+    margin-bottom: 16px;
+}
+
+/* Un poco de aire lateral en móvil */
+@media (max-width: 600px) {
+    .modal-content {
+        padding: 30px 22px;
+    }
+}
+.modal-content {
+    border-top: 6px solid var(--sk-blue-dark);
+}
+#adminFormBody input,
+#adminFormBody select {
+    margin-bottom: 18px;
+}
+
+
+.modal-actions {
+    margin: 10px 100px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+#modal-title {
+    margin: 20px 100px;
+    text-align: center;
+}

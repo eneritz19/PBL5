@@ -122,16 +122,25 @@
 
         <div id="admin-doctors" class="tab-content active">
             <div id="adminDoctorsList"></div>
-            <button class="btn-primary" onclick="openNewDoctor()">New</button>
+            <button class="btn-primary" onclick="openNewDoctor(); scrollToBottom();">
+                New
+            </button>
+
 
         </div>
 
         <div id="admin-patients" class="tab-content">
             <div id="adminPatientsList"></div>
-            <button class="btn-primary" onclick="openNewPatient()">New</button>
+            <button class="btn-primary" onclick="openNewPatient(); scrollToBottom();">
+                New
+            </button>
 
         </div>
+
+
+
     </div>
+
 
     <div id="doctorDashboard" class="container hidden" style="max-width: 900px;">
         <div class="header-flex">
@@ -205,6 +214,15 @@
                 }
             });
         }, observerOptions);
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: "smooth"
+                });
+            }, 150);
+        }
 
         function initScrollAnimations() {
             const elements = document.querySelectorAll('.case-card, .container, .tabs, .reveal-on-scroll');
@@ -325,8 +343,154 @@
             };
             reader.readAsDataURL(file);
         }
+        function openAdminForm(isEdit = false) {
+            document.getElementById("adminFormContainer").classList.remove("hidden");
+
+            const saveBtn = document.getElementById("adminFormSaveBtn");
+            if (isEdit) {
+                saveBtn.onclick = submitFormEdit;
+            } else {
+                saveBtn.onclick = submitForm;
+            }
+        }
 
         //ADMINISTRADOR
+        async function editDoctor(id_doctor) {
+            try {
+                const res = await fetch(`${API}/admin/doctor/${id_doctor}`);
+                if (!res.ok) throw new Error("Doctor not found");
+
+                const doctor = await res.json();
+
+                document.getElementById("modal-title").innerText = "Edit Doctor";
+                document.getElementById("modal-body").innerHTML = `
+            <input type="hidden" id="edit_doctor_id" value="${doctor.id_doctor}">
+            <div style="margin:20px 100px;">
+                <input id="edit_doctor_code" placeholder="Doctor Code" value="${doctor.doctor_code}">
+                <input id="edit_doctor_name" placeholder="Full Name" value="${doctor.name}">
+                <input id="edit_doctor_email" placeholder="Email address" value="${doctor.email}">
+                <input id="edit_doctor_password" type="password" placeholder="Temporary Password (leave blank to keep current)">
+                <input id="edit_doctor_clinic" placeholder="Clinic ID (optional)" value="${doctor.id_clinic || ''}">
+            </div>
+        `;
+
+                currentType = "doctor";
+                isEditing = true; // ✅ importante
+                openModal("doctor", true);
+scrollToBottom(); 
+            } catch (err) {
+                console.error(err);
+                alert("Error fetching doctor data");
+            }
+        }
+
+        async function editPatient(id_patient) {
+            try {
+                const res = await fetch(`${API}/admin/patient/${id_patient}`);
+                if (!res.ok) throw new Error("Patient not found");
+
+                const patient = await res.json();
+
+                document.getElementById("modal-title").innerText = "Edit Patient";
+                document.getElementById("modal-body").innerHTML = `
+            <input type="hidden" id="edit_patient_id" value="${patient.id_patient}">
+            <div style="margin:20px 100px;">
+                <input id="edit_patient_dni" placeholder="DNI / ID" value="${patient.dni}">
+                <input id="edit_patient_name" placeholder="Full Name" value="${patient.name}">
+                <input id="edit_patient_email" placeholder="Email address" value="${patient.email}">
+                <input id="edit_patient_password" type="password" placeholder="Temporary Password (leave blank to keep current)">
+                <select id="edit_patient_doctor">
+                    <option value="">No assigned doctor</option>
+                </select>
+            </div>
+        `;
+
+                // Cargar lista de doctores en el select
+                const doctorRes = await fetch(`${API}/admin/doctors`);
+                const doctors = await doctorRes.json();
+                const select = document.getElementById("edit_patient_doctor");
+                doctors.forEach(d => {
+                    const option = document.createElement("option");
+                    option.value = d.id_doctor;
+                    option.textContent = `${d.name} (${d.email})`;
+                    if (d.id_doctor === patient.id_doctor) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                currentType = "patient";
+                isEditing = true; // ✅ importante
+                openModal("patient", true);
+                scrollToBottom(); 
+
+            } catch (err) {
+                console.error(err);
+                alert("Error fetching patient data");
+            }
+        }
+
+        async function submitFormEdit() {
+            let payload = {};
+            let endpoint = "";
+            let method = "PUT"; // edición
+
+            if (currentType === "doctor") {
+                const idDoctor = document.getElementById("edit_doctor_id").value; // el ID real
+                if (!idDoctor) return alert("No se encontró el ID del doctor.");
+
+                payload = {
+                    name: document.getElementById("edit_doctor_name").value,
+                    email: document.getElementById("edit_doctor_email").value,
+                    id_clinic: document.getElementById("edit_doctor_clinic").value || null
+                };
+
+                const password = document.getElementById("edit_doctor_password").value;
+                if (password) payload.password = password; // solo si cambió
+
+                endpoint = `${API}/admin/doctor/${idDoctor}`; // Node-RED PUT endpoint
+
+            } else if (currentType === "patient") {
+                const idPatient = document.getElementById("edit_patient_id").value; // el ID real
+                if (!idPatient) return alert("No se encontró el ID del paciente.");
+
+                payload = {
+                    name: document.getElementById("edit_patient_name").value,
+                    email: document.getElementById("edit_patient_email").value,
+                    dni: document.getElementById("edit_patient_dni").value,
+                    id_doctor: document.getElementById("edit_patient_doctor").value || null
+                };
+
+                const password = document.getElementById("edit_patient_password").value;
+                if (password) payload.password = password;
+
+                endpoint = `${API}/admin/patient/${idPatient}`; // Node-RED PUT endpoint
+            }
+
+            try {
+                const res = await fetch(endpoint, {
+                    method,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert(`${currentType === "doctor" ? "Doctor" : "Paciente"} actualizado correctamente!`);
+                    closeModal();
+                    loadAdminDoctors();
+                    loadAdminPatients();
+                } else {
+                    alert("Error al actualizar: " + JSON.stringify(data));
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Error de conexión con el servidor.");
+            }
+        }
+
+
+
         async function loadAdminDoctors() {
             const res = await fetch(`${API}/admin/doctors`);
             const doctors = await res.json();
@@ -342,7 +506,11 @@
                 <span style="color:#888">${d.email} • ${d.clinic || ''}</span>
             </div>
             <div>
-                <button class="btn-secondary">Edit</button>
+                <button class="btn-secondary" style="color:red;"
+                        onclick="editDoctor(${d.id_doctor})">
+                    Edit
+                </button>
+
                 <button class="btn-secondary" style="color:red;"
                         onclick="deleteDoctor(${d.id_doctor})">
                     Delete
@@ -367,7 +535,10 @@
                 <span style="color:#888">${p.email} • Doctor: ${p.doctor || '—'}</span>
             </div>
             <div>
-                <button class="btn-secondary">Edit</button>
+                <button class="btn-secondary" style="color:red;" onclick="editPatient(${p.id_patient})">
+                    Edit
+                </button>
+
                 <button class="btn-secondary" style="color:red;"
                         onclick="deletePatient(${p.id_patient})">
                     Delete
@@ -411,33 +582,45 @@
             }
         }
         function openNewDoctor() {
+
             document.getElementById("modal-title").innerText = "New Doctor";
+
             document.getElementById("modal-body").innerHTML = `
-        <input id="new_doctor_code" placeholder="Doctor Code"><br>
-        <input id="new_doctor_name" placeholder="Name"><br>
-        <input id="new_doctor_email" placeholder="Email"><br>
-        <input id="new_doctor_password" type="password" placeholder="Password"><br>
-        <input id="new_doctor_clinic" placeholder="Clinic ID">
+        <div style="margin:20px 100px;">
+            <input id="new_doctor_code" placeholder="Doctor Code">
+            <input id="new_doctor_name" placeholder="Full Name">
+            <input id="new_doctor_email" placeholder="Email address">
+            <input id="new_doctor_password" type="password" placeholder="Temporary Password">
+            <input id="new_doctor_clinic" placeholder="Clinic ID (optional)">
+        </div>
     `;
-            openModal("doctor");
+
+            openModal("doctor", false);
         }
+
 
         function openNewPatient() {
             document.getElementById("modal-title").innerText = "New Patient";
-            document.getElementById("modal-body").innerHTML = `
-        <input id="new_patient_dni" placeholder="DNI"><br>
-        <input id="new_patient_name" placeholder="Name"><br>
-        <input id="new_patient_email" placeholder="Email"><br>
-        <input id="new_patient_password" type="password" placeholder="Password"><br>
 
-        <select id="new_patient_doctor">
-            <option value="">No assigned doctor</option>
-        </select>
+            document.getElementById("modal-body").innerHTML = `
+        <div style="margin:20px 100px;">
+            <input id="new_patient_dni" placeholder="DNI / ID">
+            <input id="new_patient_name" placeholder="Full Name">
+            <input id="new_patient_email" placeholder="Email address">
+            <input id="new_patient_password" type="password" placeholder="Temporary Password">
+            <select id="new_patient_doctor">
+                <option value="">No assigned doctor</option>
+            </select>
+        </div>
     `;
 
-            openModal("patient");
-            loadDoctorsForSelect(); // 👈 CLAVE
+            openModal("patient", false); // <- aquí decimos que NO es edición
+            loadDoctorsForSelect();
         }
+
+
+
+
         async function loadDoctorsForSelect() {
             try {
                 const res = await fetch(`${API}/admin/doctors`);
@@ -461,82 +644,97 @@
 
 
 
-        let currentType = null;
+        let currentType = null;  // "doctor" o "patient"
+        let isEditing = false;   // true si estamos editando, false si creamos
 
-        function openModal(type) {
+        // Abrir modal (creación o edición)
+        function openModal(type, editing = false) {
             currentType = type;
-            document.getElementById("modal").classList.remove("hidden");
+            isEditing = editing;
+
+            const modal = document.getElementById("modal");
+            modal.classList.remove("hidden");
         }
 
+        // Cerrar modal
         function closeModal() {
             document.getElementById("modal").classList.add("hidden");
         }
 
+        // Función central del botón Save
+        function modalSave() {
+            if (isEditing) {
+                submitFormEdit();
+            } else {
+                submitForm();
+            }
+        }
+
 
         async function submitForm() {
-    let payload = {};
+            let payload = {};
 
-    if (currentType === "doctor") {
-        payload = {
-            doctor_code: document.getElementById("new_doctor_code").value,
-            name: document.getElementById("new_doctor_name").value,
-            email: document.getElementById("new_doctor_email").value,
-            password: document.getElementById("new_doctor_password").value,
-            id_clinic: document.getElementById("new_doctor_clinic").value || null
-        };
+            if (currentType === "doctor") {
+                payload = {
+                    doctor_code: document.getElementById("new_doctor_code").value,
+                    name: document.getElementById("new_doctor_name").value,
+                    email: document.getElementById("new_doctor_email").value,
+                    password: document.getElementById("new_doctor_password").value,
+                    id_clinic: document.getElementById("new_doctor_clinic").value || null
+                };
 
-        try {
-            const res = await fetch("http://localhost:1880/admin/new/doctor", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+                try {
+                    const res = await fetch("http://localhost:1880/admin/new/doctor", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
 
-            const data = await res.json();
+                    const data = await res.json();
 
-            if (res.ok) {
-                alert("Doctor created successfully!");
-                closeModal();
-                loadAdminDoctors();
-            } else {
-                alert("Error creating doctor: " + JSON.stringify(data));
+                    if (res.ok) {
+                        alert("Doctor created successfully!");
+                        closeModal();
+                        loadAdminDoctors();
+                    } else {
+                        alert("Error creating doctor: " + JSON.stringify(data));
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Server connection error.");
+                }
+
+            } else if (currentType === "patient") {
+                payload = {
+                    dni: document.getElementById("new_patient_dni").value,
+                    name: document.getElementById("new_patient_name").value,
+                    email: document.getElementById("new_patient_email").value,
+                    password: document.getElementById("new_patient_password").value,
+                    id_doctor: document.getElementById("new_patient_doctor").value || null
+                };
+
+                try {
+                    const res = await fetch("http://localhost:1880/admin/new/patient", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        alert("Patient created successfully!");
+                        closeModal();
+                        loadAdminPatients();
+                    } else {
+                        alert("Error creating patient: " + JSON.stringify(data));
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Server connection error.");
+                }
             }
-        } catch (err) {
-            console.error(err);
-            alert("Server connection error.");
         }
-
-    } else if (currentType === "patient") {
-        payload = {
-            dni: document.getElementById("new_patient_dni").value,
-            name: document.getElementById("new_patient_name").value,
-            email: document.getElementById("new_patient_email").value,
-            password: document.getElementById("new_patient_password").value,
-            id_doctor: document.getElementById("new_patient_doctor").value || null
-        };
-
-        try {
-            const res = await fetch("http://localhost:1880/admin/new/patient", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                alert("Patient created successfully!");
-                closeModal();
-                loadAdminPatients();
-            } else {
-                alert("Error creating patient: " + JSON.stringify(data));
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Server connection error.");
-        }
-    }
-}
 
 
         // FIN ADMINISTRADOR
@@ -931,12 +1129,14 @@
             <h3 id="modal-title"></h3>
             <div id="modal-body"></div>
 
-            <div class="modal-actions" style="margin-top:15px; text-align:right;">
+            <div class="modal-actions" style="margin: 15px 100px; display: flex; justify-content: flex-end; gap: 10px;">
                 <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn-primary" onclick="submitForm()">Save</button>
+                <button class="btn-primary" id="modalSaveBtn" onclick="modalSave()">Save</button>
             </div>
         </div>
     </div>
+
+
 
 
 

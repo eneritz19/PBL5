@@ -376,7 +376,7 @@
         "name": "NUEVO: DOCTOR - ENVIAR INFORME",
         "info": "",
         "x": 200,
-        "y": 1820,
+        "y": 2020,
         "wires": []
     },
     {
@@ -390,7 +390,7 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 170,
-        "y": 2180,
+        "y": 2360,
         "wires": [
             [
                 "debug_raw_input",
@@ -412,7 +412,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 420,
-        "y": 2120,
+        "y": 2300,
         "wires": []
     },
     {
@@ -428,7 +428,7 @@
         "finalize": "",
         "libs": [],
         "x": 450,
-        "y": 2180,
+        "y": 2360,
         "wires": [
             [
                 "mysql_insert_diag"
@@ -445,7 +445,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "Guardar Diagnosis",
         "x": 710,
-        "y": 2180,
+        "y": 2360,
         "wires": [
             [
                 "func_update_req_simple",
@@ -467,7 +467,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 930,
-        "y": 2120,
+        "y": 2300,
         "wires": []
     },
     {
@@ -483,7 +483,7 @@
         "finalize": "",
         "libs": [],
         "x": 920,
-        "y": 2180,
+        "y": 2360,
         "wires": [
             [
                 "mysql_update_status"
@@ -497,7 +497,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "Update Status",
         "x": 1120,
-        "y": 2180,
+        "y": 2360,
         "wires": [
             [
                 "http_response_ok"
@@ -512,7 +512,7 @@
         "statusCode": "200",
         "headers": {},
         "x": 1290,
-        "y": 2180,
+        "y": 2360,
         "wires": []
     },
     {
@@ -523,7 +523,7 @@
         "scope": null,
         "uncaught": false,
         "x": 980,
-        "y": 2260,
+        "y": 2440,
         "wires": [
             [
                 "debug_error_critico",
@@ -545,7 +545,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 1180,
-        "y": 2260,
+        "y": 2440,
         "wires": []
     },
     {
@@ -556,7 +556,7 @@
         "statusCode": "500",
         "headers": {},
         "x": 1190,
-        "y": 2300,
+        "y": 2480,
         "wires": []
     },
     {
@@ -570,7 +570,7 @@
         "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 180,
-        "y": 1920,
+        "y": 2100,
         "wires": [
             [
                 "d9c93aa684aa0527"
@@ -595,7 +595,7 @@
             }
         ],
         "x": 520,
-        "y": 1920,
+        "y": 2100,
         "wires": [
             [
                 "d5c2613c2551825f"
@@ -610,7 +610,7 @@
         "statusCode": "",
         "headers": {},
         "x": 1390,
-        "y": 2040,
+        "y": 2220,
         "wires": []
     },
     {
@@ -620,7 +620,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "photo_requests",
         "x": 840,
-        "y": 1920,
+        "y": 2100,
         "wires": [
             [
                 "352eb9406bb189ea"
@@ -640,7 +640,7 @@
         "finalize": "",
         "libs": [],
         "x": 1100,
-        "y": 1920,
+        "y": 2100,
         "wires": [
             [
                 "16d2d68bcbb42eea"
@@ -657,7 +657,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "DB: Insert images",
         "x": 1390,
-        "y": 1920,
+        "y": 2100,
         "wires": [
             []
         ]
@@ -669,7 +669,7 @@
         "mydb": "9c12c0e15685ca58",
         "name": "Guardar citas",
         "x": 700,
-        "y": 2280,
+        "y": 2460,
         "wires": [
             []
         ]
@@ -1042,6 +1042,260 @@
         "headers": {},
         "x": 930,
         "y": 1640,
+        "wires": []
+    },
+    {
+        "id": "get-patient-clean",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET Patient by ID",
+        "url": "/admin/patient/:id",
+        "method": "get",
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 1740,
+        "wires": [
+            [
+                "fn-get-patient-clean"
+            ]
+        ]
+    },
+    {
+        "id": "fn-get-patient-clean",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build Patient Query",
+        "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid patient ID' };\n    return msg;\n}\nmsg.topic = 'SELECT * FROM patients WHERE id_patient = ?';\nmsg.payload = [id];\nmsg.cleanFields = true;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 1740,
+        "wires": [
+            [
+                "db-patient-select-clean"
+            ]
+        ]
+    },
+    {
+        "id": "db-patient-select-clean",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Query Patient",
+        "x": 550,
+        "y": 1740,
+        "wires": [
+            [
+                "fn-patient-clean-fields"
+            ]
+        ]
+    },
+    {
+        "id": "fn-patient-clean-fields",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Clean Patient Fields",
+        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Paciente no encontrado\" };\n    return msg;\n}\nlet patient = msg.payload[0];\nfor (let key in patient) {\n    if (patient[key] === null || patient[key] === undefined) {\n        patient[key] = \"\";\n    }\n}\nmsg.payload = patient;\nreturn msg;",
+        "outputs": 1,
+        "x": 750,
+        "y": 1740,
+        "wires": [
+            [
+                "http-response-patient"
+            ]
+        ]
+    },
+    {
+        "id": "http-response-patient",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 950,
+        "y": 1740,
+        "wires": []
+    },
+    {
+        "id": "put-patient-clean",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "PUT Patient by ID",
+        "url": "/admin/patient/:id",
+        "method": "put",
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 1820,
+        "wires": [
+            [
+                "fn-put-patient-clean"
+            ]
+        ]
+    },
+    {
+        "id": "fn-put-patient-clean",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build Patient Update",
+        "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid patient ID' };\n    return msg;\n}\nconst body = msg.payload;\nconst name = body.name || \"\";\nconst email = body.email || \"\";\nconst dni = body.dni || \"\";\nconst id_doctor = body.id_doctor || null;\nmsg.topic = 'UPDATE patients SET name = ?, email = ?, dni = ?, id_doctor = ? WHERE id_patient = ?';\nmsg.payload = [name, email, dni, id_doctor, id];\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 1820,
+        "wires": [
+            [
+                "db-patient-update-clean"
+            ]
+        ]
+    },
+    {
+        "id": "db-patient-update-clean",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Update Patient",
+        "x": 550,
+        "y": 1820,
+        "wires": [
+            [
+                "http-response-patient-put-clean"
+            ]
+        ]
+    },
+    {
+        "id": "http-response-patient-put-clean",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 750,
+        "y": 1820,
+        "wires": []
+    },
+    {
+        "id": "get-doctor-clean",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET Doctor by ID",
+        "url": "/admin/doctor/:id",
+        "method": "get",
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 1900,
+        "wires": [
+            [
+                "fn-get-doctor-clean"
+            ]
+        ]
+    },
+    {
+        "id": "fn-get-doctor-clean",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build Doctor Query",
+        "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid doctor ID' };\n    return msg;\n}\nmsg.topic = 'SELECT * FROM doctors WHERE id_doctor = ?';\nmsg.payload = [id];\nmsg.cleanFields = true;\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 1900,
+        "wires": [
+            [
+                "db-doctor-select-clean"
+            ]
+        ]
+    },
+    {
+        "id": "db-doctor-select-clean",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Query Doctor",
+        "x": 550,
+        "y": 1900,
+        "wires": [
+            [
+                "fn-doctor-clean-fields"
+            ]
+        ]
+    },
+    {
+        "id": "fn-doctor-clean-fields",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Clean Doctor Fields",
+        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Doctor no encontrado\" };\n    return msg;\n}\nlet doctor = msg.payload[0];\nfor (let key in doctor) {\n    if (doctor[key] === null || doctor[key] === undefined) {\n        doctor[key] = \"\";\n    }\n}\nmsg.payload = doctor;\nreturn msg;",
+        "outputs": 1,
+        "x": 750,
+        "y": 1900,
+        "wires": [
+            [
+                "http-response-doctor"
+            ]
+        ]
+    },
+    {
+        "id": "http-response-doctor",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 950,
+        "y": 1900,
+        "wires": []
+    },
+    {
+        "id": "put-doctor-clean",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "PUT Doctor by ID",
+        "url": "/admin/doctor/:id",
+        "method": "put",
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 1980,
+        "wires": [
+            [
+                "fn-put-doctor-clean"
+            ]
+        ]
+    },
+    {
+        "id": "fn-put-doctor-clean",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build Doctor Update",
+        "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid doctor ID' };\n    return msg;\n}\nconst body = msg.payload;\nconst name = body.name || \"\";\nconst email = body.email || \"\";\nconst id_clinic = body.id_clinic || null;\nmsg.topic = 'UPDATE doctors SET name = ?, email = ?, id_clinic = ? WHERE id_doctor = ?';\nmsg.payload = [name, email, id_clinic, id];\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 1980,
+        "wires": [
+            [
+                "db-doctor-update-clean"
+            ]
+        ]
+    },
+    {
+        "id": "db-doctor-update-clean",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Update Doctor",
+        "x": 550,
+        "y": 1980,
+        "wires": [
+            [
+                "http-response-doctor-put-clean"
+            ]
+        ]
+    },
+    {
+        "id": "http-response-doctor-put-clean",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 750,
+        "y": 1980,
         "wires": []
     }
 ]
