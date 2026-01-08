@@ -1297,5 +1297,148 @@
         "x": 750,
         "y": 1980,
         "wires": []
+    },
+    {
+        "id": "edit_appointment",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Editar cita",
+        "url": "/appointment/:id",
+        "method": "put",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 2620,
+        "wires": [
+            [
+                "update_appointment"
+            ]
+        ]
+    },
+    {
+        "id": "update_appointment",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set SQL para actualizar cita",
+        "func": "const id = msg.req.params.id;\nconst newDate = msg.req.body.date;\n\nmsg.topic = `UPDATE appointments SET date = ? WHERE id_appointment = ?`;\nmsg.payload = [newDate, id];\nreturn msg;",
+        "outputs": 1,
+        "x": 370,
+        "y": 2620,
+        "wires": [
+            [
+                "mysql_node_update"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_node_update",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL",
+        "x": 600,
+        "y": 2620,
+        "wires": [
+            [
+                "respond_update"
+            ]
+        ]
+    },
+    {
+        "id": "respond_update",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Responder PUT",
+        "statusCode": "",
+        "headers": {},
+        "x": 820,
+        "y": 2620,
+        "wires": []
+    },
+    {
+        "id": "http_delete_appointment",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "DELETE appointment",
+        "url": "/appointment/:id",
+        "method": "delete",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 2740,
+        "wires": [
+            [
+                "fn_check_appointment"
+            ]
+        ]
+    },
+    {
+        "id": "fn_check_appointment",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Check appointment exists",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = \"SELECT id_appointment FROM appointments WHERE id_appointment = ?\";\nmsg.payload = [id];\n\nmsg.appointmentId = id;\nreturn msg;",
+        "outputs": 1,
+        "x": 400,
+        "y": 2740,
+        "wires": [
+            [
+                "mysql_check_appointment"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_check_appointment",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL check",
+        "x": 640,
+        "y": 2740,
+        "wires": [
+            [
+                "fn_decide_delete"
+            ]
+        ]
+    },
+    {
+        "id": "fn_decide_delete",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "If exists → delete",
+        "func": "if (!msg.payload || msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Appointment not found\" };\n    return msg;\n}\n\nmsg.topic = \"DELETE FROM appointments WHERE id_appointment = ?\";\nmsg.payload = [msg.appointmentId];\nreturn msg;",
+        "outputs": 1,
+        "x": 880,
+        "y": 2740,
+        "wires": [
+            [
+                "mysql_delete_appointment"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_delete_appointment",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL delete",
+        "x": 1130,
+        "y": 2740,
+        "wires": [
+            [
+                "http_delete_response"
+            ]
+        ]
+    },
+    {
+        "id": "http_delete_response",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Delete OK",
+        "statusCode": "",
+        "headers": {},
+        "x": 1370,
+        "y": 2740,
+        "wires": []
     }
 ]

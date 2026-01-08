@@ -169,10 +169,9 @@
             <div class="case-card reveal-on-scroll"
                 style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <strong>Ana Lopez</strong><br>
+                    <strong></strong><br>
                     <span style="font-size:14px; color:#888;">ID: 001 • Last visit: Oct 2023</span>
                 </div>
-                <button class="btn-secondary" style="width:auto; margin:0; padding: 10px 20px;">View Fact Sheet</button>
             </div>
         </div>
 
@@ -377,7 +376,7 @@
                 currentType = "doctor";
                 isEditing = true; // ✅ importante
                 openModal("doctor", true);
-scrollToBottom(); 
+                scrollToBottom();
             } catch (err) {
                 console.error(err);
                 alert("Error fetching doctor data");
@@ -420,7 +419,7 @@ scrollToBottom();
                 currentType = "patient";
                 isEditing = true; // ✅ importante
                 openModal("patient", true);
-                scrollToBottom(); 
+                scrollToBottom();
 
             } catch (err) {
                 console.error(err);
@@ -926,53 +925,61 @@ scrollToBottom();
         }
 
         async function loadPatientAppointments() {
-            const patientId = localStorage.getItem("patient_id");
+    const patientId = localStorage.getItem("patient_id");
 
-            try {
-                const res = await fetch(`${API}/patient/appointments?id_patient=${patientId}`);
-                const citas = await res.json();
+    try {
+        const res = await fetch(`${API}/patient/appointments?id_patient=${patientId}`);
+        const citas = await res.json();
 
-                const list = document.getElementById("p-citas");
-                list.innerHTML = "";
+        const list = document.getElementById("p-citas");
+        list.innerHTML = "";
 
-                if (!citas.length) {
-                    list.innerHTML = `
+        if (!Array.isArray(citas) || citas.length === 0) {
+            list.innerHTML = `
                 <div class="case-card reveal-on-scroll">
                     <p style="color:#888;">No tienes citas.</p>
                 </div>`;
-                    return;
-                }
-
-                citas.forEach(c => {
-                    const fecha = new Date(c.date);
-                    const dia = fecha.getDate().toString().padStart(2, '0');
-                    const mes = fecha.toLocaleString('es-ES', { month: 'short' }).toUpperCase();
-                    const hora = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-                    list.innerHTML += `
-            <div class="case-card reveal-on-scroll urgency-medium">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h4 style="margin:0;">Cita con ${c.doctor_name}</h4>
-                        <p style="margin:5px 0 0 0; color:var(--text-secondary);">
-                            Status: ${c.status}
-                        </p>
-                    </div>
-                    <div style="text-align:right;">
-                        <span style="font-weight:bold; color:var(--sk-blue-dark);">${dia} ${mes}</span><br>
-                        <span style="font-size:14px;">${hora}</span>
-                    </div>
-                </div>
-            </div>`;
-                });
-
-                initScrollAnimations();
-
-            } catch (err) {
-                console.error(err);
-                alert("Error loading quotes");
-            }
+            return;
         }
+
+        citas.forEach(c => {
+            if (!c.date) return;
+
+            const fecha = new Date(c.date);
+            if (isNaN(fecha)) return;
+
+            const dia = fecha.getDate().toString().padStart(2, '0');
+            const mes = fecha.toLocaleString('es-ES', { month: 'short' }).toUpperCase();
+            const hora = fecha.toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            list.innerHTML += `
+                <div class="case-card reveal-on-scroll urgency-medium">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h4 style="margin:0;">Cita con ${c.doctor_name}</h4>
+                            <p style="margin:5px 0 0 0; color:var(--text-secondary);">
+                                Status: ${c.status}
+                            </p>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-weight:bold; color:var(--sk-blue-dark);">${dia} ${mes}</span><br>
+                            <span style="font-size:14px;">${hora}</span>
+                        </div>
+                    </div>
+                </div>`;
+        });
+
+        initScrollAnimations();
+
+    } catch (err) {
+        console.error(err);
+        alert("Error loading appointments");
+    }
+}
+
 
 
 
@@ -997,9 +1004,6 @@ scrollToBottom();
                             ID: ${p.dni} • ${p.email}
                         </span>
                     </div>
-                    <button class="btn-secondary" style="width:auto; margin:0;">
-                        View Fact Sheet
-                    </button>
                 </div>
             `;
                 });
@@ -1080,14 +1084,12 @@ scrollToBottom();
                     list.innerHTML = `
                 <div class="case-card reveal-on-scroll">
                     <p style="color:#888;">There are no scheduled appointments.</p>
-                </div>
-            `;
+                </div>`;
                     return;
                 }
 
                 citas.forEach(c => {
                     const fecha = new Date(c.date);
-
                     const dia = fecha.getDate().toString().padStart(2, '0');
                     const mes = fecha.toLocaleString('es-ES', { month: 'short' }).toUpperCase();
                     const hora = fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -1098,18 +1100,17 @@ scrollToBottom();
                     if (c.status === 'cancel') estadoColor = "#dc3545";
 
                     list.innerHTML += `
-                <div class="case-card reveal-on-scroll">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong>${c.patient_name}</strong><br>
-                            <span style="font-size:14px; color:#888;">Estado:
-                                <b style="color:${estadoColor};">${c.status}</b>
-                            </span>
-                        </div>
-                        <div style="text-align:right;">
-                            <span style="font-weight:bold; color:var(--sk-blue-dark);">${dia} ${mes}</span><br>
-                            <span style="font-size:14px;">${hora}</span>
-                        </div>
+                <div class="case-card reveal-on-scroll" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${c.patient_name}</strong><br>
+                        <span style="font-size:14px; color:#888;">Estado:
+                            <b style="color:${estadoColor};">${c.status}</b>
+                        </span><br>
+                        <span style="font-size:14px;">${dia} ${mes} • ${hora}</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-secondary" onclick="editAppointment(${c.id_appointment}, '${c.date}', ${c.id_patient})">Edit</button>
+                        <button class="btn-secondary" style="color:red;" onclick="deleteAppointment(${c.id_appointment}, ${c.id_patient})">Delete</button>
                     </div>
                 </div>
             `;
@@ -1122,6 +1123,65 @@ scrollToBottom();
                 alert("Error loading appointments.");
             }
         }
+        async function editAppointment(id_appointment, currentDate, patientId) {
+    // Pedimos la nueva fecha y hora
+    const newDate = prompt("Select new date and time (YYYY-MM-DDTHH:MM):", currentDate.slice(0, 16));
+    if (!newDate) return;
+
+    try {
+        // Llamada al endpoint Node-RED que actualiza la cita
+        const res = await fetch(`${API}/appointment/${id_appointment}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date: newDate })
+        });
+
+        if (res.ok) {
+            alert("Appointment updated successfully!");
+            // Recargar listas
+            await loadDoctorAppointments();
+            await loadPatientAppointments();
+        } else {
+            const data = await res.json();
+            alert("Error updating appointment: " + JSON.stringify(data));
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Connection error while updating appointment");
+    }
+}
+
+
+
+
+async function deleteAppointment(id_appointment, patientId) {
+    if (!confirm("Are you sure you want to delete this appointment and its diagnosis?")) return;
+
+    try {
+        const res = await fetch(`${API}/appointment/${id_appointment}`, {
+            method: "DELETE"
+        });
+
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(JSON.stringify(data));
+        }
+
+        // RECARGAR TODO
+        await loadDoctorAppointments();
+        await loadPatientAppointments();
+        await loadPatientHistory();
+
+        alert("Appointment deleted successfully!");
+
+    } catch (err) {
+        console.error(err);
+        alert("Error deleting appointment");
+    }
+}
+
+
+
     </script>
     <!-- MODAL NEW DOCTOR / PATIENT -->
     <div id="modal" class="modal hidden">
