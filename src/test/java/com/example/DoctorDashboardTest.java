@@ -10,7 +10,9 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Tag;
 
+@Tag("ui")
 class DoctorDashboardTest {
 
     private WebDriver driver;

@@ -9,7 +9,9 @@ import org.openqa.selenium.support.ui.*;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Tag;
 
+@Tag("ui")
 class DoctorScheduleTest {
 
     private WebDriver driver;
