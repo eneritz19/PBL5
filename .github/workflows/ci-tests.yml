@@ -26,7 +26,7 @@ jobs:
       - name: Start application
         run: |
           java -jar target/tu-app.jar &
-          sleep 10
+          sleep 20
 
       - name: Run tests
         run: mvn -B test
