@@ -1,12 +1,9 @@
 package com.example;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.junit.jupiter.api.*;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -22,9 +19,16 @@ class LogoutTest {
 
     @BeforeEach
     void setup() {
-        driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+
+        driver = new ChromeDriver(options);
+        driver.manage().window().maximize(); // opcional
+        wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         driver.get(URL);
+
         // Esperar a que pase el splash screen
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
     }
@@ -38,26 +42,26 @@ class LogoutTest {
 
     @Test
     void testLogoutAsPatient() {
-        // 1. Primero necesitamos estar logueados (asegúrate de que Node-RED esté ON para este paso)
+        // 1. Loguearse
         driver.findElement(By.id("email")).sendKeys("ana@example.com");
         driver.findElement(By.id("password")).sendKeys("ana123");
         driver.findElement(By.xpath("//button[text()='Login']")).click();
 
-        // 2. Esperar a que el Dashboard sea visible
-        WebElement dashboard = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("patientDashboard")));
+        // 2. Esperar dashboard paciente
+        WebElement dashboard = wait.until(
+                ExpectedConditions.visibilityOfElementLocated(By.id("patientDashboard")));
         assertTrue(dashboard.isDisplayed(), "Deberíamos estar en el Dashboard");
 
-        // 3. Buscar y pulsar el botón de Logout (en tu HTML dice "Logout" para pacientes)
+        // 3. Pulsar Logout
         WebElement logoutBtn = driver.findElement(By.xpath("//button[text()='Logout']"));
         logoutBtn.click();
 
-        // 4. VERIFICACIÓN: Al recargar, el loginPage debe volver a ser visible y el dashboard no
-        // Esperamos a que el ID 'loginPage' sea visible de nuevo
+        // 4. Verificar regreso a login
         WebElement loginPage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("loginPage")));
-        
         assertTrue(loginPage.isDisplayed(), "Tras el logout, la página de login debe ser visible");
         
-        // Opcionalmente verificar que los inputs están vacíos tras la recarga
+        // Inputs vacíos
         assertEquals("", driver.findElement(By.id("email")).getAttribute("value"));
+        assertEquals("", driver.findElement(By.id("password")).getAttribute("value"));
     }
 }

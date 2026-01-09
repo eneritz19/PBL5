@@ -3,6 +3,7 @@ package com.example;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
@@ -18,9 +19,15 @@ class Base64ConversionTest {
 
     @BeforeEach
     void setup() {
-        driver = new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+
+        driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         js = (JavascriptExecutor) driver;
+
         driver.get(URL);
 
         // Esperar a que el JS este cargado (despues del splash)
@@ -31,8 +38,9 @@ class Base64ConversionTest {
 
     @AfterEach
     void tearDown() {
-        if (driver != null)
+        if (driver != null) {
             driver.quit();
+        }
     }
 
     // TEST: Conversion Base64

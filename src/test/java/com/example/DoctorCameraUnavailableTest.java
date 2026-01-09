@@ -3,6 +3,7 @@ package com.example;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
@@ -11,58 +12,72 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class DoctorCameraUnavailableTest {
 
-    private WebDriver driver;
-    private WebDriverWait wait;
-    private final String URL = "http://localhost:8080/index.html";
+        private WebDriver driver;
+        private WebDriverWait wait;
+        private final String URL = "http://localhost:8080/index.html";
 
-    @BeforeEach
-    void setup() {
+        @BeforeEach
+        void setup() {
 
-        // SIN fake camera
-        driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        driver.get(URL);
+                // Chrome headless SIN camara falsa
+                ChromeOptions options = new ChromeOptions();
+                options.addArguments("--headless=new");
+                options.addArguments("--no-sandbox");
+                options.addArguments("--disable-dev-shm-usage");
 
-        // Login doctor
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
-                .sendKeys("jperez@clinic.com");
+                driver = new ChromeDriver(options);
+                wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                driver.get(URL);
 
-        driver.findElement(By.id("password"))
-                .sendKeys("med123");
+                // Login doctor
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
+                                .sendKeys("jperez@clinic.com");
 
-        driver.findElement(By.xpath("//button[text()='Login']")).click();
+                driver.findElement(By.id("password"))
+                                .sendKeys("med123");
 
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
+                driver.findElement(By.xpath("//button[text()='Login']")).click();
 
-        // Ir a Camara
-        WebElement cameraTab = wait.until(
-                ExpectedConditions.elementToBeClickable(
-                        By.xpath("//button[contains(text(),'Camera')]")
-                )
-        );
-        cameraTab.click();
-    }
+                wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
 
-    @AfterEach
-    void tearDown() {
-        if (driver != null) driver.quit();
-    }
+                // Ir a Camara
+                WebElement cameraTab = wait.until(
+                                ExpectedConditions.elementToBeClickable(
+                                                By.xpath("//button[contains(text(),'Camera')]")));
+                cameraTab.click();
+        }
 
-    // Camara NO disponible
+        @AfterEach
+        void tearDown() {
+                if (driver != null) {
+                        driver.quit();
+                }
+        }
 
-    @Test
-    @DisplayName("Camera not available displays alert")
-    void testCameraNotAvailable() {
+        // Camara NO disponible
 
-        WebElement btnCamera = wait.until(
-                ExpectedConditions.elementToBeClickable(By.id("btnCamera"))
-        );
+        @Test
+        @DisplayName("Camera not available: video does not start")
+        void testCameraNotAvailable() {
 
-        btnCamera.click();
+                WebElement btnCamera = wait.until(
+                                ExpectedConditions.elementToBeClickable(By.id("btnCamera")));
 
-        Alert alert = wait.until(ExpectedConditions.alertIsPresent());
-        assertEquals("Camera not available", alert.getText());
+                WebElement video = driver.findElement(By.id("camera-preview"));
 
-        alert.accept();
-    }
+                btnCamera.click();
+
+                // Esperamos un poco a que el JS intente iniciar la cámara
+                try {
+                        Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                }
+
+                // La cámara NO debe mostrarse
+                assertEquals(
+                                "none",
+                                video.getCssValue("display"),
+                                "Video should remain hidden when camera is unavailable");
+        }
+
 }

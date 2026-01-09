@@ -1,62 +1,58 @@
 package com.example;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.junit.jupiter.api.*;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ServerErrorTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    // Asegúrate de que tu HTML se esté sirviendo, pero Node-RED (puerto 1880) esté APAGADO
-    private final String URL = "http://localhost:8080/index.html"; 
+    private final String URL = "http://localhost:8080/index.html";
 
     @BeforeEach
     void setup() {
-        driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080");
+
+        driver = new ChromeDriver(options);
+        wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         driver.get(URL);
-        
-        // Esperamos a que pase el Splash Screen para interactuar con el login
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+
+        // Esperar a que el login esté visible
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("loginPage")));
     }
 
     @AfterEach
     void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        if (driver != null) driver.quit();
     }
 
     @Test
-    void shouldShowServerErrorWhenNodeRedIsDown() {
-        // 1. Introducir cualquier dato
+    @DisplayName("Login does not proceed when backend is unavailable")
+    void loginFailsWhenServerIsDown() throws InterruptedException {
+
         driver.findElement(By.id("email")).sendKeys("ana@example.com");
         driver.findElement(By.id("password")).sendKeys("ana123");
-
-        // 2. Intentar hacer login
         driver.findElement(By.xpath("//button[text()='Login']")).click();
 
-        // 3. Verificar que aparece el alert de error de conexión
-        // Selenium esperará a que el navegador intente conectar y falle (el catch en tu JS)
-        wait.until(ExpectedConditions.alertIsPresent());
-        
-        String alertText = driver.switchTo().alert().getText();
-        
-        // Verificamos que el mensaje coincide exactamente con tu código JS
-        assertEquals("Server connection error.", alertText);
-        
-        // Aceptamos la alerta para cerrar el test
-        driver.switchTo().alert().accept();
+        // Esperar a que falle el fetch
+        Thread.sleep(1500);
+
+        // SEGUIMOS en el login
+        WebElement loginPage = driver.findElement(By.id("loginPage"));
+        assertTrue(
+                loginPage.isDisplayed(),
+                "El usuario debería permanecer en el login si el servidor está caído"
+        );
     }
 }

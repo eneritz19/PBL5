@@ -19,8 +19,11 @@ class DoctorCameraTest {
     @BeforeEach
     void setup() {
 
-        // Chrome con camara falsa y permisos automaticos
+        // Chrome headless + camara falsa + permisos automaticos
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--use-fake-device-for-media-stream");
         options.addArguments("--use-fake-ui-for-media-stream");
 
@@ -51,7 +54,9 @@ class DoctorCameraTest {
 
     @AfterEach
     void tearDown() {
-        if (driver != null) driver.quit();
+        if (driver != null) {
+            driver.quit();
+        }
     }
 
     // TEST 1: Start + Detener camara
@@ -73,7 +78,7 @@ class DoctorCameraTest {
         wait.until(ExpectedConditions.textToBePresentInElement(btnCamera, "Detener"));
 
         // Video visible
-        wait.until(driver -> video.isDisplayed());
+        wait.until(d -> video.isDisplayed());
 
         // Detener camara
         btnCamera.click();

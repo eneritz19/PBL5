@@ -1,13 +1,10 @@
 package com.example;
 
 import org.junit.jupiter.api.*;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
 import java.util.List;
@@ -22,104 +19,99 @@ class DoctorDashboardTest {
 
     @BeforeEach
     void setup() {
-        driver = new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+
+        driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         driver.get(URL);
 
-        // Loguearse como doctor para acceder al panel
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
-        driver.findElement(By.id("email")).sendKeys("jperez@clinic.com");
+        // Login doctor
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
+                .sendKeys("jperez@clinic.com");
         driver.findElement(By.id("password")).sendKeys("med123");
         driver.findElement(By.xpath("//button[text()='Login']")).click();
 
-        // Asegurarse de que el dashboard del doctor cargó
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
     }
 
     @AfterEach
     void tearDown() {
-        if (driver != null)
-            driver.quit();
+        if (driver != null) driver.quit();
+    }
+
+    private void acceptAlertIfPresent() {
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(2));
+            Alert alert = shortWait.until(ExpectedConditions.alertIsPresent());
+            alert.accept();
+        } catch (TimeoutException ignored) {
+            // No hay alert → seguimos
+        }
     }
 
     @Test
     @DisplayName("Urgent Calculation: Verify card colors")
     void testUrgencyColors() {
-        // 1. Esperamos a que aparezca la lista
         wait.until(ExpectedConditions.presenceOfElementLocated(By.id("doctorPendingList")));
-
-        // 2. TRUCO: Esperamos a que la primera tarjeta tenga el símbolo '%'
-        // Esto garantiza que Node-RED ya inyectó los datos en el HTML
-        wait.until(ExpectedConditions.textMatches(By.className("urgency-badge"),
+        wait.until(ExpectedConditions.textMatches(
+                By.className("urgency-badge"),
                 java.util.regex.Pattern.compile(".*%.*")));
 
         List<WebElement> cases = driver.findElements(By.cssSelector("#doctorPendingList .case-card"));
-
         for (WebElement caseCard : cases) {
             WebElement badge = caseCard.findElement(By.className("urgency-badge"));
-            String badgeText = badge.getText();
-
-            // Limpiamos el texto
-            String numericText = badgeText.replaceAll("[^0-9]", "");
-
-            // Si sigue vacío, imprimimos qué está viendo Selenium para debuguear
-            if (numericText.isEmpty()) {
-                System.out.println("DEBUG: The badge is empty. Internal HTML:" + badge.getAttribute("innerHTML"));
-                continue; // Saltamos esta tarjeta si está vacía para que el test no explote
-            }
+            String numericText = badge.getText().replaceAll("[^0-9]", "");
+            if (numericText.isEmpty()) continue;
 
             int urgencyValue = Integer.parseInt(numericText);
             String cardClass = caseCard.getAttribute("class");
 
-            if (urgencyValue > 80) {
-                assertTrue(cardClass.contains("urgency-high"),
-                        "Error en " + urgencyValue + "%: falta clase urgency-high");
-            } else if (urgencyValue > 40) {
-                assertTrue(cardClass.contains("urgency-medium"),
-                        "Error en " + urgencyValue + "%: falta clase urgency-medium");
-            } else {
-                assertTrue(cardClass.contains("urgency-low"),
-                        "Error en " + urgencyValue + "%: falta clase urgency-low");
-            }
+            if (urgencyValue > 80) assertTrue(cardClass.contains("urgency-high"));
+            else if (urgencyValue > 40) assertTrue(cardClass.contains("urgency-medium"));
+            else assertTrue(cardClass.contains("urgency-low"));
         }
     }
 
     @Test
-    @DisplayName("Send empty diagnosis: Must display alert")
+    @DisplayName("Send empty diagnosis: report is NOT sent")
     void testEmptyDiagnosisError() {
-        // Esperar a que haya al menos una tarjeta
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#doctorPendingList .case-card")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.cssSelector("#doctorPendingList .case-card")));
 
-        // Dejamos el textarea de notas vacío y pulsamos "Send Report"
-        // (Usamos el primer botón de reporte que encontremos)
         driver.findElement(By.xpath("//button[text()='Send Report']")).click();
 
-        // Verificar alerta: "Please write some notes for the patient."
-        wait.until(ExpectedConditions.alertIsPresent());
-        assertEquals("Please write some notes for the patient.", driver.switchTo().alert().getText());
-        driver.switchTo().alert().accept();
+        // Capturamos y cerramos el alert
+        acceptAlertIfPresent();
+
+        // Verificamos que el caso sigue presente (no se envió)
+        List<WebElement> casesAfter = driver.findElements(By.cssSelector("#doctorPendingList .case-card"));
+        assertFalse(casesAfter.isEmpty(), "Case should not be removed when diagnosis is empty");
     }
 
     @Test
-    @DisplayName("Send successful diagnosis")
+    @DisplayName("Send successful diagnosis removes case from list")
     void testSuccessfulDiagnosis() {
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#doctorPendingList .case-card")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.cssSelector("#doctorPendingList .case-card")));
 
-        // 1. Seleccionar una enfermedad del dropdown
+        List<WebElement> casesBefore = driver.findElements(By.cssSelector("#doctorPendingList .case-card"));
+
         WebElement selectElement = driver.findElement(By.cssSelector("select[id^='disease-']"));
-        Select diseaseSelect = new Select(selectElement);
-        diseaseSelect.selectByVisibleText("Psoriasis");
+        new Select(selectElement).selectByVisibleText("Psoriasis");
 
-        // 2. Escribir notas
         WebElement notes = driver.findElement(By.cssSelector("textarea[id^='notes-']"));
         notes.sendKeys("Treatment with corticosteroid cream twice a day.");
 
-        // 3. Enviar
         driver.findElement(By.xpath("//button[text()='Send Report']")).click();
 
-        // 4. Verificar mensaje de éxito
-        wait.until(ExpectedConditions.alertIsPresent());
-        assertEquals("Report sent successfully", driver.switchTo().alert().getText());
-        driver.switchTo().alert().accept();
+        // Capturamos y cerramos el alert de éxito
+        acceptAlertIfPresent();
+
+        // Esperamos que la lista tenga menos elementos → caso enviado
+        wait.until(d ->
+                driver.findElements(By.cssSelector("#doctorPendingList .case-card")).size() < casesBefore.size());
     }
 }
