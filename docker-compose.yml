@@ -35,10 +35,10 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:1880"]
-    interval: 10s
-    timeout: 5s
-    retries: 10
+      test: ["CMD", "curl", "-f", "http://localhost:1880"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   web:
     image: nginx:latest
