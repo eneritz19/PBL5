@@ -51,7 +51,7 @@ services:
     networks:
       - skinxpert_network
     depends_on:
-      node-rednode-red:
+      node-red:
         condition: service_healthy
 
 
