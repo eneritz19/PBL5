@@ -11,7 +11,7 @@ import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Tag;
 
-@Tag("ui")
+//@Tag("ui")
 class DoctorCameraUnavailableTest {
 
         private WebDriver driver;

@@ -20,5 +20,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run unit tests (exclude UI)
-        run: mvn test -Dgroups=!ui
+      - name: Start backend with Docker
+        run: docker compose up -d
+
+      - name: Wait for backend
+        run: sleep 20
+
+      - name: Run tests
+        run: mvn test
