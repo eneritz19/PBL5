@@ -47,6 +47,21 @@ services:
     depends_on:
       - node-red
 
+  skinxpert_ai:
+    build: ./IA  
+    container_name: skinxpert_ai
+    restart: unless-stopped
+    networks:
+      - skinxpert_network
+
+  operating:
+    build: ./Operating
+    container_name: skinxpert_operating
+    ports:
+      - "8082:8082"
+    networks:
+      - skinxpert_network
+
 
   sonar-db:
     image: postgres:13

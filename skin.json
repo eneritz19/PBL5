@@ -57,7 +57,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 1",
-        "func": "msg.topic = `\nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n`;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n` ;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -119,10 +119,10 @@
         "id": "d8e4286ca87f6aa0",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "function 2",
-        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    p.id_patient,\n    i.file_path\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE p.id_doctor = ?\nAND pr.status != 'diagnosticada'\nORDER BY pr.urgency DESC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;",
+        "name": "Preparar Pendientes (Urgencia + %)",
+        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,           -- Aquí llega 1, 2 o 3\n    p.name,\n    p.id_patient,\n    i.file_path,\n    sd.disease AS ia_suggestion,\n    d.confidence AS ia_confidence\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nLEFT JOIN diagnoses d ON pr.id_request = d.id_request\nLEFT JOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nWHERE p.id_doctor = ?\nAND pr.status != 'diagnosticada'\n-- ORDEN CRUCIAL:\n-- 1º Nivel de Urgencia (3, 2, 1)\n-- 2º Porcentaje de riesgo (Confidence) si empatan en nivel\nORDER BY pr.urgency DESC, d.confidence DESC;\n` ;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;",
         "outputs": 1,
-        "timeout": 0,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
@@ -183,7 +183,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 5",
-        "func": "msg.topic = `\nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n` ;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -266,7 +266,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 6",
-        "func": "msg.topic = `\nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nORDER BY d.diagnosis_date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nORDER BY d.diagnosis_date DESC\n` ;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -329,7 +329,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 7",
-        "func": "msg.topic = `\nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n` ;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -560,109 +560,6 @@
         "wires": []
     },
     {
-        "id": "d3522be994903e31",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "url": "/patient/upload_photo",
-        "method": "post",
-        "upload": false,
-        "skipBodyParsing": false,
-        "swaggerDoc": "",
-        "x": 180,
-        "y": 2100,
-        "wires": [
-            [
-                "d9c93aa684aa0527"
-            ]
-        ]
-    },
-    {
-        "id": "d9c93aa684aa0527",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Decodificar y Guardar Foto",
-        "func": "// 1. Obtener datos del payload enviado por el HTML\nconst id_patient = msg.payload.id_patient;\nconst urgency = msg.payload.urgency || 50;\nlet base64Image = msg.payload.image_base64;\nconst originalFileName = msg.payload.file_name;\n\n// 2. Definir rutas\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst extension = originalFileName.split('.').pop();\nconst uniqueFileName = `paciente_${id_patient}_${Date.now()}.${extension}`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\n// 3. Limpiar Base64\nif (base64Image.startsWith('data:')) {\n    base64Image = base64Image.split(',')[1];\n}\n\n// 4. Guardar imagen\nconst imageBuffer = Buffer.from(base64Image, 'base64');\n\ntry {\n    fs.writeFileSync(fullPath, imageBuffer);\n    node.warn(`Imagen guardada en: ${fullPath}`);\n} catch (e) {\n    msg.statusCode = 500;\n    msg.payload = { success: false, error: \"Error al guardar la imagen\" };\n    return msg;\n}\n\n// 5. Preparar INSERT photo_requests\nmsg.topic = \"INSERT INTO photo_requests (id_patient, urgency, status) VALUES (?, ?, 'pendiente')\";\nmsg.payload = [id_patient, urgency];\n\n// Guardamos la ruta para la siguiente función\nflow.set('temp_image_path', webPath);\n\nreturn msg;\n",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [
-            {
-                "var": "fs",
-                "module": "fs"
-            }
-        ],
-        "x": 520,
-        "y": 2100,
-        "wires": [
-            [
-                "d5c2613c2551825f"
-            ]
-        ]
-    },
-    {
-        "id": "0516b36f2bbd3d1e",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "statusCode": "",
-        "headers": {},
-        "x": 1390,
-        "y": 2220,
-        "wires": []
-    },
-    {
-        "id": "d5c2613c2551825f",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "photo_requests",
-        "x": 840,
-        "y": 2100,
-        "wires": [
-            [
-                "352eb9406bb189ea"
-            ]
-        ]
-    },
-    {
-        "id": "352eb9406bb189ea",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Preparar Inserción Imagen",
-        "func": "const id_request = msg.payload.insertId;\nconst file_path = flow.get('temp_image_path');\n\nif (!id_request || !file_path) {\n    msg.statusCode = 500;\n    msg.payload = { success: false, error: \"Error interno\" };\n    return [null, msg];\n}\n\n// Mensaje para DB\nconst msgImage = {\n    ...msg,\n    topic: \"INSERT INTO images (id_request, file_path) VALUES (?, ?)\",\n    payload: [id_request, file_path]\n};\n\n// Mensaje FINAL para frontend\nconst msgResponse = {\n    ...msg,\n    statusCode: 201,\n    payload: {\n        success: true,\n        message: \"Photo uploaded successfully\",\n        file_path\n    }\n};\n\nreturn [msgImage, msgResponse];\n",
-        "outputs": 2,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1100,
-        "y": 2100,
-        "wires": [
-            [
-                "16d2d68bcbb42eea"
-            ],
-            [
-                "0516b36f2bbd3d1e"
-            ]
-        ]
-    },
-    {
-        "id": "16d2d68bcbb42eea",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "DB: Insert images",
-        "x": 1390,
-        "y": 2100,
-        "wires": [
-            []
-        ]
-    },
-    {
         "id": "2201348d70eabd60",
         "type": "mysql",
         "z": "f6f2187d.f17ca8",
@@ -696,8 +593,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Query Doctors",
-        "func": "msg.topic = `\nSELECT d.id_doctor, d.doctor_code, d.name, d.email, c.name AS clinic\nFROM doctors d\nLEFT JOIN clinics c ON d.id_clinic = c.id_clinic\n`;\nreturn msg;",
+        "func": "msg.topic = `\nSELECT d.id_doctor, d.doctor_code, d.name, d.email, c.name AS clinic\nFROM doctors d\nLEFT JOIN clinics c ON d.id_clinic = c.id_clinic\n` ;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 390,
         "y": 1160,
         "wires": [
@@ -728,8 +630,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Query Patients",
-        "func": "msg.topic = `\nSELECT p.id_patient, p.dni, p.name, p.email, d.name AS doctor\nFROM patients p\nLEFT JOIN doctors d ON p.id_doctor = d.id_doctor\n`;\nreturn msg;",
+        "func": "msg.topic = `\nSELECT p.id_patient, p.dni, p.name, p.email, d.name AS doctor\nFROM patients p\nLEFT JOIN doctors d ON p.id_doctor = d.id_doctor\n` ;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 390,
         "y": 1240,
         "wires": [
@@ -794,8 +701,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Preparar Query Login UNION",
-        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email y password requeridos' };\n    return msg;\n}\n\nmsg.topic = `\nSELECT 'Admin' AS role, id_admin AS id, name, email\nFROM admin\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Patient', id_patient AS id, name, email\nFROM patients\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Doctor', id_doctor AS id, name, email\nFROM doctors\nWHERE email=? AND password=SHA2(?,256)\nLIMIT 1\n`;\n\nmsg.payload = [email, password, email, password, email, password];\nreturn msg;",
+        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email y password requeridos' };\n    return msg;\n}\n\nmsg.topic = `\nSELECT 'Admin' AS role, id_admin AS id, name, email\nFROM admin\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Patient', id_patient AS id, name, email\nFROM patients\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Doctor', id_doctor AS id, name, email\nFROM doctors\nWHERE email=? AND password=SHA2(?,256)\nLIMIT 1\n` ;\n\nmsg.payload = [email, password, email, password, email, password];\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 380,
         "y": 240,
         "wires": [
@@ -866,11 +778,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Delete patient SQL",
-        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM patients\nWHERE id_patient = ?\n`;\n\nmsg.payload = [id];\nreturn msg;",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM patients\nWHERE id_patient = ?\n` ;\n\nmsg.payload = [id];\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
+        "libs": [],
         "x": 360,
         "y": 1380,
         "wires": [
@@ -901,11 +815,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Delete doctor SQL",
-        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM doctors\nWHERE id_doctor = ?\n`;\n\nmsg.payload = [id];\nreturn msg;",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM doctors\nWHERE id_doctor = ?\n` ;\n\nmsg.payload = [id];\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
+        "libs": [],
         "x": 360,
         "y": 1480,
         "wires": [
@@ -935,7 +851,11 @@
         "name": "HTTP Response",
         "func": "if (msg.payload.affectedRows === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Not found\" };\n    return msg;\n}\n\nmsg.statusCode = 200;\nmsg.payload = { success: true };\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
         "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 800,
         "y": 1430,
         "wires": [
@@ -977,8 +897,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Prepare Doctor Insert",
-        "func": "const { doctor_code, name, email, password, id_clinic } = msg.payload;\n\nif (!doctor_code || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required doctor fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO doctors (\n  doctor_code,\n  name,\n  email,\n  password,\n  id_clinic\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n`;\n\nmsg.payload = [\n    doctor_code,\n    name,\n    email,\n    password,\n    id_clinic || null\n];\n\nreturn msg;",
+        "func": "const { doctor_code, name, email, password, id_clinic } = msg.payload;\n\nif (!doctor_code || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required doctor fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO doctors (\n  doctor_code,\n  name,\n  email,\n  password,\n  id_clinic\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n` ;\n\nmsg.payload = [\n    doctor_code,\n    name,\n    email,\n    password,\n    id_clinic || null\n];\n\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 430,
         "y": 1600,
         "wires": [
@@ -1009,8 +934,13 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Prepare Patient Insert",
-        "func": "const { dni, name, email, password, id_doctor } = msg.payload;\n\nif (!dni || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required patient fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO patients (\n  dni,\n  name,\n  email,\n  password,\n  id_doctor\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n`;\n\nmsg.payload = [\n    dni,\n    name,\n    email,\n    password,\n    id_doctor || null\n];\n\nreturn msg;",
+        "func": "const { dni, name, email, password, id_doctor } = msg.payload;\n\nif (!dni || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required patient fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO patients (\n  dni,\n  name,\n  email,\n  password,\n  id_doctor\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n` ;\n\nmsg.payload = [\n    dni,\n    name,\n    email,\n    password,\n    id_doctor || null\n];\n\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 430,
         "y": 1680,
         "wires": [
@@ -1067,6 +997,11 @@
         "name": "Build Patient Query",
         "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid patient ID' };\n    return msg;\n}\nmsg.topic = 'SELECT * FROM patients WHERE id_patient = ?';\nmsg.payload = [id];\nmsg.cleanFields = true;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 350,
         "y": 1740,
         "wires": [
@@ -1096,6 +1031,11 @@
         "name": "Clean Patient Fields",
         "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Paciente no encontrado\" };\n    return msg;\n}\nlet patient = msg.payload[0];\nfor (let key in patient) {\n    if (patient[key] === null || patient[key] === undefined) {\n        patient[key] = \"\";\n    }\n}\nmsg.payload = patient;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 750,
         "y": 1740,
         "wires": [
@@ -1138,6 +1078,11 @@
         "name": "Build Patient Update",
         "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid patient ID' };\n    return msg;\n}\nconst body = msg.payload;\nconst name = body.name || \"\";\nconst email = body.email || \"\";\nconst dni = body.dni || \"\";\nconst id_doctor = body.id_doctor || null;\nmsg.topic = 'UPDATE patients SET name = ?, email = ?, dni = ?, id_doctor = ? WHERE id_patient = ?';\nmsg.payload = [name, email, dni, id_doctor, id];\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 350,
         "y": 1820,
         "wires": [
@@ -1194,6 +1139,11 @@
         "name": "Build Doctor Query",
         "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid doctor ID' };\n    return msg;\n}\nmsg.topic = 'SELECT * FROM doctors WHERE id_doctor = ?';\nmsg.payload = [id];\nmsg.cleanFields = true;\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 350,
         "y": 1900,
         "wires": [
@@ -1265,6 +1215,11 @@
         "name": "Build Doctor Update",
         "func": "const id = parseInt(msg.req.params.id);\nif (isNaN(id)) {\n    msg.statusCode = 400;\n    msg.payload = { error: 'Invalid doctor ID' };\n    return msg;\n}\nconst body = msg.payload;\nconst name = body.name || \"\";\nconst email = body.email || \"\";\nconst id_clinic = body.id_clinic || null;\nmsg.topic = 'UPDATE doctors SET name = ?, email = ?, id_clinic = ? WHERE id_doctor = ?';\nmsg.payload = [name, email, id_clinic, id];\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 350,
         "y": 1980,
         "wires": [
@@ -1322,6 +1277,11 @@
         "name": "Set SQL para actualizar cita",
         "func": "const id = msg.req.params.id;\nconst newDate = msg.req.body.date;\n\nmsg.topic = `UPDATE appointments SET date = ? WHERE id_appointment = ?`;\nmsg.payload = [newDate, id];\nreturn msg;",
         "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
         "x": 370,
         "y": 2620,
         "wires": [
@@ -1439,6 +1399,164 @@
         "headers": {},
         "x": 1370,
         "y": 2740,
+        "wires": []
+    },
+    {
+        "id": "126a0cd737267399",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Recibir Foto",
+        "url": "/upload-case",
+        "method": "post",
+        "upload": true,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 2140,
+        "wires": [
+            [
+                "9a584b9d8cca6530"
+            ]
+        ]
+    },
+    {
+        "id": "9a584b9d8cca6530",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Preparar Form Data",
+        "func": "// El archivo llega con el nombre 'foto' (porque así lo pusiste en formData.append(\"foto\", file))\nconst file = msg.req.files[0]; \nconst patientId = msg.req.body.id_patient;\n\n// Guardamos estos datos en el flujo para usarlos después de que la IA responda\nmsg.id_patient = patientId;\nmsg.filename = `piel_${patientId}_${Date.now()}.jpg`;\n\n// Configuramos la petición para el contenedor skinxpert_ai\nmsg.headers = {\n    \"Content-Type\": \"multipart/form-data\"\n};\n\nmsg.payload = {\n    \"file\": {\n        \"value\": file.buffer,\n        \"options\": {\n            \"filename\": file.originalname,\n            \"contentType\": file.mimetype\n        }\n    }\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 2140,
+        "wires": [
+            [
+                "e6b26f271ebc7303"
+            ]
+        ]
+    },
+    {
+        "id": "e6b26f271ebc7303",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "IA PREDICT",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://skinxpert_ai:5000/predecir",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 590,
+        "y": 2140,
+        "wires": [
+            [
+                "c117a32f741028a1"
+            ]
+        ]
+    },
+    {
+        "id": "c117a32f741028a1",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Guardar Foto + IA + SQL",
+        "func": "// 1. DEFINIR RUTAS Y EXTRAER ARCHIVO\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst file = msg.req.files[0]; \nconst id_patient = msg.req.body.id_patient || 1;\n\nif (!file) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"No se recibió ninguna imagen\" };\n    return msg;\n}\n\n// 2. GENERAR NOMBRE Y GUARDAR FÍSICAMENTE EN DISCO\nconst uniqueFileName = `piel_${id_patient}_${Date.now()}.jpg`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\ntry {\n    // Usamos el módulo 'fs' cargado en la pestaña 'libs'\n    fs.writeFileSync(fullPath, file.buffer); \n    node.warn(`Imagen física guardada en: ${fullPath}`);\n} catch (e) {\n    node.error(\"Error escribiendo archivo: \" + e.message);\n    msg.statusCode = 500;\n    msg.payload = { error: \"Error al guardar el archivo en el servidor\" };\n    return msg;\n}\n\n// 3. LÓGICA DE IA Y SEVERIDAD\nvar iaResult = msg.payload || {};\nvar diseaseId = iaResult.id_skindiseases || 1;\nvar probabilidad = iaResult.confianza || 0.0;\n\nvar severityMap = {\n    2: 1.0, 12: 1.0,                   // Cánceres y Carcinomas (Crítico)\n    4: 0.7, 5: 0.6, 11: 0.7, 22: 0.7,  // Bullous, Cellulitis, Lupus, Vasculitis\n    1: 0.3, 3: 0.3, 6: 0.3, 10: 0.2,   // Acne, Dermatitis, Eczema\n    20: 0.3, 23: 0.2, 19: 0.3          // Urticaria, Warts, Tinea\n};\n\nvar gravedad = severityMap[diseaseId] || 0.5;\nvar score = (gravedad * gravedad) * probabilidad;\n\nvar urgenciaFinal = 1; \nif (score >= 0.25) {\n    urgenciaFinal = 3; // ALTO\n} else if (score >= 0.05) {\n    urgenciaFinal = 2; // MEDIO\n}\n\n// 4. PREPARAR CONSULTA SQL\nvar riskPercent = Math.round(probabilidad * 100);\nvar doctorId = Math.floor(Math.random() * 3) + 1;\n\nmsg.topic = `\n    INSERT INTO photo_requests (id_patient, urgency, status)\n    VALUES (${id_patient}, ${urgenciaFinal}, 'pendiente');\n\n    SET @last_id = LAST_INSERT_ID();\n\n    INSERT INTO images (id_request, file_path)\n    VALUES (@last_id, '${webPath}');\n\n` ;\n\n\n// 5. PREPARAR DATOS PARA JAVA\nmsg.javaData = {\n    \"imageCode\": uniqueFileName,\n    \"doctorId\": parseInt(doctorId),\n    \"urgency\": parseInt(urgenciaFinal)\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "fs",
+                "module": "fs"
+            }
+        ],
+        "x": 810,
+        "y": 2140,
+        "wires": [
+            [
+                "ecf174a124515981"
+            ]
+        ]
+    },
+    {
+        "id": "ecf174a124515981",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Guardar en BD",
+        "x": 1020,
+        "y": 2140,
+        "wires": [
+            [
+                "c606ac8aa9421b6c"
+            ]
+        ]
+    },
+    {
+        "id": "c606ac8aa9421b6c",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Recuperar datos Java",
+        "func": "// Recuperamos los datos que guardamos antes de entrar a la base de datos\nmsg.payload = msg.javaData;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1260,
+        "y": 2140,
+        "wires": [
+            [
+                "0b87c951244e8fa1"
+            ]
+        ]
+    },
+    {
+        "id": "0b87c951244e8fa1",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Enviar a operating",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://operating:8082/add-task",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1470,
+        "y": 2140,
+        "wires": [
+            [
+                "f446149b7ef44157"
+            ]
+        ]
+    },
+    {
+        "id": "f446149b7ef44157",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "FIN",
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "x": 1670,
+        "y": 2140,
         "wires": []
     }
 ]
