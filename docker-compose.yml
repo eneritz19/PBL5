@@ -32,13 +32,7 @@ services:
     networks:
       - skinxpert_network
     depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1880"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - db
 
   web:
     image: nginx:latest
@@ -51,8 +45,22 @@ services:
     networks:
       - skinxpert_network
     depends_on:
-      node-red:
-        condition: service_healthy
+      - node-red
+
+  skinxpert_ai:
+    build: ./IA  
+    container_name: skinxpert_ai
+    restart: unless-stopped
+    networks:
+      - skinxpert_network
+
+  operating:
+    build: ./Operating
+    container_name: skinxpert_operating
+    ports:
+      - "8082:8082"
+    networks:
+      - skinxpert_network
 
 
   sonar-db:

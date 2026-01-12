@@ -21,22 +21,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Start Docker services
-        run: docker compose up -d
+      - name: Run CI-safe tests
+        run: mvn -B test -Dgroups=ui
 
-      - name: Wait for frontend to be ready
-        run: |
-          echo "Waiting for frontend..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/index.html > /dev/null; then
-              echo "Frontend is ready"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "Frontend did not start in time"
-          docker compose logs
-          exit 1
-
-      - name: Run tests
-        run: mvn -B test

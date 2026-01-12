@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Tag;
 
-//@Tag("ui")
+@Tag("ui")
 class ScrollRevealTest {
 
     private WebDriver driver;
