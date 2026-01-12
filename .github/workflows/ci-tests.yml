@@ -1,4 +1,4 @@
-name: Java CI
+name: Java CI with Selenium
 
 on:
   push:
@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -20,11 +21,22 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Start backend with Docker
+      - name: Start Docker services
         run: docker compose up -d
 
-      - name: Wait for backend
-        run: sleep 20
+      - name: Wait for frontend to be ready
+        run: |
+          echo "Waiting for frontend..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/index.html > /dev/null; then
+              echo "Frontend is ready"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Frontend did not start in time"
+          docker compose logs
+          exit 1
 
       - name: Run tests
-        run: mvn test
+        run: mvn -B test
