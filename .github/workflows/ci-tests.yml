@@ -1,4 +1,4 @@
-name: Java CI with Selenium
+name: Java CI
 
 on:
   push:
@@ -11,8 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -21,6 +20,5 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run CI-safe tests
-        run: mvn -B test -Dgroups=ui
-
+      - name: Run unit tests (exclude UI)
+        run: mvn test -Dgroups=!ui
