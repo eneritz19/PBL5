@@ -3,13 +3,9 @@ package com.example;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
-
 import java.time.Duration;
-
 import static org.junit.jupiter.api.Assertions.*;
-import org.junit.jupiter.api.Tag;
 
 @Tag("ui")
 class DoctorScheduleTest {
@@ -20,13 +16,7 @@ class DoctorScheduleTest {
 
     @BeforeEach
     void setup() {
-        // Configurar Chrome en headless para tests automáticos
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        driver = new ChromeDriver(options);
-
+        driver = new ChromeDriver();
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         driver.get(URL);
 
@@ -42,47 +32,42 @@ class DoctorScheduleTest {
         // Ir a Agenda
         WebElement agendaTab = wait.until(
                 ExpectedConditions.elementToBeClickable(
-                        By.xpath("//div[contains(@class,'tabs')]//button[contains(text(),'Agenda')]")));
+                        By.xpath("//div[contains(@class,'tabs')]//button[contains(text(),'Agenda')]")
+                )
+        );
         agendaTab.click();
     }
 
     @AfterEach
     void tearDown() {
-        if (driver != null)
-            driver.quit();
+        if (driver != null) driver.quit();
     }
 
     @Test
     @DisplayName("Agendar cita: datetime y confirmación")
     void testScheduleAppointment() {
-
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
-        // Inyectar el formulario en d-citas (porque el JS real lo elimina)
+        // 1. Inyectar el formulario en d-citas (porque el JS real lo elimina)
         js.executeScript("""
                 const container = document.getElementById('d-citas');
-                container.innerHTML = `
-                    <div class="case-card">
-                        <input type="datetime-local" id="testDate">
-                        <button id="testConfirm"
-                                onclick="alert('Appointment saved in database')">
-                            Confirm Appointment
-                        </button>
-                    </div>
-                `;
-            """);
+                container.innerHTML = `<div class="case-card">
+                    <input type="datetime-local" id="testDate">
+                    <button id="testConfirm" onclick="alert('Appointment saved in database')">Confirm Appointment</button>
+                </div>`;
+                """);
 
-        // Esperar el input
+        // 2. Esperar el input
         WebElement dateInput = wait.until(
-                ExpectedConditions.elementToBeClickable(By.id("testDate")));
-
+                ExpectedConditions.elementToBeClickable(By.id("testDate"))
+        );
         dateInput.sendKeys("2025-12-25T10:00");
 
-        // Click confirmar
+        // 3. Click confirmar
         WebElement confirmBtn = driver.findElement(By.id("testConfirm"));
         confirmBtn.click();
 
-        // Verificar alerta
+        // 4. Verificar alerta
         Alert alert = wait.until(ExpectedConditions.alertIsPresent());
         assertEquals("Appointment saved in database", alert.getText());
         alert.accept();
