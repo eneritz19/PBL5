@@ -47,6 +47,7 @@ services:
     depends_on:
       - node-red
 
+
   sonar-db:
     image: postgres:13
     container_name: skinxpert_sonar_db
@@ -58,6 +59,7 @@ services:
       - postgresql_data:/var/lib/postgresql/data
     networks:
       - skinxpert_network
+
 
   sonarqube:
     image: sonarqube:community
@@ -77,8 +79,20 @@ services:
     depends_on:
       - sonar-db
 
-  
-
+  skinxpert_ai:
+    build: ./IA  
+    container_name: skinxpert_ai
+    restart: unless-stopped
+    networks:
+      - skinxpert_network
+      
+  operating:
+    build: ./Operating
+    container_name: skinxpert_operating
+    ports:
+      - "8082:8082"
+    networks:
+      - skinxpert_network
 volumes:
   mysql_data:
     driver: local

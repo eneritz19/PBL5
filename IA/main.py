@@ -1,121 +1,210 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
+from pathlib import Path
 from PIL import Image
 import io
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torchvision import transforms, models
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras.applications.efficientnet import preprocess_input
 
-app = FastAPI()
+app = FastAPI(title="SkinXpert API (Keras)")
 
-# ==========================================
-# 1. CONFIGURACIÓN DEL DISPOSITIVO
-# ==========================================
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"--- Servidor SkinXpert usando: {device} ---")
+# ============================================================
+# 0) CONFIG
+# ============================================================
+SEED = 42
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
 
-# ==========================================
-# 2. DEFINICIÓN DE LAS 23 CLASES Y MAPEO SQL
-# ==========================================
-# El orden debe ser EXACTAMENTE el mismo que en tu entrenamiento (alfabético)
-CLASES = [
-    "Acne and Rosacea Photos", "Actinic Keratosis Basal Cell Carcinoma and other Malignant Lesions",
-    "Atopic Dermatitis Photos", "Bullous Disease Photos", "Cellulitis Impetigo and other Bacterial Infections",
-    "Eczema Photos", "Exanthems and Drug Eruptions", "Hair Loss Photos Alopecia and other Hair Diseases",
-    "Herpes HPV and other STDs Photos", "Light Diseases and Disorders of Pigmentation",
-    "Lupus and other Connective Tissue diseases", "Melanoma Skin Cancer Nevi and Moles",
-    "Nail Fungus and other Nail Disease", "Poison Ivy Photos and other Contact Dermatitis",
-    "Psoriasis pictures Lichen Planus and related diseases", "Scabies Lyme Disease and other Infestations and Bites",
-    "Seborrheic Keratoses and other Benign Tumors", "Systemic Disease",
-    "Tinea Ringworm Candidiasis and other Fungal Infections", "Urticaria Hives",
-    "Vascular Tumors", "Vasculitis Photos", "Warts Molluscum and other Viral Infections"
+PROJECT_ROOT = Path(__file__).resolve().parent
+MODELS_DIR = PROJECT_ROOT  # modelos al mismo nivel que main.py
+
+IMG_SIZE = 192
+
+MODEL1_PATH = MODELS_DIR / "model1_triage_final.keras"
+MODEL2_PATH = MODELS_DIR / "model2_final.keras"
+MODEL3_PATH = MODELS_DIR / "model3_best_finetuned.keras"
+
+# ============================================================
+# 1) CLASES
+# ============================================================
+CLASSES_M1 = ["Cancer", "Nevus", "Other_Benign"]
+CLASSES_M2 = ["AK", "BCC", "MEL", "SCC"]
+CLASSES_M3 = [
+    "Acne_Rosacea", "Benign_Tumor", "Dermatitis", "Fungal_Infection", "Hair_Disorder",
+    "Nevus", "Psoriasis", "Systemic", "Urticaria", "Viral_Infection"
 ]
 
-# Mapeo a los IDs de tu base de datos MySQL (basado en el orden de tu tabla de enfermedades)
-MAPA_SQL = {clase: i + 1 for i, clase in enumerate(CLASES)}
+# ============================================================
+# 2) MAPEO IA
+# ============================================================
+DISEASE_TO_ID = {
+    "AK": 2,
+    "BCC": 3,
+    "MEL": 4,
+    "SCC": 5,
 
-# ==========================================
-# 3. RECONSTRUCCIÓN DE LA ARQUITECTURA (EfficientNet-B0)
-# ==========================================
-def cargar_modelo():
-    print("Iniciando reconstrucción de la arquitectura B0...")
-    # 1. Creamos la base
-    model = models.efficientnet_b0(weights=None) 
-    
-    # 2. Recreamos la "cabeza" que entrenamos (debe ser idéntica)
-    num_ftrs = model.classifier[1].in_features
-    model.classifier[1] = nn.Sequential(
-        nn.Dropout(p=0.4, inplace=True),
-        nn.Linear(num_ftrs, 23)
-    )
-    
-    # 3. Cargar los pesos entrenados
-    MODEL_PATH = 'mejor_modelo_skinxpert.pth'
-    try:
-        # Cargamos el state_dict (los pesos)
-        state_dict = torch.load(MODEL_PATH, map_location=device)
-        model.load_state_dict(state_dict)
-        model.to(device)
-        model.eval()
-        print("✅ Pesos del modelo cargados correctamente.")
-        return model
-    except Exception as e:
-        print(f"❌ ERROR al cargar pesos: {e}")
-        return None
+    "Acne_Rosacea": 1,
+    "Benign_Tumor": 6,
+    "Dermatitis": 7,
+    "Fungal_Infection": 8,
+    "Hair_Disorder": 9,
+    "Nevus": 10,
+    "Psoriasis": 11,
+    "Systemic": 12,
+    "Urticaria": 13,
+    "Viral_Infection": 14
+}
 
-# Instanciamos el modelo globalmente
-skinxpert_model = cargar_modelo()
 
-# ==========================================
-# 4. PREPROCESAMIENTO DE IMAGEN
-# ==========================================
-transform_pipeline = transforms.Compose([
-    transforms.Resize((448, 448)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
+# ============================================================
+# 3) UMBRALES (IGUAL QUE NOTEBOOK)
+# ============================================================
+P_CANCER_HIGH = 0.55
+P_CANCER_LOW  = 0.25
+REJECT_MARGIN = 0.05   # notebook
+TOPK = 3
 
-# ==========================================
-# 5. ENDPOINT PARA NODE-RED
-# ==========================================
+# ============================================================
+# 4) CARGA MODELOS
+# ============================================================
+def _check_exists(p: Path):
+    if not p.exists():
+        raise FileNotFoundError(f"Modelo no encontrado: {p}")
+
+_check_exists(MODEL1_PATH)
+_check_exists(MODEL2_PATH)
+_check_exists(MODEL3_PATH)
+
+print("⏳ Cargando modelos...")
+model1 = tf.keras.models.load_model(MODEL1_PATH)
+model2 = tf.keras.models.load_model(MODEL2_PATH)
+model3 = tf.keras.models.load_model(MODEL3_PATH)
+print("✅ Modelos cargados.")
+
+# ============================================================
+# 5) HELPERS
+# ============================================================
+def pil_to_tensor(image: Image.Image) -> np.ndarray:
+    img = image.convert("RGB").resize((IMG_SIZE, IMG_SIZE))
+    arr = np.array(img).astype(np.float32)
+    arr = np.expand_dims(arr, axis=0)
+    arr = preprocess_input(arr)
+    return arr
+
+def looks_like_softmax(vec: np.ndarray) -> bool:
+    v = np.asarray(vec).ravel()
+    if np.any(v < 0) or np.any(v > 1.0):
+        return False
+    s = float(np.sum(v))
+    return abs(s - 1.0) < 1e-2
+
+def softmax_np(x: np.ndarray) -> np.ndarray:
+    x = x.astype(np.float32)
+    x = x - np.max(x, axis=-1, keepdims=True)
+    e = np.exp(x)
+    return e / np.sum(e, axis=-1, keepdims=True)
+
+def probs_from_model_output(raw: np.ndarray) -> np.ndarray:
+    # Si ya parece softmax -> usar tal cual, si no -> aplicar softmax
+    v = np.asarray(raw).ravel()
+    if looks_like_softmax(v):
+        return v
+    return softmax_np(v)
+
+def topk(probs: np.ndarray, class_names: list, k: int = 3):
+    probs = np.asarray(probs).ravel()
+    idx = np.argsort(probs)[::-1][:k]
+    return [{"label": class_names[i], "prob": float(probs[i])} for i in idx]
+
+def reject_by_margin(probs: np.ndarray) -> bool:
+    s = np.sort(np.asarray(probs).ravel())[::-1]
+    if len(s) < 2:
+        return True
+    margin = float(s[0] - s[1])
+    return margin < REJECT_MARGIN
+
+def pipeline_predict(img_arr: np.ndarray):
+    # ---------- M1: TRIAGE ----------
+    raw1 = model1.predict(img_arr, verbose=0)[0]
+    p1 = probs_from_model_output(raw1)
+
+    idx = {c: i for i, c in enumerate(CLASSES_M1)}
+    p_cancer = float(p1[idx["Cancer"]])
+    p_nevus  = float(p1[idx["Nevus"]])
+    p_other  = float(p1[idx["Other_Benign"]])
+
+    # Decision routing (igual notebook)
+    if p_cancer >= P_CANCER_HIGH:
+        route = "M2"
+        reason = "P(Cancer) alta"
+    elif p_cancer <= P_CANCER_LOW:
+        route = "M3"
+        reason = "P(Cancer) baja"
+    else:
+        top1_idx = int(np.argmax(p1))
+        top1_lab = CLASSES_M1[top1_idx]
+        route = "M2" if top1_lab == "Cancer" else "M3"
+        reason = f"Zona gris → clase dominante: {top1_lab}"
+
+    # ---------- Clasificación final ----------
+    if route == "M2":
+        raw = model2.predict(img_arr, verbose=0)[0]
+        probs = probs_from_model_output(raw)
+        class_names = CLASSES_M2
+    else:
+        raw = model3.predict(img_arr, verbose=0)[0]
+        probs = probs_from_model_output(raw)
+        class_names = CLASSES_M3
+
+    top_final = topk(probs, class_names, k=TOPK)
+    pred_label = top_final[0]["label"]
+    pred_conf = float(top_final[0]["prob"])          # 0..1
+    pred_conf_pct = float(pred_conf * 100.0)         # 0..100
+
+    reject = reject_by_margin(probs)
+
+    disease_id = DISEASE_TO_ID.get(pred_label, 1)
+
+    return {
+        # CAMPOS PARA NODE-RED:
+        "id_skindiseases": int(disease_id),
+        "disease_name": pred_label,
+        "confianza": pred_conf,                 # 0..1
+        "confidence_percent": pred_conf_pct,    # 0..100
+        "route_used": route,
+
+        # INFO EXTRA DEBUG:
+        "m1": {
+            "p_cancer": p_cancer,
+            "p_nevus": p_nevus,
+            "p_other": p_other,
+            "reason": reason,
+            "top3": topk(p1, CLASSES_M1, 3)
+        },
+        "final": {
+            "topk": top_final,
+            "reject": reject
+        }
+    }
+
+# ============================================================
+# 6) ENDPOINTS
+# ============================================================
 @app.post("/predecir")
 async def predict(file: UploadFile = File(...)):
-    if skinxpert_model is None:
-        return {"error": "Modelo no disponible en el servidor."}
-
     try:
-        # Leer y convertir imagen
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents)).convert('RGB')
-        
-        # Aplicar transformaciones
-        tensor = transform_pipeline(image).unsqueeze(0).to(device)
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
 
-        # Inferencia
-        with torch.no_grad():
-            outputs = skinxpert_model(tensor)
-            probabilities = F.softmax(outputs, dim=1)
-            confianza, pred_idx = torch.max(probabilities, 1)
+        img_arr = pil_to_tensor(image)
+        result = pipeline_predict(img_arr)
 
-        idx = pred_idx.item()
-        nombre_clase = CLASES[idx]
-        id_sql = MAPA_SQL.get(nombre_clase, -1)
-
-        # Determinar riesgo
-        malignas = ["Melanoma", "Actinic", "Basal Cell"]
-        categoria = "Maligno/Precanceroso" if any(x in nombre_clase for x in malignas) else "Benigno"
-
-        print(f"🔍 Predicción: {nombre_clase} | Confianza: {confianza.item():.2%}")
-
-        return {
-            "id_skindiseases": id_sql,
-            "diagnostico_texto": nombre_clase,
-            "confianza": float(confianza.item()),
-            "categoria_general": categoria
-        }
+        return JSONResponse(result)
 
     except Exception as e:
-        return {"error": f"Error en procesamiento: {str(e)}"}
+        return JSONResponse({"error": str(e)}, status_code=500)
 
-# Ejecución: uvicorn main:app --host 0.0.0.0 --port 8000
+@app.get("/")
+async def health():
+    return {"status": "SkinXpert AI running", "version": "1.1.0"}

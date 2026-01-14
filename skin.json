@@ -1468,7 +1468,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Guardar Foto + IA + SQL",
-        "func": "// 1. DEFINIR RUTAS Y EXTRAER ARCHIVO\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst file = msg.req.files[0]; \nconst id_patient = msg.req.body.id_patient || 1;\n\nif (!file) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"No se recibió ninguna imagen\" };\n    return msg;\n}\n\n// 2. GENERAR NOMBRE Y GUARDAR FÍSICAMENTE EN DISCO\nconst uniqueFileName = `piel_${id_patient}_${Date.now()}.jpg`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\ntry {\n    // Usamos el módulo 'fs' cargado en la pestaña 'libs'\n    fs.writeFileSync(fullPath, file.buffer); \n    node.warn(`Imagen física guardada en: ${fullPath}`);\n} catch (e) {\n    node.error(\"Error escribiendo archivo: \" + e.message);\n    msg.statusCode = 500;\n    msg.payload = { error: \"Error al guardar el archivo en el servidor\" };\n    return msg;\n}\n\n// 3. LÓGICA DE IA Y SEVERIDAD\nvar iaResult = msg.payload || {};\nvar diseaseId = iaResult.id_skindiseases || 1;\nvar probabilidad = iaResult.confianza || 0.0;\n\nvar severityMap = {\n    2: 1.0, 12: 1.0,                   // Cánceres y Carcinomas (Crítico)\n    4: 0.7, 5: 0.6, 11: 0.7, 22: 0.7,  // Bullous, Cellulitis, Lupus, Vasculitis\n    1: 0.3, 3: 0.3, 6: 0.3, 10: 0.2,   // Acne, Dermatitis, Eczema\n    20: 0.3, 23: 0.2, 19: 0.3          // Urticaria, Warts, Tinea\n};\n\nvar gravedad = severityMap[diseaseId] || 0.5;\nvar score = (gravedad * gravedad) * probabilidad;\n\nvar urgenciaFinal = 1; \nif (score >= 0.25) {\n    urgenciaFinal = 3; // ALTO\n} else if (score >= 0.05) {\n    urgenciaFinal = 2; // MEDIO\n}\n\n// 4. PREPARAR CONSULTA SQL\nvar riskPercent = Math.round(probabilidad * 100);\nvar doctorId = Math.floor(Math.random() * 3) + 1;\n\nmsg.topic = `\n    INSERT INTO photo_requests (id_patient, urgency, status)\n    VALUES (${id_patient}, ${urgenciaFinal}, 'pendiente');\n\n    SET @last_id = LAST_INSERT_ID();\n\n    INSERT INTO images (id_request, file_path)\n    VALUES (@last_id, '${webPath}');\n\n` ;\n\n\n// 5. PREPARAR DATOS PARA JAVA\nmsg.javaData = {\n    \"imageCode\": uniqueFileName,\n    \"doctorId\": parseInt(doctorId),\n    \"urgency\": parseInt(urgenciaFinal)\n};\n\nreturn msg;",
+        "func": "// ============================================================\n// 1. DEFINIR RUTAS Y EXTRAER ARCHIVO\n// ============================================================\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst file = msg.req.files[0]; \nconst id_patient = msg.req.body.id_patient || 1;\n\nif (!file) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"No se recibió ninguna imagen\" };\n    return msg;\n}\n\n// ============================================================\n// 2. GENERAR NOMBRE Y GUARDAR FÍSICAMENTE EN DISCO\n// ============================================================\nconst uniqueFileName = `piel_${id_patient}_${Date.now()}.jpg`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\ntry {\n    // Usamos el módulo 'fs' cargado en la pestaña 'libs'\n    fs.writeFileSync(fullPath, file.buffer); \n    node.warn(`✅ Imagen física guardada en: ${fullPath}`);\n} catch (e) {\n    node.error(\"❌ Error escribiendo archivo: \" + e.message);\n    msg.statusCode = 500;\n    msg.payload = { error: \"Error al guardar el archivo en el servidor\" };\n    return msg;\n}\n\n// ============================================================\n// 3. EXTRAER RESULTADO DE LA IA (AHORA CON CAMPOS CORRECTOS)\n// ============================================================\nvar iaResult = msg.payload || {};\nvar diseaseId = iaResult.id_skindiseases || 1;\nvar probabilidad = iaResult.confianza || 0.0;\nvar diseaseName = iaResult.disease_name || \"Unknown\";\n\nnode.warn(`🤖 IA Resultado: diseaseId=${diseaseId}, confianza=${probabilidad}, nombre=${diseaseName}`);\n\n// ============================================================\n// 4. CALCULAR URGENCIA BASADA EN SEVERIDAD\n// ============================================================\nvar severityMap = {\n    2: 1.0, 12: 1.0, 24: 1.0,                   // Cánceres y Carcinomas (Crítico)\n    4: 0.7, 5: 0.6, 11: 0.7, 22: 0.7,  // Bullous, Cellulitis, Lupus, Vasculitis\n    1: 0.3, 3: 0.3, 6: 0.3, 10: 0.2,   // Acne, Dermatitis, Eczema\n    20: 0.3, 23: 0.2, 19: 0.3          // Urticaria, Warts, Tinea\n};\n\nvar gravedad = severityMap[diseaseId] || 0.5;\nvar score = (gravedad * gravedad) * probabilidad;\n\nvar urgenciaFinal = 1; \nif (score >= 0.25) {\n    urgenciaFinal = 3; // ALTO\n} else if (score >= 0.05) {\n    urgenciaFinal = 2; // MEDIO\n}\n\nnode.warn(`📊 Urgencia calculada: ${urgenciaFinal} (score=${score.toFixed(3)})`);\n\n// ============================================================\n// 5. ASIGNAR DOCTOR ALEATORIO (O PUEDES USAR LÓGICA DE ROUND-ROBIN)\n// ============================================================\nvar doctorId = Math.floor(Math.random() * 3) + 1;\n\n// ============================================================\n// 6. PREPARAR CONSULTA SQL (AHORA INCLUYE DIAGNÓSTICO)\n// ============================================================\nvar riskPercent = Math.round(probabilidad * 100);\n//var riskPercent = +(probabilidad * 100).toFixed(2);\n\nmsg.topic = `\n    -- 1️⃣ Guardar solicitud de foto\n    INSERT INTO photo_requests (id_patient, urgency, status)\n    VALUES (${id_patient}, ${urgenciaFinal}, 'pendiente');\n\n    SET @last_id = LAST_INSERT_ID();\n\n    -- 2️⃣ Guardar la imagen\n    INSERT INTO images (id_request, file_path)\n    VALUES (@last_id, '${webPath}');\n\n    -- 3️⃣ ✅ NUEVO: Guardar el diagnóstico de la IA\n    INSERT INTO diagnoses (\n        id_request, \n        id_doctor, \n        id_patient, \n        id_skindiseases, \n        confidence, \n        doctor_notes\n    )\n    VALUES (\n        @last_id, \n        ${doctorId}, \n        ${id_patient}, \n        ${diseaseId}, \n        ${riskPercent}, \n        'AI prediction: ${diseaseName} (${riskPercent}% confidence). Pending doctor review.'\n    );\n`;\n\nnode.warn(`📝 SQL preparado con diagnóstico incluido`);\n\n// ============================================================\n// 7. PREPARAR DATOS PARA JAVA (OPERATING)\n// ============================================================\nmsg.javaData = {\n    \"imageCode\": uniqueFileName,\n    \"doctorId\": parseInt(doctorId),\n    \"urgency\": parseInt(urgenciaFinal),\n    \"diseaseId\": parseInt(diseaseId),\n    \"confidence\": parseFloat(probabilidad)\n};\n\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1557,6 +1557,209 @@
         },
         "x": 1670,
         "y": 2140,
+        "wires": []
+    },
+    {
+        "id": "e2931a5f4c34cbc2",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "Poll /status (cada 2s)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 1,
+        "payload": "",
+        "payloadType": "date",
+        "x": 220,
+        "y": 2940,
+        "wires": [
+            [
+                "923907bd14cbd4c6"
+            ]
+        ]
+    },
+    {
+        "id": "923907bd14cbd4c6",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET operating /status",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://operating:8082/status",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 470,
+        "y": 2940,
+        "wires": [
+            [
+                "44bdfa027c109f53"
+            ]
+        ]
+    },
+    {
+        "id": "4ca477820e5b2b3a",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "ERROR polling /status",
+        "active": true,
+        "tosidebar": true,
+        "complete": "error",
+        "targetType": "msg",
+        "x": 740,
+        "y": 3000,
+        "wires": []
+    },
+    {
+        "id": "44bdfa027c109f53",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Parse state + compute load + store",
+        "func": "// Expected Java /status response ideally:\n// { mode: \"monitor\"|\"mp\", state: <object OR string> }\n// Some implementations return state as stringified JSON.\n\nconst resp = msg.payload || {};\nconst mode = resp.mode || resp.current_mode || \"unknown\";\nlet state = resp.state;\n\n// If /status returns a JSON-string (e.g. \"{...}\"), try parsing\nif (typeof state === \"string\") {\n  // It might be a plain string, or JSON-string, or stringified JSON inside JSON\n  try {\n    // If it's quoted JSON from gson.toJson(currentState) it may be \"...\" with escapes.\n    // Attempt 1: parse as JSON directly\n    const parsed = JSON.parse(state);\n    state = parsed;\n  } catch (e1) {\n    // Attempt 2: if resp itself is a string (rare)\n    try {\n      const parsed2 = JSON.parse(resp);\n      state = parsed2.state || parsed2;\n    } catch (e2) {\n      // Keep as string\n    }\n  }\n}\n\n// Compute load if possible\n// We support a few shapes:\n// A) state.doctors[doctorId].sizes.TOTAL\n// B) state.doctors is array with sizes\n// C) state contains TOTAL at top\nlet total = 0;\n\nfunction addIfNumber(x){\n  if (typeof x === 'number' && !isNaN(x)) total += x;\n}\n\nif (state && typeof state === \"object\") {\n  if (typeof state.TOTAL === \"number\") {\n    total = state.TOTAL;\n  } else if (state.doctors && typeof state.doctors === \"object\") {\n    // object map\n    for (const k of Object.keys(state.doctors)) {\n      const d = state.doctors[k];\n      if (d && d.sizes && typeof d.sizes.TOTAL === \"number\") addIfNumber(d.sizes.TOTAL);\n      else if (d && typeof d.TOTAL === \"number\") addIfNumber(d.TOTAL);\n    }\n  } else if (Array.isArray(state)) {\n    // array list of doctors\n    for (const d of state) {\n      if (d && d.sizes && typeof d.sizes.TOTAL === \"number\") addIfNumber(d.sizes.TOTAL);\n      else if (d && typeof d.TOTAL === \"number\") addIfNumber(d.TOTAL);\n    }\n  }\n}\n\n// Store latest snapshot in flow context for other tabs/nodes\nflow.set(\"os_latest\", { ts: Date.now(), mode, state, total });\n\nmsg.payload = { ts: Date.now(), mode, total, state };\nmsg.os = { mode, total, state };\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 2940,
+        "wires": [
+            [
+                "ece1b54dca3e6146",
+                "d3873c02f1eb376a",
+                "f4f299f7555c9db9"
+            ]
+        ]
+    },
+    {
+        "id": "ece1b54dca3e6146",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "STATUS (real time)",
+        "active": true,
+        "tosidebar": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1040,
+        "y": 2900,
+        "wires": []
+    },
+    {
+        "id": "d3873c02f1eb376a",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Auto-control: decide mode (hysteresis)",
+        "func": "// Simple control loop for Level 3:\n// - If total load is high -> mp\n// - If total load is low -> monitor\n// Uses hysteresis to avoid flapping.\n\nconst total = (msg.os && typeof msg.os.total === 'number') ? msg.os.total : 0;\nconst currentMode = (msg.os && msg.os.mode) ? String(msg.os.mode).toLowerCase() : \"unknown\";\n\nconst HIGH_ON  = 30; // if total >= 30 -> switch to mp\nconst LOW_OFF  = 10; // if total <= 10 -> switch back to monitor\n\nlet desired = null;\n\nif (total >= HIGH_ON && currentMode !== \"mp\") {\n  desired = \"mp\";\n}\n\nif (total <= LOW_OFF && currentMode !== \"monitor\") {\n  desired = \"monitor\";\n}\n\nif (!desired) return null; // no action\n\nmsg.payload = { mode: desired };\nmsg.headers = { \"Content-Type\": \"application/json\" };\nmsg.url = \"http://operating:8082/config\";\nmsg.method = \"POST\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 810,
+        "y": 3060,
+        "wires": [
+            [
+                "88e5c039ea467080"
+            ]
+        ]
+    },
+    {
+        "id": "88e5c039ea467080",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST operating /config (auto)",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 1120,
+        "y": 3060,
+        "wires": [
+            [
+                "dcaaa0908cda182a"
+            ]
+        ]
+    },
+    {
+        "id": "dcaaa0908cda182a",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "CONFIG change OK",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1360,
+        "y": 3040,
+        "wires": []
+    },
+    {
+        "id": "f3b9389d4e025424",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "CONFIG change ERROR",
+        "active": true,
+        "tosidebar": true,
+        "complete": "error",
+        "targetType": "msg",
+        "x": 1370,
+        "y": 3080,
+        "wires": []
+    },
+    {
+        "id": "f4f299f7555c9db9",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Format text for visualization",
+        "func": "const p = msg.payload;\nconst ts = new Date(p.ts).toLocaleTimeString();\nlet text = `time=${ts} | mode=${p.mode} | total=${p.total}`;\n\n// Add a short summary if possible\nif (p.state && typeof p.state === 'object') {\n  // try to show per-doctor totals if available\n  if (p.state.doctors && typeof p.state.doctors === 'object') {\n    const parts = [];\n    for (const k of Object.keys(p.state.doctors)) {\n      const d = p.state.doctors[k];\n      const t = d?.sizes?.TOTAL ?? d?.TOTAL;\n      if (typeof t === 'number') parts.push(`${k}:${t}`);\n    }\n    if (parts.length) text += ` | doctors { ${parts.join(' ')} }`;\n  }\n}\n\nmsg.payload = text;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 790,
+        "y": 3180,
+        "wires": [
+            [
+                "15200e02a00d1da3"
+            ]
+        ]
+    },
+    {
+        "id": "15200e02a00d1da3",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "VIEW (text)",
+        "active": true,
+        "tosidebar": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1060,
+        "y": 3180,
         "wires": []
     }
 ]

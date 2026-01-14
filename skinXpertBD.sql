@@ -168,213 +168,131 @@ CREATE TABLE skin_diseases (
 INSERT INTO skin_diseases 
 (disease, ICD_code, standard_treatment, medications, alternatives, recommendations, referral, source)
 VALUES
--- 1. Acne and Rosacea
-('Acne and Rosacea', 'L70.0, L71', 
-'Hygiene + topical treatment; antibiotics in inflammatory cases.',
-'Topical retinoids, Benzoyl peroxide, Doxycycline, Isotretinoin, Topical metronidazole',
-'Hormonal therapies, Vascular laser',
-'Avoid irritants, avoid rosacea triggers, dermatology follow-up',
-'Dermatology for moderate or severe cases',
-'Dermatology guidelines'),
+-- 1) Acne_Rosacea
+('Acne_Rosacea', 'L70.0, L71',
+'Higiene + tratamiento tópico; antibióticos si inflamatorio moderado-severo.',
+'Retinoides tópicos, Peróxido de benzoilo, Doxiciclina, Isotretinoína, Metronidazol tópico',
+'Terapias hormonales, Láser vascular',
+'Evitar irritantes y desencadenantes; seguimiento dermatológico',
+'Dermatología',
+'Guías dermatología'),
 
--- 2. Actinic keratosis / Basal cell carcinoma
-('Actinic keratosis and basal cell carcinoma', 'L57.0, C44.x',
-'Cryotherapy or topical treatments; surgery for BCC.',
-'5-FU, Imiquimod, Vismodegib',
-'Photodynamic therapy, Radiotherapy',
-'Strict photoprotection, regular check-ups',
-'Dermatology / Oncology',
-'Skin cancer guidelines'),
+-- 2) AK
+('AK', 'L57.0',
+'Crioterapia o tratamientos tópicos; seguimiento por riesgo de progresión.',
+'5-FU, Imiquimod, Diclofenaco gel, Terapia fotodinámica',
+'PDT, Láser, Observación en casos seleccionados',
+'Fotoprotección estricta; revisiones periódicas',
+'Dermatología',
+'Guías cáncer cutáneo'),
 
--- 3. Atopic dermatitis
-('Atopic dermatitis', 'L20',
-'Emollients + topical corticosteroids; biologics in severe cases.',
-'Topical corticosteroids, Tacrolimus, Pimecrolimus, Dupilumab',
-'Phototherapy, immunosuppression in selected cases',
-'Hydration, avoid allergens, control secondary infections',
-'Dermatology',
-'Atopic dermatitis guidelines'),
+-- 3) BCC
+('BCC', 'C44.x',
+'Escisión quirúrgica o técnicas destructivas según localización/tamaño.',
+'Imiquimod (casos superficiales), Vismodegib (avanzados seleccionados)',
+'Cirugía de Mohs, Radioterapia (seleccionados)',
+'Fotoprotección; control dermatológico',
+'Dermatología / Oncología',
+'Guías cáncer cutáneo'),
 
--- 4. Bullous diseases
-('Bullous diseases', 'L10, L12',
-'Systemic corticosteroids + immunosuppressants.',
-'Systemic corticosteroids, Azathioprine, Mycophenolate, Rituximab',
-'Biological therapies, wound care',
-'Skin care, infection control',
-'Dermatology / Internal medicine',
-'Bullous disease guidelines'),
+-- 4) MEL
+('MEL', 'C43',
+'Escisión + estadificación; manejo oncológico si avanzado.',
+'Pembrolizumab, Nivolumab; terapias dirigidas BRAF/MEK si aplica',
+'Ensayos clínicos, Quimioterapia (casos seleccionados)',
+'Evitar sol; seguimiento estrecho',
+'Oncología (urgente)',
+'Guías melanoma'),
 
--- 5. Cellulitis and impetigo
-('Cellulitis and impetigo', 'L03, A46',
-'Oral or IV antibiotics depending on severity.',
-'Dicloxacillin, Cephalexin, Mupirocin, Clindamycin',
-'Abscess drainage, hospitalization if sepsis',
-'Hygiene, local wound care',
-'Emergency or infectious disease depending on severity',
-'Skin infection guidelines'),
+-- 5) SCC
+('SCC', 'C44.x',
+'Escisión quirúrgica; estadificación si alto riesgo.',
+'5-FU tópico (in situ seleccionados), Inmunoterapia (avanzados seleccionados)',
+'Cirugía de Mohs, Radioterapia (seleccionados)',
+'Fotoprotección; revisiones periódicas',
+'Oncología / Dermatología (urgente)',
+'Guías carcinoma escamoso'),
 
--- 6. Eczema
-('Eczema', 'L30',
-'Topical corticosteroids + irritant avoidance.',
-'Topical corticosteroids, Tacrolimus',
-'Phototherapy, immunosuppression',
-'Avoid irritants, hydration',
-'Dermatology if refractory',
-'Dermatology guidelines'),
+-- 6) Benign_Tumor
+('Benign_Tumor', 'D23.x, L82.x',
+'Observación o eliminación si molesto/sospechoso.',
+'No suele requerir medicación',
+'Crioterapia, Curetaje, Láser',
+'Monitorizar cambios',
+'Dermatología',
+'Guías dermatología'),
 
--- 7. Exanthems and drug reactions
-('Exanthems and drug reactions', 'T88.7, L27',
-'Discontinue drug, symptomatic support.',
-'Antihistamines, topical or systemic corticosteroids',
-'Hospital treatment if SCAR/TEN',
-'Document allergies, follow-up testing',
-'Emergency or allergy department',
-'Skin reaction protocols'),
+-- 7) Dermatitis
+('Dermatitis', 'L20, L30',
+'Emolientes + corticoide tópico; escalado si grave.',
+'Corticoides tópicos, Tacrolimus/Pimecrolimus, Dupilumab (grave)',
+'Fototerapia, inmunosupresión seleccionada',
+'Hidratación; evitar irritantes/alérgenos',
+'Dermatología',
+'Guías dermatitis'),
 
--- 8. Alopecia and hair disorders
-('Alopecia and hair disorders', 'L63, L66',
-'Topical/injected corticosteroids, minoxidil.',
-'Corticosteroids, Minoxidil, JAK inhibitors',
-'Hair transplantation, laser therapy',
-'Evaluate systemic causes, psychological support',
-'Dermatology',
-'Alopecia guidelines'),
+-- 8) Fungal_Infection
+('Fungal_Infection', 'B35.x, B37.x',
+'Antifúngicos tópicos u orales según extensión.',
+'Terbinafina, Itraconazol, Azoles tópicos',
+'Desbridamiento en casos seleccionados',
+'Higiene; evitar humedad',
+'Dermatología',
+'Guías micosis'),
 
--- 9. Herpes, HPV, and other STIs
-('Herpes, HPV and other STIs', 'A60-A64, B97.7',
-'Antivirals for herpes; imiquimod/cryotherapy for warts.',
-'Acyclovir, Valacyclovir, Imiquimod, Salicylic acid',
-'Physical removal, HPV vaccination',
-'Sexual counseling, prevention',
-'Dermatology / Sexual health',
-'STI guidelines'),
+-- 9) Hair_Disorder
+('Hair_Disorder', 'L63, L66',
+'Diagnóstico etiológico; tratamientos tópicos/infiltrados según caso.',
+'Minoxidil, Corticoides, Inmunomoduladores (según etiología)',
+'Trasplante capilar, láser (seleccionados)',
+'Buscar causas sistémicas; apoyo psicológico si precisa',
+'Dermatología',
+'Guías alopecia'),
 
--- 10. Pigmentation disorders
-('Pigmentation disorders', 'L80, L81.x',
-'Phototherapy, topical treatments.',
-'Topical corticosteroids, Topical calcineurin inhibitors',
-'Depigmentation, micropigmentation',
-'Photoprotection',
-'Dermatology',
-'Pigmentation guidelines'),
+-- 10) Nevus
+('Nevus', 'D22',
+'Observación; extirpación si atípico/sospechoso.',
+'No requiere medicación',
+'Dermatoscopia seriada, excisión si criterios',
+'Vigilar ABCDE; fotoprotección',
+'Dermatología',
+'Referencias nevos'),
 
--- 11. Lupus and connective tissue diseases
-('Lupus and connective tissue diseases', 'M32, L93',
-'Antimalarials + corticosteroids + immunosuppressants.',
-'Hydroxychloroquine, Methotrexate, Azathioprine',
-'Biological therapies',
-'Strict photoprotection',
-'Rheumatology and dermatology',
-'Multidisciplinary guidelines'),
+-- 11) Psoriasis
+('Psoriasis', 'L40, L43',
+'Tópicos → fototerapia → sistémicos/biológicos según severidad.',
+'Corticoides tópicos, Calcipotriol, Metotrexato, Biológicos (según caso)',
+'Fototerapia UVB, Apremilast',
+'Control comorbilidades; adherencia al tratamiento',
+'Dermatología',
+'Guías psoriasis'),
 
--- 12. Melanoma and nevi
-('Cutaneous melanoma', 'C43',
-'Surgery + staging + immunotherapy.',
-'Nivolumab, Pembrolizumab, BRAF/MEK inhibitors',
-'Chemotherapy, clinical trials',
-'Avoid sun exposure, follow-up',
-'Immediate oncology',
-'NCCN Guidelines'),
+-- 12) Systemic
+('Systemic', 'Variable',
+'Tratamiento de la enfermedad sistémica subyacente.',
+'Según etiología (derivar para estudio)',
+'Manejo multidisciplinar',
+'Detectar síntomas sistémicos; seguimiento',
+'Medicina interna',
+'Guías multidisciplinares'),
 
--- 13. Onychomycosis and nail disorders
-('Nail fungal infections and disorders', 'B35.1, L60.x',
-'Topical or oral antifungals depending on severity.',
-'Terbinafine, Itraconazole, Ciclopirox',
-'Laser, debridement',
-'Hygiene, avoid moisture',
-'Dermatology',
-'Onychomycosis guidelines'),
-
--- 14. Contact dermatitis and poison ivy
-('Contact dermatitis (including poison ivy)', 'L23-L25',
-'Topical/systemic corticosteroids + avoid irritant.',
-'Topical corticosteroids, Antihistamines',
-'Protective barriers',
-'Wash skin after exposure',
-'Allergy / Dermatology',
-'Dermatitis protocols'),
-
--- 15. Psoriasis and lichen planus
-('Psoriasis and lichen planus', 'L40, L43',
-'Topical therapies → phototherapy → systemic/biologics.',
-'Methotrexate, Adalimumab, Secukinumab, Ustekinumab',
-'Apremilast, UVB phototherapy',
-'Manage comorbidities',
-'Dermatology',
-'Psoriasis guidelines'),
-
--- 16. Scabies, Lyme and other infestations
-('Scabies and Lyme disease', 'B86, A69',
-'Permethrin/ivermectin; antibiotics for Lyme.',
-'Permethrin, Ivermectin, Doxycycline',
-'Environmental measures',
-'Treat contacts, bite prevention',
-'Dermatology / Infectious diseases',
-'Infestation guidelines'),
-
--- 17. Seborrheic keratosis
-('Seborrheic keratosis and benign tumors', 'D23.x, L82.x',
-'Observation or removal.',
-'No medication required',
-'Cryotherapy, curettage',
-'Monitor for changes',
-'Dermatology',
-'Dermatology guidelines'),
-
--- 18. Systemic disease with skin manifestations
-('Systemic diseases with cutaneous manifestations', 'Variable',
-'Treatment of underlying disease.',
-'Medications depending on etiology',
-'Multidisciplinary management',
-'Detect systemic symptoms',
-'Internal medicine',
-'Multidisciplinary guidelines'),
-
--- 19. Tinea and candidiasis
-('Tinea, dermatophytosis and candidiasis', 'B35.x, B37.x',
-'Topical or oral antifungals.',
-'Terbinafine, Itraconazole, Topical azoles',
-'Debridement, hygiene',
-'Control predisposing factors',
-'Dermatology',
-'Mycosis guidelines'),
-
--- 20. Urticaria
+-- 13) Urticaria
 ('Urticaria', 'L50',
-'H1 antihistamines; omalizumab if refractory.',
-'Cetirizine, Loratadine, Omalizumab',
-'Short-term systemic corticosteroids',
-'Identify triggers',
-'Allergy department',
-'Urticaria guidelines'),
+'Antihistamínicos H1; escalado si refractaria.',
+'Cetirizina/Loratadina; Omalizumab (refractaria)',
+'Corticoides cortos (seleccionados)',
+'Identificar desencadenantes',
+'Alergología / Dermatología',
+'Guías urticaria'),
 
--- 21. Vascular tumors
-('Vascular tumors', 'D18.0',
-'Observation or laser/sclerosing treatment.',
-'Propranolol, Sclerosing agents',
-'Surgery, laser',
-'Follow-up depending on evolution',
-'Dermatology / Vascular surgery',
-'Vascular malformation guidelines'),
-
--- 22. Vasculitis
-('Cutaneous vasculitis', 'M30-M31',
-'Systemic corticosteroids + immunosuppression.',
-'Methotrexate, Azathioprine, Cyclophosphamide, Rituximab',
-'Biologics',
-'Evaluate systemic involvement',
-'Rheumatology',
-'Vasculitis guidelines'),
-
--- 23. Warts and molluscum
-('Warts and molluscum contagiosum', 'B07, A63',
-'Destructive or topical therapies.',
-'Salicylic acid, Imiquimod, Cryotherapy',
-'Observation in children, topical immunotherapy',
-'Advice on contagion',
-'Dermatology',
-'Viral infection guidelines');
-
+-- 14) Viral_Infection
+('Viral_Infection', 'B07, A63',
+'Terapias destructivas o tópicas según lesión.',
+'Ácido salicílico, Imiquimod, Crioterapia',
+'Observación (niños/lesiones pequeñas), inmunoterapia tópica',
+'Consejos contagio; prevención',
+'Dermatología',
+'Guías infecciones virales');
 
 /* ===========================================================
    9. DIAGNOSTICOS MEDICOS
