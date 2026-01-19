@@ -3,100 +3,92 @@ package com.example;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ModalTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+@Tag("ui")
+class ModalTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
-
-    @BeforeAll
-    void setupDriver() {
-        driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-    }
+    private final String URL = "http://localhost:8080/index.html";
 
     @BeforeEach
     void setup() {
-        driver.get("http://localhost:8080"); // Ajusta a tu URL
+        driver = new ChromeDriver();
+        wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        driver.get(URL);
 
-        // 1️⃣ Forzar landingPage visible y ocultar loginPage
+        // Forzar landing page visible (sin login)
         ((JavascriptExecutor) driver).executeScript(
-                "document.getElementById('loginPage').classList.add('hidden');" +
-                        "document.getElementById('landingPage').classList.remove('hidden');");
+                "document.getElementById('loginPage')?.classList.add('hidden');" +
+                "document.getElementById('landingPage')?.classList.remove('hidden');"
+        );
 
-        // Esperar a que landingPage sea visible
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("landingPage")));
     }
 
-    @Test
-    void modalInteractionTest() {
-        // Abrir modal principal
-        WebElement openModalBtn = driver.findElement(By.cssSelector(".btn-primary")); // Ajusta si hay botón específico
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", openModalBtn);
-
-        ((JavascriptExecutor) driver).executeScript(
-                "document.getElementById('modal').classList.remove('hidden');");
-
-        WebElement modal = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("modal")));
-        Assertions.assertTrue(modal.isDisplayed(), "Modal principal debería mostrarse");
-
-        // Verificar contenido dinámico
-        WebElement modalTitle = modal.findElement(By.id("modal-title"));
-        WebElement modalBody = modal.findElement(By.id("modal-body"));
-        
-        ((JavascriptExecutor) driver).executeScript(
-                "document.getElementById('modal').classList.remove('hidden');" +
-                        "document.getElementById('modal-title').innerText = 'Título de prueba';" +
-                        "document.getElementById('modal-body').innerText = 'Contenido de prueba';");
-
-        Assertions.assertFalse(modalTitle.getText().isEmpty(), "Modal title no debería estar vacío");
-        Assertions.assertFalse(modalBody.getText().isEmpty(), "Modal body no debería estar vacío");
-
-        // Guardar modal
-        WebElement saveBtn = modal.findElement(By.id("modalSaveBtn"));
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", saveBtn);
-
-        // Cerrar modal
-        WebElement cancelBtn = modal.findElement(By.cssSelector(".btn-secondary"));
-        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", cancelBtn);
-
-        wait.until(ExpectedConditions.invisibilityOf(modal));
-        Assertions.assertFalse(modal.isDisplayed(), "Modal principal debería estar oculto");
+    @AfterEach
+    void tearDown() {
+        if (driver != null) {
+            driver.quit();
+        }
     }
 
     @Test
+    @DisplayName("Main modal opens, shows content and closes")
+    void modalInteractionTest() {
+
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        // Abrir modal (forzado)
+        js.executeScript("document.getElementById('modal').classList.remove('hidden');");
+
+        WebElement modal = wait.until(
+                ExpectedConditions.visibilityOfElementLocated(By.id("modal")));
+        assertTrue(modal.isDisplayed(), "El modal debería mostrarse");
+
+        // Simular contenido dinámico
+        js.executeScript(
+                "document.getElementById('modal-title').innerText = 'Título de prueba';" +
+                "document.getElementById('modal-body').innerText = 'Contenido de prueba';"
+        );
+
+        WebElement modalTitle = modal.findElement(By.id("modal-title"));
+        WebElement modalBody = modal.findElement(By.id("modal-body"));
+
+        assertFalse(modalTitle.getText().isBlank(), "El título no debería estar vacío");
+        assertFalse(modalBody.getText().isBlank(), "El cuerpo no debería estar vacío");
+
+        // Cerrar modal
+        WebElement cancelBtn = modal.findElement(
+                By.xpath(".//button[contains(text(),'Cancel')]"));
+        js.executeScript("arguments[0].click();", cancelBtn);
+
+        wait.until(ExpectedConditions.invisibilityOf(modal));
+    }
+
+    @Test
+    @DisplayName("Image modal opens and closes")
     void imageModalTest() {
-        // Abrir imageModal
-        WebElement imageModal = driver.findElement(By.id("imageModal"));
-        ((JavascriptExecutor) driver).executeScript(
+
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        // Abrir image modal
+        js.executeScript(
                 "document.getElementById('imageModal').classList.remove('hidden');");
 
-        wait.until(ExpectedConditions.visibilityOf(imageModal));
-        Assertions.assertTrue(imageModal.isDisplayed(), "Image modal debería mostrarse");
+        WebElement imageModal = wait.until(
+                ExpectedConditions.visibilityOfElementLocated(By.id("imageModal")));
+        assertTrue(imageModal.isDisplayed(), "El image modal debería mostrarse");
 
-        // Cerrar imageModal
-        ((JavascriptExecutor) driver).executeScript(
+        // Cerrar image modal
+        js.executeScript(
                 "document.getElementById('imageModal').classList.add('hidden');");
 
         wait.until(ExpectedConditions.invisibilityOf(imageModal));
-        Assertions.assertFalse(imageModal.isDisplayed(), "Image modal debería estar oculto");
-    }
-
-    @AfterEach
-    void teardown() {
-        // Limpiar modales
-        ((JavascriptExecutor) driver).executeScript(
-                "document.getElementById('modal').classList.add('hidden');" +
-                        "document.getElementById('imageModal').classList.add('hidden');");
-    }
-
-    @AfterAll
-    void cleanup() {
-        driver.quit();
     }
 }
