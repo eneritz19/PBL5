@@ -16,7 +16,6 @@ class AdminDashboardTest {
         private WebDriverWait wait;
         private static final String BASE_URL = "http://localhost:8080/index.html";
 
-
         @BeforeEach
         void setup() {
                 driver = new ChromeDriver();
@@ -29,6 +28,7 @@ class AdminDashboardTest {
                                         By.xpath("//button[contains(text(),'Login')]")));
                         loginButtonMain.click();
                 } catch (TimeoutException ignored) {
+                        System.out.println("Pantalla inicial no encontrada, continuando con el flujo.");
                 }
 
                 // Esperar login

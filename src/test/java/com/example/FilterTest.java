@@ -8,8 +8,6 @@ import org.openqa.selenium.support.ui.*;
 import java.time.Duration;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @Tag("ui")
 class FilterTest {
 
@@ -78,7 +76,7 @@ class FilterTest {
         searchInput.sendKeys(searchText);
 
         // Esperar un momento a que se aplique el filtro
-        wait.until(driver -> {
+        wait.until(d -> {
             List<WebElement> patientsAfter = driver.findElements(By.cssSelector("#doctorPatientsList .patient-card"));
             return patientsAfter.size() <= countBefore; // lista se reduce o queda igual si no hay coincidencias
         });
@@ -113,6 +111,7 @@ class FilterTest {
 
         // Verificar si al menos un doctor contiene el texto buscado
         boolean found = doctors.stream().anyMatch(e -> e.getText().contains(searchName));
+        Assertions.assertTrue(found, "Al menos un doctor debe coincidir con el filtro");
 
         // Esto pasa si el filtro se aplica sin errores, aunque no haya coincidencias
         Assertions.assertTrue(true, "Filtro aplicado correctamente en el panel de doctores");

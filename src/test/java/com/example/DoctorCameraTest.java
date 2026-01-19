@@ -74,7 +74,7 @@ class DoctorCameraTest {
         btnCamera.click();
 
         // Verificar que el video se muestra
-        wait.until(driver -> video.isDisplayed());
+        wait.until(d -> video.isDisplayed());
         assertTrue(video.isDisplayed(), "Video should be visible when camera is started");
     }
 }
