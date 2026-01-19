@@ -1,15 +1,10 @@
 package com.example;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,10 +14,8 @@ class DoctorLoginServiceTest {
 
     @BeforeEach
     void setup() throws Exception {
-        // Conexión a base de datos en memoria
         conn = DriverManager.getConnection("jdbc:h2:mem:doctorDb;DB_CLOSE_DELAY=-1");
 
-        // Creamos la tabla con tu estructura exacta
         conn.createStatement().execute(
                 "CREATE TABLE doctors (" +
                         "doctor_code VARCHAR(20) PRIMARY KEY, " +
@@ -32,7 +25,6 @@ class DoctorLoginServiceTest {
                         "id_clinic INT" +
                         ");");
 
-        // Insertamos tus doctores reales para el test
         insertDoctor("MED001", "Dr. Juan Perez", "jperez@clinic.com", "med123", 1);
         insertDoctor("MED002", "Dra. Laura Gomez", "lgomez@clinic.com", "med123", 1);
         insertDoctor("MED003", "Dr. Carlos Ruiz", "cruiz@clinic.com", "med123", 2);
@@ -46,13 +38,12 @@ class DoctorLoginServiceTest {
 
     private void insertDoctor(String code, String name, String email, String plainPassword, int clinicId)
             throws Exception {
-        String hash = sha256(plainPassword);
         PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO doctors(doctor_code, name, email, password_hash, id_clinic) VALUES(?,?,?,?,?)");
+                "INSERT INTO doctors VALUES (?,?,?,?,?)");
         ps.setString(1, code);
         ps.setString(2, name);
         ps.setString(3, email);
-        ps.setString(4, hash);
+        ps.setString(4, sha256(plainPassword));
         ps.setInt(5, clinicId);
         ps.executeUpdate();
         ps.close();
@@ -68,15 +59,28 @@ class DoctorLoginServiceTest {
     }
 
     private boolean attemptLogin(String email, String password) throws Exception {
+
+        if (email == null || password == null)
+            return false;
+
+        email = email.trim();
+        password = password.trim();
+
+        if (email.isEmpty() || password.isEmpty())
+            return false;
+
         PreparedStatement ps = conn.prepareStatement(
                 "SELECT password_hash FROM doctors WHERE email = ?");
         ps.setString(1, email);
+
         ResultSet rs = ps.executeQuery();
         if (!rs.next())
             return false;
-        String stored = rs.getString(1);
+
+        String stored = rs.getString("password_hash");
         rs.close();
         ps.close();
+
         return stored.equals(sha256(password));
     }
 
@@ -92,11 +96,11 @@ class DoctorLoginServiceTest {
 
     @Test
     void checkDoctorCodeAndClinic() throws Exception {
-        // Verificar que los datos adicionales se guardaron bien
-        PreparedStatement ps = conn.prepareStatement("SELECT doctor_code, id_clinic FROM doctors WHERE email = ?");
+        PreparedStatement ps = conn.prepareStatement(
+                "SELECT doctor_code, id_clinic FROM doctors WHERE email = ?");
         ps.setString(1, "cruiz@clinic.com");
-        ResultSet rs = ps.executeQuery();
 
+        ResultSet rs = ps.executeQuery();
         assertTrue(rs.next());
         assertEquals("MED003", rs.getString("doctor_code"));
         assertEquals(2, rs.getInt("id_clinic"));
@@ -107,12 +111,11 @@ class DoctorLoginServiceTest {
 
     @Test
     void loginFailsWhenDoctorFieldsAreEmpty() throws Exception {
-        assertFalse(attemptLogin(" ", " "), "The system should treat blank spaces as empty fields.");
+        assertFalse(attemptLogin(" ", " "));
     }
 
     @Test
     void loginFailsWithEmptyPasswordForJuanPerez() throws Exception {
-        // Específicamente para un usuario que sí existe en el setup
-        assertFalse(attemptLogin("jperez@clinic.com", ""), "Juan Perez should not be able to log in without a password.");
+        assertFalse(attemptLogin("jperez@clinic.com", ""));
     }
 }

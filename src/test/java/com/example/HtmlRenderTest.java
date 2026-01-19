@@ -12,19 +12,35 @@ import static org.junit.jupiter.api.Assertions.*;
 class HtmlRenderTest {
 
     @Test
-    void indexContainsLoginForm() throws Exception {
-        File html = new File(System.getProperty("user.dir"), "src/main/webapp/index.html");
-        assertTrue(html.exists(), "El archivo index.html debe existir en src/main/webapp/");
+    void indexContainsLoginElements() throws Exception {
+
+        File html = new File(System.getProperty("user.dir"),
+                "src/main/webapp/index.html");
+
+        assertTrue(html.exists(),
+                "index.html debe existir en src/main/webapp/");
 
         Document doc = Jsoup.parse(html, "UTF-8");
 
-        // El HTML actual no usa un <form>, los campos son inputs con id y un botón con onclick
-        assertNotNull(doc.selectFirst("#email"), "Debe existir un input con id=email");
-        assertNotNull(doc.selectFirst("#password"), "Debe existir un input con id=password");
+        /* ---------- INPUTS ---------- */
 
-        Element btn = doc.selectFirst("button");
-        assertNotNull(btn, "Debe existir un botón en la página");
-        String onclick = btn.hasAttr("onclick") ? btn.attr("onclick") : "";
-        assertTrue(onclick.contains("handleLogin") || btn.text().toLowerCase().contains("login"), "El botón debe disparar handleLogin() o contener el texto 'Login'");
+        Element emailInput = doc.selectFirst("#email");
+        assertNotNull(emailInput, "Debe existir un input con id='email'");
+
+        Element passwordInput = doc.selectFirst("#password");
+        assertNotNull(passwordInput, "Debe existir un input con id='password'");
+
+        /* ---------- BOTÓN LOGIN ---------- */
+
+        // 1️⃣ Intentar por id (forma más fiable)
+        Element loginBtn = doc.selectFirst("#loginBtn");
+
+        // 2️⃣ Si no existe, buscar botón con texto Login
+        if (loginBtn == null) {
+            loginBtn = doc.selectFirst("button:matchesOwn((?i)login)");
+        }
+
+        assertNotNull(loginBtn,
+                "Debe existir un botón de login (id='loginBtn' o texto 'Login')");
     }
 }

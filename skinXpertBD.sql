@@ -14,11 +14,6 @@ CREATE TABLE clinics (
     address VARCHAR(255)
 );
 
-INSERT INTO clinics (name, address) VALUES
-('Clinica Dermatológica Central', 'Av. Salud 123'),
-('Clinica Dermatologica Central', 'Av. Salud 123'),
-('Clinica Especialistas del Sur', 'Calle Medicina 45');
-
 
 /* ===========================================================
    2. ADMIN
@@ -32,9 +27,6 @@ CREATE TABLE admin (
     password VARCHAR(256) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-INSERT INTO admin (name, email, password) VALUES
-('Admin1', 'admin@skinXpert.com', SHA2('admin123',256));
 
 
 /* ===========================================================
@@ -54,11 +46,6 @@ CREATE TABLE doctors (
         ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-INSERT INTO doctors (doctor_code, name, email, password, id_clinic) VALUES
-('MED001', 'Dr. Juan Perez', 'jperez@clinic.com', SHA2('med123',256), 1),
-('MED002', 'Dra. Laura Gomez', 'lgomez@clinic.com', SHA2('med123',256), 1),
-('MED003', 'Dr. Carlos Ruiz', 'cruiz@clinic.com', SHA2('med123',256), 2);
-
 
 /* ===========================================================
    4. PACIENTES
@@ -77,10 +64,6 @@ CREATE TABLE patients (
         ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-INSERT INTO patients (dni, name, email, password, id_doctor) VALUES
-('12345678A', 'Ana Martinez', 'ana@example.com', SHA2('ana123',256), 1),
-('87654321B', 'Pedro Lopez', 'pedro@example.com', SHA2('pedro123',256), 1),
-('11223344C', 'Carla Torres', 'carla@example.com', SHA2('carla123',256), 2);
 
 
 /* ===========================================================
@@ -93,18 +76,13 @@ CREATE TABLE appointments (
     id_patient INT NOT NULL,
     id_doctor INT NOT NULL,
     date DATETIME NOT NULL,
-    status ENUM('pendiente','realizada','cancelada') DEFAULT 'pendiente',
+    status ENUM('pending','completed','canceled') DEFAULT 'pending',
     comments TEXT,
     FOREIGN KEY (id_patient) REFERENCES patients(id_patient)
         ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (id_doctor) REFERENCES doctors(id_doctor)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES
-(1, 1, '2025-02-15 10:00:00', 'pendiente', 'Revision inicial'),
-(2, 1, '2025-02-16 12:00:00', 'realizada', 'Control de evolucion'),
-(3, 2, '2025-02-20 09:30:00', 'pendiente', 'Estudio de lesion');
 
 
 /* ===========================================================
@@ -117,15 +95,10 @@ CREATE TABLE photo_requests (
     id_patient INT NOT NULL,
     urgency TINYINT DEFAULT 1,
     upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('pendiente','revisando','diagnosticada') DEFAULT 'pendiente',
+    status ENUM('pending','reviewing','diagnosed') DEFAULT 'pending',
     FOREIGN KEY (id_patient) REFERENCES patients(id_patient)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-INSERT INTO photo_requests (id_patient, urgency, status) VALUES
-(1, 3, 'pendiente'),
-(2, 1, 'revisando'),
-(3, 2, 'pendiente');
 
 
 /* ===========================================================
@@ -142,10 +115,6 @@ CREATE TABLE images (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-INSERT INTO images (id_request, file_path) VALUES
-(1, '/uploads/foto_ana_01.jpg'),
-(2, '/uploads/foto_pedro_01.jpg'),
-(3, '/uploads/foto_carla_01.jpg');
 
 
 /* ===========================================================
@@ -165,134 +134,6 @@ CREATE TABLE skin_diseases (
     source VARCHAR(255)
 );
 
-INSERT INTO skin_diseases 
-(disease, ICD_code, standard_treatment, medications, alternatives, recommendations, referral, source)
-VALUES
--- 1) Acne_Rosacea
-('Acne_Rosacea', 'L70.0, L71',
-'Higiene + tratamiento tópico; antibióticos si inflamatorio moderado-severo.',
-'Retinoides tópicos, Peróxido de benzoilo, Doxiciclina, Isotretinoína, Metronidazol tópico',
-'Terapias hormonales, Láser vascular',
-'Evitar irritantes y desencadenantes; seguimiento dermatológico',
-'Dermatología',
-'Guías dermatología'),
-
--- 2) AK
-('AK', 'L57.0',
-'Crioterapia o tratamientos tópicos; seguimiento por riesgo de progresión.',
-'5-FU, Imiquimod, Diclofenaco gel, Terapia fotodinámica',
-'PDT, Láser, Observación en casos seleccionados',
-'Fotoprotección estricta; revisiones periódicas',
-'Dermatología',
-'Guías cáncer cutáneo'),
-
--- 3) BCC
-('BCC', 'C44.x',
-'Escisión quirúrgica o técnicas destructivas según localización/tamaño.',
-'Imiquimod (casos superficiales), Vismodegib (avanzados seleccionados)',
-'Cirugía de Mohs, Radioterapia (seleccionados)',
-'Fotoprotección; control dermatológico',
-'Dermatología / Oncología',
-'Guías cáncer cutáneo'),
-
--- 4) MEL
-('MEL', 'C43',
-'Escisión + estadificación; manejo oncológico si avanzado.',
-'Pembrolizumab, Nivolumab; terapias dirigidas BRAF/MEK si aplica',
-'Ensayos clínicos, Quimioterapia (casos seleccionados)',
-'Evitar sol; seguimiento estrecho',
-'Oncología (urgente)',
-'Guías melanoma'),
-
--- 5) SCC
-('SCC', 'C44.x',
-'Escisión quirúrgica; estadificación si alto riesgo.',
-'5-FU tópico (in situ seleccionados), Inmunoterapia (avanzados seleccionados)',
-'Cirugía de Mohs, Radioterapia (seleccionados)',
-'Fotoprotección; revisiones periódicas',
-'Oncología / Dermatología (urgente)',
-'Guías carcinoma escamoso'),
-
--- 6) Benign_Tumor
-('Benign_Tumor', 'D23.x, L82.x',
-'Observación o eliminación si molesto/sospechoso.',
-'No suele requerir medicación',
-'Crioterapia, Curetaje, Láser',
-'Monitorizar cambios',
-'Dermatología',
-'Guías dermatología'),
-
--- 7) Dermatitis
-('Dermatitis', 'L20, L30',
-'Emolientes + corticoide tópico; escalado si grave.',
-'Corticoides tópicos, Tacrolimus/Pimecrolimus, Dupilumab (grave)',
-'Fototerapia, inmunosupresión seleccionada',
-'Hidratación; evitar irritantes/alérgenos',
-'Dermatología',
-'Guías dermatitis'),
-
--- 8) Fungal_Infection
-('Fungal_Infection', 'B35.x, B37.x',
-'Antifúngicos tópicos u orales según extensión.',
-'Terbinafina, Itraconazol, Azoles tópicos',
-'Desbridamiento en casos seleccionados',
-'Higiene; evitar humedad',
-'Dermatología',
-'Guías micosis'),
-
--- 9) Hair_Disorder
-('Hair_Disorder', 'L63, L66',
-'Diagnóstico etiológico; tratamientos tópicos/infiltrados según caso.',
-'Minoxidil, Corticoides, Inmunomoduladores (según etiología)',
-'Trasplante capilar, láser (seleccionados)',
-'Buscar causas sistémicas; apoyo psicológico si precisa',
-'Dermatología',
-'Guías alopecia'),
-
--- 10) Nevus
-('Nevus', 'D22',
-'Observación; extirpación si atípico/sospechoso.',
-'No requiere medicación',
-'Dermatoscopia seriada, excisión si criterios',
-'Vigilar ABCDE; fotoprotección',
-'Dermatología',
-'Referencias nevos'),
-
--- 11) Psoriasis
-('Psoriasis', 'L40, L43',
-'Tópicos → fototerapia → sistémicos/biológicos según severidad.',
-'Corticoides tópicos, Calcipotriol, Metotrexato, Biológicos (según caso)',
-'Fototerapia UVB, Apremilast',
-'Control comorbilidades; adherencia al tratamiento',
-'Dermatología',
-'Guías psoriasis'),
-
--- 12) Systemic
-('Systemic', 'Variable',
-'Tratamiento de la enfermedad sistémica subyacente.',
-'Según etiología (derivar para estudio)',
-'Manejo multidisciplinar',
-'Detectar síntomas sistémicos; seguimiento',
-'Medicina interna',
-'Guías multidisciplinares'),
-
--- 13) Urticaria
-('Urticaria', 'L50',
-'Antihistamínicos H1; escalado si refractaria.',
-'Cetirizina/Loratadina; Omalizumab (refractaria)',
-'Corticoides cortos (seleccionados)',
-'Identificar desencadenantes',
-'Alergología / Dermatología',
-'Guías urticaria'),
-
--- 14) Viral_Infection
-('Viral_Infection', 'B07, A63',
-'Terapias destructivas o tópicas según lesión.',
-'Ácido salicílico, Imiquimod, Crioterapia',
-'Observación (niños/lesiones pequeñas), inmunoterapia tópica',
-'Consejos contagio; prevención',
-'Dermatología',
-'Guías infecciones virales');
 
 /* ===========================================================
    9. DIAGNOSTICOS MEDICOS
@@ -318,9 +159,198 @@ CREATE TABLE diagnoses (
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) VALUES
-(1, 1, 1, 1, 87.5, 'Lesion compatible con acne leve.'),
-(2, 1, 2, 2, 92.3, 'Dermatitis en fase activa.'),
-(3, 2, 3, 3, 75.0, 'Placas compatibles con psoriasis.');
+/* ===========================================================
+   1. CLINICS
+   =========================================================== */
 
-   
+INSERT INTO clinics (name, address) VALUES
+('Central Dermatology Clinic', 'Health Ave 123'),
+('Southern Specialists Clinic', 'Medicine Street 45');
+
+
+/* ===========================================================
+   2. ADMIN
+   =========================================================== */
+
+INSERT INTO admin (name, email, password) VALUES
+('Admin1', 'admin@skinXpert.com', SHA2('admin123',256));
+
+
+/* ===========================================================
+   3. DOCTORS
+   =========================================================== */
+
+INSERT INTO doctors (doctor_code, name, email, password, id_clinic) VALUES
+('MED001', 'Dr. Juan Perez', 'jperez@clinic.com', SHA2('med123',256), 1),
+('MED002', 'Dr. Laura Gomez', 'lgomez@clinic.com', SHA2('med123',256), 1),
+('MED003', 'Dr. Carlos Ruiz', 'cruiz@clinic.com', SHA2('med123',256), 2);
+
+
+/* ===========================================================
+   4. PATIENTS
+   =========================================================== */
+
+INSERT INTO patients (dni, name, email, password, id_doctor) VALUES
+('12345678A', 'Ana Martinez', 'ana@example.com', SHA2('ana123',256), 1),
+('87654321B', 'Pedro Lopez', 'pedro@example.com', SHA2('pedro123',256), 1),
+('11223344C', 'Carla Torres', 'carla@example.com', SHA2('carla123',256), 2);
+
+
+/* ===========================================================
+   5. APPOINTMENTS
+   =========================================================== */
+
+INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES
+(1, 1, '2025-02-15 10:00:00', 'pending', 'Initial check-up'),
+(2, 1, '2025-02-16 12:00:00', 'completed', 'Follow-up evaluation'),
+(3, 2, '2025-02-20 09:30:00', 'pending', 'Lesion assessment');
+
+
+/* ===========================================================
+   6. PHOTO REQUESTS
+   =========================================================== */
+
+INSERT INTO photo_requests (id_patient, urgency, status) VALUES
+(1, 3, 'pending'),
+(2, 1, 'reviewing'),
+(3, 2, 'pending');
+
+
+/* ===========================================================
+   7. IMAGES
+   =========================================================== */
+
+INSERT INTO images (id_request, file_path) VALUES
+(1, '/uploads/ana_photo_01.jpg'),
+(2, '/uploads/pedro_photo_01.jpg'),
+(3, '/uploads/carla_photo_01.jpg');
+
+
+/* ===========================================================
+   8. SKIN DISEASES
+   =========================================================== */
+
+INSERT INTO skin_diseases
+(disease, ICD_code, standard_treatment, medications, alternatives, recommendations, referral, source)
+VALUES
+('Acne Rosacea', 'L70.0, L71',
+'Hygiene and topical treatment; antibiotics if moderate to severe inflammation.',
+'Topical retinoids, Benzoyl peroxide, Doxycycline, Isotretinoin, Topical metronidazole',
+'Hormonal therapies, Vascular laser',
+'Avoid irritants and triggers; dermatologic follow-up',
+'Dermatology',
+'Dermatology guidelines'),
+
+('Actinic Keratosis', 'L57.0',
+'Cryotherapy or topical treatments; follow-up due to progression risk.',
+'5-FU, Imiquimod, Diclofenac gel, Photodynamic therapy',
+'PDT, Laser, Observation in selected cases',
+'Strict photoprotection; periodic check-ups',
+'Dermatology',
+'Skin cancer guidelines'),
+
+('Basal Cell Carcinoma', 'C44.x',
+'Surgical excision or destructive techniques depending on size and location.',
+'Imiquimod (superficial cases), Vismodegib (selected advanced cases)',
+'Mohs surgery, Radiotherapy (selected)',
+'Photoprotection; dermatologic surveillance',
+'Dermatology / Oncology',
+'Skin cancer guidelines'),
+
+('Melanoma', 'C43',
+'Excision and staging; oncologic management if advanced.',
+'Pembrolizumab, Nivolumab; BRAF/MEK targeted therapy if applicable',
+'Clinical trials, Chemotherapy (selected cases)',
+'Avoid sun exposure; close follow-up',
+'Oncology (urgent)',
+'Melanoma guidelines'),
+
+('Squamous Cell Carcinoma', 'C44.x',
+'Surgical excision; staging if high risk.',
+'Topical 5-FU (selected in situ cases), Immunotherapy (selected advanced cases)',
+'Mohs surgery, Radiotherapy (selected)',
+'Photoprotection; periodic reviews',
+'Oncology / Dermatology (urgent)',
+'Squamous carcinoma guidelines'),
+
+('Benign Tumor', 'D23.x, L82.x',
+'Observation or removal if symptomatic or suspicious.',
+'Usually no medication required',
+'Cryotherapy, Curettage, Laser',
+'Monitor for changes',
+'Dermatology',
+'Dermatology guidelines'),
+
+('Dermatitis', 'L20, L30',
+'Emollients plus topical corticosteroids; escalation if severe.',
+'Topical corticosteroids, Tacrolimus/Pimecrolimus, Dupilumab (severe)',
+'Phototherapy, Selected immunosuppression',
+'Moisturization; avoid irritants/allergens',
+'Dermatology',
+'Dermatitis guidelines'),
+
+('Fungal Infection', 'B35.x, B37.x',
+'Topical or oral antifungals depending on extent.',
+'Terbinafine, Itraconazole, Topical azoles',
+'Debridement in selected cases',
+'Hygiene; avoid moisture',
+'Dermatology',
+'Mycosis guidelines'),
+
+('Hair Disorder', 'L63, L66',
+'Etiologic diagnosis; topical or infiltrative treatments as needed.',
+'Minoxidil, Corticosteroids, Immunomodulators (depending on cause)',
+'Hair transplant, Laser therapy (selected)',
+'Investigate systemic causes; psychological support if needed',
+'Dermatology',
+'Alopecia guidelines'),
+
+('Nevus', 'D22',
+'Observation; excision if atypical or suspicious.',
+'No medication required',
+'Serial dermoscopy, excision if criteria met',
+'Monitor ABCDE criteria; photoprotection',
+'Dermatology',
+'Nevus references'),
+
+('Psoriasis', 'L40, L43',
+'Topicals → phototherapy → systemic/biologic therapy depending on severity.',
+'Topical corticosteroids, Calcipotriol, Methotrexate, Biologics (case-dependent)',
+'UVB phototherapy, Apremilast',
+'Manage comorbidities; treatment adherence',
+'Dermatology',
+'Psoriasis guidelines'),
+
+('Systemic Disease', 'Variable',
+'Treatment of the underlying systemic disease.',
+'According to etiology (refer for evaluation)',
+'Multidisciplinary management',
+'Detect systemic symptoms; follow-up',
+'Internal Medicine',
+'Multidisciplinary guidelines'),
+
+('Urticaria', 'L50',
+'H1 antihistamines; escalation if refractory.',
+'Cetirizine/Loratadine; Omalizumab (refractory)',
+'Short-course corticosteroids (selected)',
+'Identify triggers',
+'Allergy / Dermatology',
+'Urticaria guidelines'),
+
+('Viral Infection', 'B07, A63',
+'Destructive or topical therapies depending on lesion.',
+'Salicylic acid, Imiquimod, Cryotherapy',
+'Observation (children/small lesions), topical immunotherapy',
+'Contagion prevention advice',
+'Dermatology',
+'Viral infection guidelines');
+
+
+/* ===========================================================
+   9. DIAGNOSES
+   =========================================================== */
+
+INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) VALUES
+(1, 1, 1, 1, 87.5, 'Lesion compatible with mild acne.'),
+(2, 1, 2, 2, 92.3, 'Dermatitis in active phase.'),
+(3, 2, 3, 3, 75.0, 'Plaques compatible with psoriasis.');

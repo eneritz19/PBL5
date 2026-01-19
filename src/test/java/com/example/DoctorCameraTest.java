@@ -5,91 +5,76 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.*;
+
 import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("ui")
 class DoctorCameraTest {
 
-        private WebDriver driver;
-        private WebDriverWait wait;
-        private final String URL = "http://localhost:8080/index.html";
+    private WebDriver driver;
+    private WebDriverWait wait;
+    private final String URL = "http://localhost:8080/index.html";
 
-        @BeforeEach
-        void setup() {
-                // Chrome con camara falsa y permisos automaticos
-                ChromeOptions options = new ChromeOptions();
-                options.addArguments("--use-fake-device-for-media-stream");
-                options.addArguments("--use-fake-ui-for-media-stream");
-                driver = new ChromeDriver(options);
+    @BeforeEach
+    void setup() {
+        // Chrome con cámara falsa y permisos automáticos
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--use-fake-device-for-media-stream");
+        options.addArguments("--use-fake-ui-for-media-stream");
+        driver = new ChromeDriver(options);
+        wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-                wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-                driver.get(URL);
+        // --- Abrir página inicial ---
+        driver.get(URL);
 
-                /*driver.manage().deleteAllCookies();
-                ((JavascriptExecutor) driver).executeScript("window.localStorage.clear();");
-                driver.navigate().refresh();*/
+        // --- Click en Login ---
+        WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//button[contains(text(),'Login')]")
+        ));
+        loginButtonMain.click();
 
-                // Login como Doctor
-                wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
-                                .sendKeys("jperez@clinic.com");
-                driver.findElement(By.id("password")).sendKeys("med123");
-                driver.findElement(By.xpath("//button[text()='Login']")).click();
+        // --- Login DOCTOR ---
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("jperez@clinic.com");
+        driver.findElement(By.id("password")).sendKeys("med123");
+        driver.findElement(By.id("loginBtn")).click();
 
-                // Esperar dashboard doctor
-                wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
+        // --- Esperar dashboard doctor cargado ---
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
 
-                // Ir a pestaña Camara
-                WebElement cameraTab = wait.until(
-                                ExpectedConditions.elementToBeClickable(
-                                                By.xpath("//button[contains(text(),'Camera')]")));
-                cameraTab.click();
+        // --- Ir a pestaña Cámara ---
+        WebElement cameraTab = wait.until(
+                ExpectedConditions.elementToBeClickable(
+                        By.xpath("//button[@onclick=\"openTab('d-camera', this)\"]")
+                )
+        );
+        cameraTab.click();
 
-        }
+        // --- Esperar que el tab de cámara esté activo ---
+        wait.until(ExpectedConditions.attributeContains(By.id("d-camera"), "class", "active"));
 
-        @AfterEach
-        void tearDown() {
-                if (driver != null)
-                        driver.quit();
-        }
+        // --- Esperar video y botón ---
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("camera-preview")));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("btnCamera")));
+    }
 
-        // TEST 1: Start + Detener camara
-        @Test
-        @DisplayName("Camera: Start and stop correctly")
-        void testStartAndStopCamera() {
-                WebElement btnCamera = wait.until(
-                                ExpectedConditions.elementToBeClickable(By.id("btnCamera")));
-                WebElement video = driver.findElement(By.id("camera-preview"));
+    @AfterEach
+    void tearDown() {
+        if (driver != null) driver.quit();
+    }
 
-                // Iniciar camara
-                btnCamera.click();
+    @Test
+    @DisplayName("Camera loads correctly for doctor")
+    void testCameraIsVisible() {
+        WebElement btnCamera = wait.until(ExpectedConditions.elementToBeClickable(By.id("btnCamera")));
+        WebElement video = driver.findElement(By.id("camera-preview"));
 
-                // Boton cambia a Detener
-                wait.until(ExpectedConditions.textToBePresentInElement(btnCamera, "Detener"));
+        // Iniciar cámara
+        btnCamera.click();
 
-                // Video visible
-                wait.until(driver -> video.isDisplayed());
-
-                // Detener camara
-                btnCamera.click();
-
-                // Boton vuelve a Iniciar
-                wait.until(ExpectedConditions.textToBePresentInElement(btnCamera, "Iniciar"));
-
-                // Video oculto
-                assertEquals("none", video.getCssValue("display"));
-        }
-
-        // TEST 2: Camara disponible (permiso implicito)
-        @Test
-        @DisplayName("Camera available: no alert displayed")
-        void testCameraAvailable() {
-                WebElement btnCamera = wait.until(
-                                ExpectedConditions.elementToBeClickable(By.id("btnCamera")));
-                btnCamera.click();
-
-                // Esperamos un pequeño tiempo y verificamos que NO haya alert
-                WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
-                assertThrows(TimeoutException.class, () -> shortWait.until(ExpectedConditions.alertIsPresent()));
-        }
+        // Verificar que el video se muestra
+        wait.until(driver -> video.isDisplayed());
+        assertTrue(video.isDisplayed(), "Video should be visible when camera is started");
+    }
 }

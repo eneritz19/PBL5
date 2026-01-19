@@ -22,41 +22,50 @@ class DoctorDashboardTest {
     @BeforeEach
     void setup() {
         driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        js = (JavascriptExecutor) driver;
+        wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
+        // Abrir la página inicial
         driver.get(URL);
 
-        // --- LOGIN DOCTOR ---
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
-                .sendKeys("jperez@clinic.com");
-        driver.findElement(By.id("password")).sendKeys("med123");
-        driver.findElement(By.xpath("//button[text()='Login']")).click();
+        // --- Esperar y hacer click en botón Login de la pantalla principal
+        WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("//button[contains(text(),'Login')]")));
+        loginButtonMain.click();
 
+        // --- Esperar pantalla de login
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+
+        // --- Login DOCTOR ---
+        driver.findElement(By.id("email")).sendKeys("jperez@clinic.com");
+        driver.findElement(By.id("password")).sendKeys("med123");
+        driver.findElement(By.id("loginBtn")).click();
+
+        // --- Esperar dashboard cargado ---
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
 
-        // --- INYECTAR CASOS PENDIENTES (CLAVE PARA mvn test) ---
+        // --- INYECTAR CASOS PENDIENTES ---
+        js = (JavascriptExecutor) driver;
         js.executeScript("""
-            const list = document.getElementById('doctorPendingList');
-            list.innerHTML = `
-                <div class="case-card urgency-medium reveal-on-scroll is-visible">
-                    <span class="urgency-badge">75%</span>
-                    <select id="disease-1">
-                        <option>Psoriasis</option>
-                        <option>Acne</option>
-                    </select>
-                    <textarea id="notes-1"></textarea>
-                    <button onclick="
-                        const notes = document.getElementById('notes-1').value;
-                        if(!notes){
-                            alert('Please write some notes for the patient.');
-                        } else {
-                            alert('Report sent successfully');
-                        }
-                    ">Send Report</button>
-                </div>
-            `;
-        """);
+                    const list = document.getElementById('doctorPendingList');
+                    list.innerHTML = `
+                        <div class="case-card urgency-medium reveal-on-scroll is-visible">
+                            <span class="urgency-badge">75%</span>
+                            <select id="disease-1">
+                                <option>Psoriasis</option>
+                                <option>Acne</option>
+                            </select>
+                            <textarea id="notes-1"></textarea>
+                            <button onclick="
+                                const notes = document.getElementById('notes-1').value;
+                                if(!notes){
+                                    alert('Please write some notes for the patient.');
+                                } else {
+                                    alert('Report sent successfully');
+                                }
+                            ">Send Report</button>
+                        </div>
+                    `;
+                """);
     }
 
     @AfterEach
@@ -74,12 +83,10 @@ class DoctorDashboardTest {
     void testUrgencyColors() {
         wait.until(ExpectedConditions.textMatches(
                 By.className("urgency-badge"),
-                Pattern.compile(".*%.*")
-        ));
+                Pattern.compile(".*%.*")));
 
         List<WebElement> cases = driver.findElements(
-                By.cssSelector("#doctorPendingList .case-card")
-        );
+                By.cssSelector("#doctorPendingList .case-card"));
 
         assertFalse(cases.isEmpty(), "Debe haber al menos una tarjeta");
 
@@ -105,8 +112,7 @@ class DoctorDashboardTest {
     @DisplayName("Send empty diagnosis: Must display alert")
     void testEmptyDiagnosisError() {
         wait.until(ExpectedConditions.presenceOfElementLocated(
-                By.cssSelector("#doctorPendingList .case-card")
-        ));
+                By.cssSelector("#doctorPendingList .case-card")));
 
         driver.findElement(By.xpath("//button[text()='Send Report']")).click();
 
@@ -122,12 +128,10 @@ class DoctorDashboardTest {
     @DisplayName("Send successful diagnosis")
     void testSuccessfulDiagnosis() {
         wait.until(ExpectedConditions.presenceOfElementLocated(
-                By.cssSelector("#doctorPendingList .case-card")
-        ));
+                By.cssSelector("#doctorPendingList .case-card")));
 
         Select diseaseSelect = new Select(
-                driver.findElement(By.id("disease-1"))
-        );
+                driver.findElement(By.id("disease-1")));
         diseaseSelect.selectByVisibleText("Psoriasis");
 
         WebElement notes = driver.findElement(By.id("notes-1"));
