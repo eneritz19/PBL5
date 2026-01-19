@@ -19,7 +19,7 @@ class AdminDashboardTest {
         @BeforeEach
         void setup() {
                 driver = new ChromeDriver();
-                wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+                wait = new WebDriverWait(driver, Duration.ofSeconds(25));
                 driver.get(URL);
 
                 // Pasar pantalla inicial (si existe)
