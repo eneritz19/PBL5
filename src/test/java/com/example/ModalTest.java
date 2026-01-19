@@ -14,13 +14,13 @@ class ModalTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    private final String URL = "http://localhost:8080/index.html";
+    private static final String BASE_URL = "http://localhost:8080/index.html";
 
     @BeforeEach
     void setup() {
         driver = new ChromeDriver();
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-        driver.get(URL);
+        driver.get(BASE_URL);
 
         // Forzar landing page visible (sin login)
         ((JavascriptExecutor) driver).executeScript(

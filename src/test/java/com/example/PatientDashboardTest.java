@@ -14,7 +14,7 @@ class PatientDashboardTest {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    private final String URL = "http://localhost:8080/index.html";
+    private static final String BASE_URL = "http://localhost:8080/index.html";
 
     @BeforeEach
     void setup() {
@@ -22,7 +22,7 @@ class PatientDashboardTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
         // --- Abrir página inicial ---
-        driver.get(URL);
+        driver.get(BASE_URL);
 
         // --- Click en Login en la primera pantalla ---
         WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(

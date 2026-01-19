@@ -15,7 +15,7 @@ class Base64ConversionTest {
     private WebDriver driver;
     private WebDriverWait wait;
     private JavascriptExecutor js;
-    private final String URL = "http://localhost:8080/index.html";
+    private static final String BASE_URL = "http://localhost:8080/index.html";
 
     @BeforeEach
     void setup() {
@@ -23,7 +23,7 @@ class Base64ConversionTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
         js = (JavascriptExecutor) driver;
 
-        driver.get(URL);
+        driver.get(BASE_URL);
 
         // --- PASAR PANTALLA INICIAL ---
         WebElement loginButtonMain = wait.until(

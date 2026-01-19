@@ -17,7 +17,7 @@ class DoctorDashboardTest {
     private WebDriver driver;
     private WebDriverWait wait;
     private JavascriptExecutor js;
-    private final String URL = "http://localhost:8080/index.html";
+    private static final String BASE_URL = "http://localhost:8080/index.html";
 
     @BeforeEach
     void setup() {
@@ -25,7 +25,7 @@ class DoctorDashboardTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
         // Abrir la página inicial
-        driver.get(URL);
+        driver.get(BASE_URL);
 
         // --- Esperar y hacer click en botón Login de la pantalla principal
         WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
