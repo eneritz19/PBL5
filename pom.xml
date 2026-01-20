@@ -15,7 +15,6 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.organization>skinxpert</sonar.organization>
-        <sonar.exclusions>src/main/java/com/example/Main.java</sonar.exclusions>
     </properties>
 
     <dependencies>
