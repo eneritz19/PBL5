@@ -24,26 +24,20 @@ class DoctorDashboardTest {
         driver = new ChromeDriver();
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-        // Abrir la página inicial
         driver.get(BASE_URL);
 
-        // --- Esperar y hacer click en botón Login de la pantalla principal
         WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[contains(text(),'Login')]")));
         loginButtonMain.click();
 
-        // --- Esperar pantalla de login
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
 
-        // --- Login DOCTOR ---
         driver.findElement(By.id("email")).sendKeys("jperez@clinic.com");
         driver.findElement(By.id("password")).sendKeys("med123");
         driver.findElement(By.id("loginBtn")).click();
 
-        // --- Esperar dashboard cargado ---
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("doctorDashboard")));
 
-        // --- INYECTAR CASOS PENDIENTES ---
         js = (JavascriptExecutor) driver;
         js.executeScript("""
                     const list = document.getElementById('doctorPendingList');
@@ -75,9 +69,6 @@ class DoctorDashboardTest {
         }
     }
 
-    // --------------------------------------------------
-    // TEST 1: Colores de urgencia
-    // --------------------------------------------------
     @Test
     @DisplayName("Urgent Calculation: Verify card colors")
     void testUrgencyColors() {
@@ -105,9 +96,6 @@ class DoctorDashboardTest {
         }
     }
 
-    // --------------------------------------------------
-    // TEST 2: Enviar diagnóstico vacío
-    // --------------------------------------------------
     @Test
     @DisplayName("Send empty diagnosis: Must display alert")
     void testEmptyDiagnosisError() {
@@ -121,9 +109,6 @@ class DoctorDashboardTest {
         alert.accept();
     }
 
-    // --------------------------------------------------
-    // TEST 3: Diagnóstico correcto
-    // --------------------------------------------------
     @Test
     @DisplayName("Send successful diagnosis")
     void testSuccessfulDiagnosis() {

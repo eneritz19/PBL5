@@ -33,8 +33,6 @@ class LoginServiceTest {
         conn.close();
     }
 
-    /* ---------- HELPERS ---------- */
-
     private void insertUser(String email, String plainPassword) throws Exception {
         String hash = sha256(plainPassword);
 
@@ -82,8 +80,6 @@ class LoginServiceTest {
 
         return stored.equals(sha256(password));
     }
-
-    /* ---------- TESTS ---------- */
 
     @Test
     void loginFailsWhenEmailNotFound() throws Exception {

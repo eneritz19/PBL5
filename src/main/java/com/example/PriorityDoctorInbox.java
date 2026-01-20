@@ -46,9 +46,6 @@ public class PriorityDoctorInbox implements DoctorInbox {
         items.release();
     }
 
-    /**
-     * CORRECCIÓN LÍNEA 55: Se elimina el bloque de código comentado que pedía Sonar.
-     */
     private static PhotoMsg.Urgency effectiveUrgency(PhotoMsg msg, long nowMillis) {
         long wait = nowMillis - msg.createdAtMillis;
 
@@ -65,10 +62,6 @@ public class PriorityDoctorInbox implements DoctorInbox {
         return msg.urgency == PhotoMsg.Urgency.MEDIO ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.ALTO;
     }
 
-    /**
-     * CORRECCIÓN LÍNEA 79: Refactorización para reducir Complejidad Cognitiva.
-     * Se han extraído las lógicas de movimiento a métodos privados.
-     */
     private void applyAgingLocked() {
         long now = System.currentTimeMillis();
         processLowAging(now);
@@ -135,10 +128,6 @@ public class PriorityDoctorInbox implements DoctorInbox {
     public Map<String, Integer> sizesSnapshot() {
         lock.lock();
         try {
-            /**
-             * CORRECCIÓN LÍNEA 155: Se elimina el código comentado.
-             * CORRECCIÓN LÍNEA 157: Declaración de variables en líneas separadas.
-             */
             int h = high.size();
             int m = med.size();
             int l = low.size();
@@ -163,9 +152,6 @@ public class PriorityDoctorInbox implements DoctorInbox {
                              removeFromDeque(low, imageCode);
 
             if (removed) {
-                /**
-                 * CORRECCIÓN LÍNEA 179: Manejo del valor booleano de tryAcquire.
-                 */
                 if (!items.tryAcquire()) {
                     LOGGER.log(Level.WARNING, "No se pudo adquirir el permiso del ítem tras borrado manual");
                 }

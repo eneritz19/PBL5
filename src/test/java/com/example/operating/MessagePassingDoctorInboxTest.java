@@ -15,7 +15,6 @@ class MessagePassingDoctorInboxTest {
     void enqueue_and_snapshotOrdered_ordersByUrgencyThenCreatedAt() {
         MessagePassingDoctorInbox inbox = new MessagePassingDoctorInbox("D1");
 
-        // Mezcla, y con timestamps para ordenar determinísticamente
         inbox.enqueue(new PhotoMsg("low2", "D1", PhotoMsg.Urgency.BAJO, 30L));
         inbox.enqueue(new PhotoMsg("high2", "D1", PhotoMsg.Urgency.ALTO, 40L));
         inbox.enqueue(new PhotoMsg("med1", "D1", PhotoMsg.Urgency.MEDIO, 10L));
@@ -25,10 +24,8 @@ class MessagePassingDoctorInboxTest {
         List<QueueUpdate.QueueItem> ordered = inbox.snapshotOrdered();
         List<String> codes = ordered.stream().map(i -> i.imageCode).toList();
 
-        // Orden: ALTO (createdAt asc) -> MEDIO -> BAJO
         assertEquals(List.of("high1", "high2", "med1", "low1", "low2"), codes);
 
-        // En snapshotOrdered, urgency sale como name() del enum original
         assertEquals("ALTO", ordered.get(0).urgency);
         assertEquals("ALTO", ordered.get(1).urgency);
         assertEquals("MEDIO", ordered.get(2).urgency);

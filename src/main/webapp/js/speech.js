@@ -1,4 +1,3 @@
-// TEXT-TO-SPEECH FUNCTIONS FOR MINI-XPERT
 let speechSynthesis = window.speechSynthesis;
 let currentUtterance = null;
 
@@ -132,7 +131,6 @@ function speak(text) {
         speechSynthesis.cancel();
     }
 
-    // Wait a bit for cancel to complete
     setTimeout(() => {
         currentUtterance = new SpeechSynthesisUtterance(text);
         currentUtterance.lang = 'en-US';
@@ -140,7 +138,6 @@ function speak(text) {
         currentUtterance.pitch = 1;
         currentUtterance.volume = 1;
 
-        // Show status
         document.getElementById('speechStatus').style.display = 'block';
         document.getElementById('stopSpeechBtn').style.display = 'inline-block';
         document.getElementById('speechStatusText').textContent = 'Reading...';

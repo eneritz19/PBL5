@@ -25,7 +25,6 @@ class Base64ConversionTest {
 
         driver.get(BASE_URL);
 
-        // --- PASAR PANTALLA INICIAL ---
         WebElement loginButtonMain = wait.until(
                 ExpectedConditions.elementToBeClickable(
                         By.xpath("//button[contains(text(),'Login')]")
@@ -33,13 +32,11 @@ class Base64ConversionTest {
         );
         loginButtonMain.click();
 
-        // --- LOGIN ---
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")))
                 .sendKeys("ana@example.com");
         driver.findElement(By.id("password")).sendKeys("ana123");
         driver.findElement(By.id("loginBtn")).click();
 
-        // --- INYECTAR getBase64 SI NO EXISTE ---
         js.executeScript("""
             if (typeof window.getBase64 !== 'function') {
                 window.getBase64 = function(file) {
@@ -53,7 +50,6 @@ class Base64ConversionTest {
             }
         """);
 
-        // --- ESPERAR A QUE EXISTA ---
         wait.until(d -> Boolean.TRUE.equals(
                 js.executeScript("return typeof window.getBase64 === 'function';")
         ));
@@ -64,9 +60,6 @@ class Base64ConversionTest {
         if (driver != null) driver.quit();
     }
 
-    // --------------------------------------------------
-    // TEST 1: PNG
-    // --------------------------------------------------
     @Test
     @DisplayName("getBase64 converts PNG correctly")
     void testGetBase64WithPNG() {
@@ -94,9 +87,6 @@ class Base64ConversionTest {
         assertFalse(data.isBlank());
     }
 
-    // --------------------------------------------------
-    // TEST 2: JPG
-    // --------------------------------------------------
     @Test
     @DisplayName("getBase64 converts JPG correctly")
     void testGetBase64WithJPG() {

@@ -10,12 +10,10 @@ public class QueueEngine {
 <span class="fc" id="L10">    }</span>
 
     public void onIncoming(PhotoMsg msg) throws InterruptedException {
-        // 1) Gestión de colas (tu parte)
-<span class="fc" id="L14">        manager.enqueue(msg);</span>
-
-        // 2) Push con “cómo queda la nueva cola”
-<span class="fc" id="L17">        QueueUpdate update = manager.buildUpdate(msg.doctorId);</span>
-<span class="fc" id="L18">        sink.push(update);</span>
-<span class="fc" id="L19">    }</span>
+<span class="fc" id="L13">        manager.enqueue(msg);</span>
+        
+<span class="fc" id="L15">        QueueUpdate update = manager.buildUpdate(msg.doctorId);</span>
+<span class="fc" id="L16">        sink.push(update);</span>
+<span class="fc" id="L17">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

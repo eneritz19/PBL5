@@ -26,7 +26,6 @@ class NavigationTest {
 
         driver.get(BASE_URL);
 
-        // ---- PASAR SPLASH / LOGIN ----
         WebElement loginMain = wait.until(
                 ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Login')]"))
         );
@@ -47,36 +46,28 @@ class NavigationTest {
     @DisplayName("Test navigation through 'How it Works' steps safely")
     void testNavigationHowItWorks() {
 
-        // 1️⃣ Esperar a que el landing page se muestre
         wait.until(ExpectedConditions.presenceOfElementLocated(By.id("landingPage")));
         js.executeScript("document.getElementById('landingPage').classList.remove('hidden');");
 
-        // 2️⃣ Esperar a que el loader desaparezca
         wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("logoLoader")));
 
-        // 3️⃣ Scroll hasta "How it Works"
         WebElement howItWorks = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("como-funciona")));
         js.executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", howItWorks);
 
-        // 4️⃣ Interactuar con los steps
         List<WebElement> steps = driver.findElements(By.cssSelector(".step-indicator"));
 
         for (int i = 0; i < steps.size(); i++) {
             WebElement step = steps.get(i);
 
-            // Scroll seguro antes de click
             js.executeScript("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", step);
 
-            // Esperar a que no haya overlay y que sea clicable
             wait.until(ExpectedConditions.and(
                     ExpectedConditions.elementToBeClickable(step),
                     ExpectedConditions.invisibilityOfElementLocated(By.id("logoLoader"))
             ));
 
-            // Click seguro
             js.executeScript("arguments[0].click();", step); // Usar JS para evitar bloqueos de overlay
 
-            // Validar que se activó
             int index = i;
             wait.until(d -> steps.get(index).getAttribute("class").contains("active"));
             assertTrue(step.getAttribute("class").contains("active"),

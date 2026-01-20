@@ -7,6 +7,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "root"
       MYSQL_DATABASE: "skinXpert"
+      TZ: "Europe/Madrid"
+    command: --default-time-zone='Europe/Madrid'
     ports:
       - "3307:3306"
     volumes:

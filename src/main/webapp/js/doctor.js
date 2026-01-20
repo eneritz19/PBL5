@@ -1,4 +1,3 @@
-// CAMBIO 5: Imagen clickeable en pending
 async function loadDoctorPending() {
     const doctorId = localStorage.getItem("doctor_id");
     const res = await fetch(`${API}/doctor/pending?id_doctor=${doctorId}`);

@@ -41,7 +41,6 @@ class QueueEngineTest {
         assertEquals(1, u.queueOrdered.size());
         assertEquals("img1", u.queueOrdered.get(0).imageCode);
         
-        // Se verifica que el sistema asigna ALTO por defecto según la lógica actual
         assertEquals("ALTO", u.queueOrdered.get(0).urgency);
         
         assertEquals(100L, u.queueOrdered.get(0).createdAt);
@@ -66,7 +65,6 @@ class QueueEngineTest {
         QueueUpdate u = sink.last.get();
         assertNotNull(u);
 
-        // Se valida el orden de llegada (FIFO) observado en la ejecución
         List<String> codes = u.queueOrdered.stream().map(it -> it.imageCode).toList();
         assertEquals(List.of("low1", "high1", "med1", "high2"), codes);
 

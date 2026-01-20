@@ -28,7 +28,7 @@ public class MessagePassingDoctorInbox implements DoctorInbox {
 
     @Override
     public void enqueue(PhotoMsg msg) {
-<span class="fc" id="L31">        q.put(msg); // message passing: el productor “manda” el msg al buzón del médico</span>
+<span class="fc" id="L31">        q.put(msg); </span>
 <span class="fc" id="L32">    }</span>
 
     @Override
@@ -38,42 +38,40 @@ public class MessagePassingDoctorInbox implements DoctorInbox {
 
     @Override
     public List&lt;QueueUpdate.QueueItem&gt; snapshotOrdered() {
-        // Ojo: snapshot no bloquea a productores; es “consistente suficiente” para
-        // monitoring.
-        // Si quieres snapshot 100% congelado, habría que copiar y ordenar, como hacemos
-        // aquí.
-<span class="fc" id="L45">        ArrayList&lt;PhotoMsg&gt; copy = new ArrayList&lt;&gt;(q);</span>
-<span class="fc" id="L46">        copy.sort(Comparator</span>
-<span class="fc" id="L47">                .comparingInt((PhotoMsg m) -&gt; urgencyRank(m.urgency))</span>
-<span class="fc" id="L48">                .thenComparingLong(m -&gt; m.createdAtMillis));</span>
+<span class="fc" id="L41">        ArrayList&lt;PhotoMsg&gt; copy = new ArrayList&lt;&gt;(q);</span>
+<span class="fc" id="L42">        copy.sort(Comparator</span>
+<span class="fc" id="L43">                .comparingInt((PhotoMsg m) -&gt; urgencyRank(m.urgency))</span>
+<span class="fc" id="L44">                .thenComparingLong(m -&gt; m.createdAtMillis));</span>
 
-<span class="fc" id="L50">        ArrayList&lt;QueueUpdate.QueueItem&gt; out = new ArrayList&lt;&gt;(copy.size());</span>
-<span class="fc bfc" id="L51" title="All 2 branches covered.">        for (PhotoMsg m : copy) {</span>
-<span class="fc" id="L52">            out.add(new QueueUpdate.QueueItem(m.imageCode, m.urgency.name(), m.createdAtMillis));</span>
-<span class="fc" id="L53">        }</span>
-<span class="fc" id="L54">        return out;</span>
+<span class="fc" id="L46">        ArrayList&lt;QueueUpdate.QueueItem&gt; out = new ArrayList&lt;&gt;(copy.size());</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        for (PhotoMsg m : copy) {</span>
+<span class="fc" id="L48">            out.add(new QueueUpdate.QueueItem(m.imageCode, m.urgency.name(), m.createdAtMillis));</span>
+<span class="fc" id="L49">        }</span>
+<span class="fc" id="L50">        return out;</span>
     }
 
     @Override
     public Map&lt;String, Integer&gt; sizesSnapshot() {
-<span class="fc" id="L59">        int h = 0, m = 0, l = 0;</span>
-<span class="fc bfc" id="L60" title="All 2 branches covered.">        for (PhotoMsg msg : q) {</span>
-<span class="pc bpc" id="L61" title="1 of 4 branches missed.">            switch (msg.urgency) {</span>
-<span class="fc" id="L62">                case ALTO -&gt; h++;</span>
-<span class="fc" id="L63">                case MEDIO -&gt; m++;</span>
-<span class="fc" id="L64">                case BAJO -&gt; l++;</span>
+<span class="fc" id="L55">        int h = 0;</span>
+<span class="fc" id="L56">        int m = 0;</span>
+<span class="fc" id="L57">        int l = 0;</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        for (PhotoMsg msg : q) {</span>
+<span class="pc bpc" id="L59" title="1 of 4 branches missed.">            switch (msg.urgency) {</span>
+<span class="fc" id="L60">                case ALTO -&gt; h++;</span>
+<span class="fc" id="L61">                case MEDIO -&gt; m++;</span>
+<span class="fc" id="L62">                case BAJO -&gt; l++;</span>
             }
-<span class="fc" id="L66">        }</span>
-<span class="fc" id="L67">        Map&lt;String, Integer&gt; map = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L68">        map.put(&quot;ALTO&quot;, h);</span>
-<span class="fc" id="L69">        map.put(&quot;MEDIO&quot;, m);</span>
-<span class="fc" id="L70">        map.put(&quot;BAJO&quot;, l);</span>
-<span class="fc" id="L71">        map.put(&quot;TOTAL&quot;, h + m + l);</span>
-<span class="fc" id="L72">        return map;</span>
+<span class="fc" id="L64">        }</span>
+<span class="fc" id="L65">        Map&lt;String, Integer&gt; map = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L66">        map.put(&quot;ALTO&quot;, h);</span>
+<span class="fc" id="L67">        map.put(&quot;MEDIO&quot;, m);</span>
+<span class="fc" id="L68">        map.put(&quot;BAJO&quot;, l);</span>
+<span class="fc" id="L69">        map.put(&quot;TOTAL&quot;, h + m + l);</span>
+<span class="fc" id="L70">        return map;</span>
     }
 
     public String doctorId() {
-<span class="fc" id="L76">        return doctorId;</span>
+<span class="fc" id="L74">        return doctorId;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

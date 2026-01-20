@@ -76,26 +76,21 @@ class MessagePassingEngineTest {
 
     @Test
     void remove_whenItemIsInDoctorQueue_removesAndPushesUpdate_returnsTrue() throws Exception {
-        // Configuramos para esperar 2 señales: la del accept inicial y la del remove
+        
         LatchingSink sink = new LatchingSink(2);
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);
 
         try {
             engine.accept(new PhotoMsg("img1", "D1", PhotoMsg.Urgency.ALTO, 1L));
 
-            // CORRECCIÓN LÍNEA 130: En lugar de sleep, esperamos a que el primer push
-            // ocurra
-            // Usamos un pequeño bucle o simplemente verificamos que la lista 'all' ya tenga
-            // el primer item
             long start = System.currentTimeMillis();
             while (sink.all.isEmpty() && (System.currentTimeMillis() - start) < 2000) {
-                Thread.onSpinWait(); // Alternativa eficiente a sleep para esperas ultra cortas
+                Thread.onSpinWait(); 
             }
 
             boolean removed = engine.remove("D1", "img1");
             assertTrue(removed, "El elemento debería haber sido eliminado");
 
-            // Esperamos a que se completen los 2 pushes (el inicial + el del remove)
             assertTrue(sink.await(2, TimeUnit.SECONDS), "Expected initial push + remove push");
 
             QueueUpdate q = engine.getQueue("D1");
@@ -119,10 +114,6 @@ class MessagePassingEngineTest {
             boolean removed = engine.remove("D1", "nope");
             assertFalse(removed);
 
-            // CORRECCIÓN LÍNEA 161: Para verificar que NO hay más pushes,
-            // simplemente verificamos el tamaño de la lista tras una espera corta en el
-            // latch
-            // (que sabemos que no bajará de 0)
             sink.latch.await(150, TimeUnit.MILLISECONDS);
 
             int pushesAfter = sink.all.size();
@@ -146,10 +137,8 @@ class MessagePassingEngineTest {
     void testEngineLifecycle() throws InterruptedException {
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), new ConsoleUpdateSink());
 
-        // Test shutdown (Cubre la interrupción del hilo)
         engine.shutdown();
 
-        // Test loadAll con datos (Cubre la reconstrucción del estado)
         Map<String, List<QueueUpdate.QueueItem>> state = Map.of(
                 "D1", List.of(new QueueUpdate.QueueItem("img1", "BAJO", 1000L)));
         assertDoesNotThrow(() -> engine.loadAll(state));
@@ -159,11 +148,11 @@ class MessagePassingEngineTest {
     void testStateAndDumpCoverage() {
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), new ConsoleUpdateSink());
         try {
-            // Cubre el método state()
+            
             assertNotNull(engine.state());
-            // Cubre el método dumpAll()
+            
             assertNotNull(engine.dumpAll());
-            // Cubre el método getQueue()
+            
             assertNotNull(engine.getQueue("D1"));
         } finally {
             engine.shutdown();
@@ -176,18 +165,11 @@ class MessagePassingEngineTest {
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);
 
         try {
-            // Pausamos los hilos del motor para que el mensaje se quede atrapado en la cola
-            // de entrada
-            // Esto se hace forzando un remove antes de que el dispatcher actúe
             PhotoMsg msg = new PhotoMsg("img-temp", "D-TEMP", PhotoMsg.Urgency.ALTO, 1L);
             engine.accept(msg);
 
-            // Cubre la línea: incomingQueue.removeIf(...)
-            // Intentamos borrarlo antes de que el dispatcher lo procese
             boolean removed = engine.remove("D-TEMP", "img-temp");
 
-            // No importa si devuelve true o false (depende de la velocidad),
-            // lo importante es que el test pase por esa línea de código.
             assertDoesNotThrow(() -> engine.getQueue("D-TEMP"));
         } finally {
             engine.shutdown();
@@ -196,9 +178,7 @@ class MessagePassingEngineTest {
 
     @Test
     void testErrorHandlingInLoops() throws Exception {
-        // Para cubrir los bloques "catch (Exception ex)" necesitamos que el manager o
-        // el sink fallen
-        // Usamos un Sink que lance una RuntimeException
+
         UpdateSink errorSink = update -> {
             throw new RuntimeException("Simulated Error");
         };
@@ -208,10 +188,8 @@ class MessagePassingEngineTest {
         try {
             engine.accept(new PhotoMsg("error-img", "D1", PhotoMsg.Urgency.ALTO, 1L));
 
-            // Damos un tiempo para que el error se imprima en System.err
             Thread.sleep(200);
 
-            // Si el motor sigue vivo tras el error, el catch ha funcionado
             assertDoesNotThrow(() -> engine.getQueue("D1"));
         } finally {
             engine.shutdown();

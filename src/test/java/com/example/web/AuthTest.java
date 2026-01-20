@@ -22,7 +22,6 @@ class AuthTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
         driver.get(BASE_URL);
 
-        // Pasar pantalla inicial
         WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[contains(text(),'Login')]")));
         loginButtonMain.click();
@@ -66,23 +65,19 @@ class AuthTest {
     @DisplayName("Logout returns to login screen")
     void logoutWorksCorrectly() {
 
-        // Login como paciente
         login("ana@example.com", "ana123");
 
         WebElement patientDashboard = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.id("patientDashboard")));
         assertTrue(patientDashboard.isDisplayed());
 
-        // Buscar SOLO el botón Logout dentro del dashboard visible
         WebElement logoutButton = wait.until(
                 ExpectedConditions.elementToBeClickable(
                         patientDashboard.findElement(
                                 By.xpath(".//button[contains(text(),'Log')]"))));
 
-        // Click seguro
         logoutButton.click();
 
-        // Verificar que vuelve al login
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("loginPage")));
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
 

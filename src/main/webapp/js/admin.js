@@ -1,7 +1,6 @@
 let currentType = null;
 let isEditing = false;
 
-// CAMBIO 6: Admin con botones separados
 async function loadAdminDoctors() {
     const res = await fetch(`${API}/admin/doctors`);
     const doctors = await res.json();
@@ -109,7 +108,6 @@ async function deletePatient(id) {
     );
 }
 
-// CAMBIO 7: Modal corregido
 function openNewDoctor() {
     document.getElementById("modal-title").innerText = "New Doctor";
     document.getElementById("modal-body").innerHTML = `

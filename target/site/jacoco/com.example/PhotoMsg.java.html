@@ -10,17 +10,15 @@ public final class PhotoMsg {
     public final Urgency urgency;
     public final long createdAtMillis;
 
-    // Nuevo mensaje “normal”
     public PhotoMsg(String imageCode, String doctorId, Urgency urgency) {
-<span class="fc" id="L15">        this(imageCode, doctorId, urgency, Instant.now().toEpochMilli());</span>
-<span class="fc" id="L16">    }</span>
+<span class="fc" id="L14">        this(imageCode, doctorId, urgency, Instant.now().toEpochMilli());</span>
+<span class="fc" id="L15">    }</span>
 
-    // Rehydrate / migración: respetar antigüedad real
-<span class="fc" id="L19">    public PhotoMsg(String imageCode, String doctorId, Urgency urgency, long createdAtMillis) {</span>
-<span class="fc" id="L20">        this.imageCode = Objects.requireNonNull(imageCode);</span>
-<span class="fc" id="L21">        this.doctorId = Objects.requireNonNull(doctorId);</span>
-<span class="fc" id="L22">        this.urgency = Objects.requireNonNull(urgency);</span>
-<span class="fc" id="L23">        this.createdAtMillis = createdAtMillis;</span>
-<span class="fc" id="L24">    }</span>
+<span class="fc" id="L17">    public PhotoMsg(String imageCode, String doctorId, Urgency urgency, long createdAtMillis) {</span>
+<span class="fc" id="L18">        this.imageCode = Objects.requireNonNull(imageCode);</span>
+<span class="fc" id="L19">        this.doctorId = Objects.requireNonNull(doctorId);</span>
+<span class="fc" id="L20">        this.urgency = Objects.requireNonNull(urgency);</span>
+<span class="fc" id="L21">        this.createdAtMillis = createdAtMillis;</span>
+<span class="fc" id="L22">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -22,20 +22,14 @@ class HtmlRenderTest {
 
         Document doc = Jsoup.parse(html, "UTF-8");
 
-        /* ---------- INPUTS ---------- */
-
         Element emailInput = doc.selectFirst("#email");
         assertNotNull(emailInput, "Debe existir un input con id='email'");
 
         Element passwordInput = doc.selectFirst("#password");
         assertNotNull(passwordInput, "Debe existir un input con id='password'");
 
-        /* ---------- BOTÓN LOGIN ---------- */
-
-        // 1️⃣ Intentar por id (forma más fiable)
         Element loginBtn = doc.selectFirst("#loginBtn");
 
-        // 2️⃣ Si no existe, buscar botón con texto Login
         if (loginBtn == null) {
             loginBtn = doc.selectFirst("button:matchesOwn((?i)login)");
         }

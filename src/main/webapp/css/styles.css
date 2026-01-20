@@ -1,7 +1,3 @@
-/* ============================================
-   SKINXPERT - ESTILOS PRINCIPALES
-   ============================================ */
-
 * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -37,10 +33,6 @@ h1, h2, h3, h4, h5, h6 {
     --input-bg: #f5f5f7;
 }
 
-/* ============================================
-   BADGES DE URGENCIA CON ANIMACIONES
-   ============================================ */
-
 .urgency-badge {
     padding: 6px 14px;
     border-radius: 100px;
@@ -48,32 +40,25 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
 }
 
-/* URGENCIA ALTA - ROJO CON PARPADEO */
 .badge-high {
     background: #fee2e2;
     color: #991b1b;
     animation: pulse-red 2s ease-in-out infinite !important;
 }
 
-/* URGENCIA MEDIA - NARANJA CON PARPADEO */
 .badge-medium {
     background: #fef3c7;
     color: #92400e;
     animation: pulse-orange 2s ease-in-out infinite !important;
 }
 
-/* URGENCIA BAJA - VERDE CON PARPADEO (CAMBIADO DE AZUL) */
 .badge-low {
     background: #d1fae5;
     color: #065f46;
     animation: pulse-green 2s ease-in-out infinite !important;
 }
 
-/* ============================================
-   ANIMACIONES DE PARPADEO
-   ============================================ */
-
-/* Parpadeo ROJO para urgencia alta */
+/* Parpadeos */
 @keyframes pulse-red {
     0%, 100% {
         background-color: #fee2e2;
@@ -85,7 +70,6 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-/* Parpadeo NARANJA para urgencia media */
 @keyframes pulse-orange {
     0%, 100% {
         background-color: #fef3c7;
@@ -97,7 +81,6 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-/* Parpadeo VERDE para urgencia baja */
 @keyframes pulse-green {
     0%, 100% {
         background-color: #d1fae5;
@@ -109,10 +92,6 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-/* ============================================
-   BARRAS LATERALES DE COLOR
-   ============================================ */
-
 .urgency-high {
     border-left: 4px solid #dc2626;
 }
@@ -121,19 +100,14 @@ h1, h2, h3, h4, h5, h6 {
     border-left: 4px solid #f59e0b;
 }
 
-/* Barra AZUL en historial de pacientes */
 .urgency-low {
     border-left: 4px solid #0EA5E9;
 }
 
-/* Barra VERDE para casos pendientes del doctor (urgencia baja) */
 .doctor-urgency-low {
     border-left: 4px solid #10b981;
 }
 
-/* ============================================
-   MODO OSCURO
-   ============================================ */
 
 body.dark-mode {
     background: #000000 !important;
@@ -205,7 +179,6 @@ body.dark-mode #speechStatus {
     color: #ffffff !important;
 }
 
-/* Mantener animaciones de badges en modo oscuro */
 body.dark-mode .badge-high {
     animation: pulse-red 2s ease-in-out infinite !important;
     color: #991b1b !important;
@@ -221,7 +194,6 @@ body.dark-mode .badge-low {
     color: #065f46 !important;
 }
 
-/* Mantener barras de color en modo oscuro */
 body.dark-mode .urgency-low {
     border-left: 4px solid #0EA5E9 !important;
 }
@@ -238,7 +210,6 @@ body.dark-mode .urgency-high {
     border-left: 4px solid #ef4444 !important;
 }
 
-/* Sugerencia IA en modo oscuro */
 body.dark-mode .case-card div[style*="background: #f0f9ff"] {
     background: #1a3a52 !important;
 }
@@ -248,7 +219,6 @@ body.dark-mode .case-card p[style*="color:#1e40af"] {
     color: #60a5fa !important;
 }
 
-/* Botón eliminar en rojo */
 .delete-btn {
     background: #ef4444 !important;
     color: white !important;
@@ -263,7 +233,6 @@ body.dark-mode .delete-btn {
     color: white !important;
 }
 
-/* Botón de modo oscuro */
 .dark-mode-toggle {
     background: #0EA5E9;
     border: none;
@@ -314,12 +283,10 @@ body.dark-mode .role-badge {
     border-left: 4px solid #f59e0b !important;
 }
 
-/* Barra AZUL en historial de pacientes */
 .urgency-low {
     border-left: 4px solid #0EA5E9 !important;
 }
 
-/* Barra VERDE para casos pendientes del doctor (urgencia baja) */
 .doctor-urgency-low {
     border-left: 4px solid #10b981 !important;
 }
@@ -366,7 +333,6 @@ body.dark-mode .admin-button-group button[style*="color:red"] {
     color: #ef4444 !important;
 }
 
-/* LANDING PAGE EN MODO OSCURO */
 body.dark-mode .landing-navbar {
     background: rgba(0, 0, 0, 0.72) !important;
     backdrop-filter: saturate(180%) blur(20px);
@@ -455,10 +421,6 @@ body.dark-mode .phone-frame {
     filter: drop-shadow(0 30px 80px rgba(14, 165, 233, 0.4));
 }
 
-/* ============================================
-   NOTIFICACIONES Y MODALES
-   ============================================ */
-
 .toast-container {
     position: fixed;
     top: 20px;
@@ -510,7 +472,6 @@ body.dark-mode .phone-frame {
     background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
-/* LOADING SPINNER */
 .spinner-overlay {
     position: fixed;
     top: 0;
@@ -546,7 +507,6 @@ body.dark-mode .phone-frame {
     font-weight: 600;
 }
 
-/* MODAL DE CONFIRMACIÓN */
 .confirm-modal {
     position: fixed;
     top: 0;
@@ -601,7 +561,6 @@ body.dark-mode .phone-frame {
     margin: 0;
 }
 
-/* DRAG & DROP ZONE */
 .drop-zone {
     border: 3px dashed #0EA5E9;
     border-radius: 16px;
@@ -624,7 +583,6 @@ body.dark-mode .phone-frame {
     margin-bottom: 15px;
 }
 
-/* CONTADOR DE CARACTERES */
 .char-counter {
     font-size: 12px;
     color: #64748B;
@@ -641,7 +599,6 @@ body.dark-mode .phone-frame {
     color: #ef4444;
 }
 
-/* VALIDACIÓN DE INPUTS */
 input.error, textarea.error, select.error {
     border-color: #ef4444 !important;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
@@ -662,7 +619,6 @@ input.success, textarea.success, select.success {
     gap: 5px;
 }
 
-/* BÚSQUEDA EN ADMIN */
 .search-box {
     position: relative;
     margin-bottom: 20px;
@@ -681,7 +637,6 @@ input.success, textarea.success, select.success {
     font-size: 18px;
 }
 
-/* PWA INSTALL BUTTON */
 .install-pwa {
     position: fixed;
     bottom: 20px;
@@ -704,10 +659,6 @@ input.success, textarea.success, select.success {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
 }
-
-/* ============================================
-   LOADER
-   ============================================ */
 
 #logoLoader {
     position: fixed;
@@ -765,10 +716,6 @@ input.success, textarea.success, select.success {
     letter-spacing: -0.015em;
 }
 
-/* ============================================
-   ANIMACIONES GENERALES
-   ============================================ */
-
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(40px); }
     to { opacity: 1; transform: translateY(0); }
@@ -821,10 +768,6 @@ input.success, textarea.success, select.success {
 .landing-page { display: block; }
 .landing-page.hidden { display: none; }
 .hidden { display: none !important; }
-
-/* ============================================
-   LANDING PAGE
-   ============================================ */
 
 .hero-section {
     background: linear-gradient(to bottom, var(--sk-secondary), #ffffff);
@@ -994,7 +937,6 @@ input.success, textarea.success, select.success {
     line-height: 1.5;
 }
 
-/* Features Section */
 .features-section {
     padding: 120px 20px;
     background: white;
@@ -1076,7 +1018,6 @@ input.success, textarea.success, select.success {
     letter-spacing: -0.015em;
 }
 
-/* How It Works Section */
 .how-it-works-section {
     padding: 120px 20px;
     background: #000000;
@@ -1231,7 +1172,6 @@ input.success, textarea.success, select.success {
     color: white;
 }
 
-/* Testimonials */
 .testimonials-section {
     padding: 120px 20px;
     background: white;
@@ -1291,7 +1231,6 @@ input.success, textarea.success, select.success {
     letter-spacing: -0.01em;
 }
 
-/* Download Section */
 .download-section {
     padding: 120px 20px;
     background: white;
@@ -1378,7 +1317,6 @@ input.success, textarea.success, select.success {
     transform: scale(1.06);
 }
 
-/* CTA Section */
 .cta-section {
     background: linear-gradient(135deg, var(--sk-blue-light), #0284c7);
     color: white;
@@ -1446,7 +1384,6 @@ input.success, textarea.success, select.success {
     letter-spacing: -0.01em;
 }
 
-/* Footer */
 .footer {
     background: #f5f5f7;
     padding: 64px 40px 32px;
@@ -1538,10 +1475,6 @@ input.success, textarea.success, select.success {
 .footer-legal a:hover {
     color: var(--sk-blue-light);
 }
-
-/* ============================================
-   DASHBOARD PRINCIPAL
-   ============================================ */
 
 .main-content {
     transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
@@ -1780,7 +1713,6 @@ button:hover {
     box-shadow: 0 6px 24px rgba(14, 165, 233, 0.3);
 }
 
-/* MODAL */
 .modal {
     position: fixed;
     top: 0;
@@ -1848,7 +1780,6 @@ button:hover {
     margin: 0;
 }
 
-/* Botones para cámara y eliminar foto */
 .upload-controls {
     display: flex;
     gap: 10px;
@@ -1879,7 +1810,6 @@ button:hover {
     background: #dc2626;
 }
 
-/* Modal para ver imagen completa */
 .image-modal {
     position: fixed;
     top: 0;
@@ -1926,7 +1856,6 @@ button:hover {
     transform: scale(1.05);
 }
 
-/* Espaciado entre botones de admin */
 .admin-button-group {
     display: flex;
     gap: 12px;
@@ -1937,10 +1866,6 @@ button:hover {
     padding: 10px 20px;
     font-size: 14px;
 }
-
-/* ============================================
-   RESPONSIVE
-   ============================================ */
 
 @media (max-width: 768px) {
     .hero-content,

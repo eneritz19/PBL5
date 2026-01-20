@@ -21,21 +21,17 @@ class PatientDashboardTest {
         driver = new ChromeDriver();
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
-        // --- Abrir página inicial ---
         driver.get(BASE_URL);
 
-        // --- Click en Login en la primera pantalla ---
         WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[contains(text(),'Login')]")
         ));
         loginButtonMain.click();
 
-        // --- Login PACIENTE ---
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email"))).sendKeys("ana@example.com");
         driver.findElement(By.id("password")).sendKeys("ana123");
         driver.findElement(By.id("loginBtn")).click();
 
-        // --- Esperar dashboard paciente cargado ---
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("patientDashboard")));
     }
 
@@ -44,45 +40,35 @@ class PatientDashboardTest {
         if (driver != null) driver.quit();
     }
 
-    // --------------------------------------------------
-    // TEST 1: Verificar que el historial del paciente está visible
-    // --------------------------------------------------
     @Test
     @DisplayName("Patient dashboard: History visible")
     void testHistoryIsVisible() {
-        // Hacer click en la pestaña Historial
+        
         WebElement historyTab = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[contains(text(),'History')]")
         ));
         historyTab.click();
 
-        // Esperar que la lista de historial esté visible en DOM
         WebElement historyList = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.id("patientHistoryList") // <-- asegúrate que este id coincide con tu HTML
+                By.id("patientHistoryList") 
         ));
 
-        // Comprobar que está visible
         assertTrue(historyList.isDisplayed(), "El historial debería estar visible");
     }
 
-    // --------------------------------------------------
-    // TEST 2: Verificar que las citas del paciente están visibles
-    // --------------------------------------------------
     @Test
     @DisplayName("Patient dashboard: Appointments visible")
     void testAppointmentsAreVisible() {
-        // Hacer click en la pestaña Citas
+        
         WebElement appointmentsTab = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[contains(text(),'Appointments')]")
         ));
         appointmentsTab.click();
 
-        // Esperar que la lista de citas esté visible en DOM
         WebElement appointmentsList = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                By.id("patientAppointmentsList") // <-- asegúrate que este id coincide con tu HTML
+                By.id("patientAppointmentsList") 
         ));
 
-        // Comprobar que está visible
         assertTrue(appointmentsList.isDisplayed(), "Las citas deberían estar visibles");
     }
 }

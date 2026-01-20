@@ -10,10 +10,8 @@ public class QueueEngine {
     }
 
     public void onIncoming(PhotoMsg msg) throws InterruptedException {
-        // 1) Gestión de colas (tu parte)
         manager.enqueue(msg);
-
-        // 2) Push con “cómo queda la nueva cola”
+        
         QueueUpdate update = manager.buildUpdate(msg.doctorId);
         sink.push(update);
     }

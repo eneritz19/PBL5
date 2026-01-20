@@ -92,13 +92,10 @@ public class MessagePassingEngine implements Engine {
 
     @Override
     public boolean remove(String doctorId, String imageCode) throws InterruptedException {
-        // 1) eliminar si aún estaba esperando en incomingQueue
         incomingQueue.removeIf(m -> m.doctorId.equals(doctorId) && m.imageCode.equals(imageCode));
 
-        // 2) eliminar de la cola del doctor
         boolean ok = manager.remove(doctorId, imageCode);
 
-        // 3) push update si se eliminó
         if (ok) {
             updatesQueue.put(manager.buildUpdate(doctorId));
         }

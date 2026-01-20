@@ -57,15 +57,15 @@ public class MessagePassingEngine implements Engine {
 <span class="fc" id="L57">            } catch (InterruptedException e) {</span>
 <span class="fc" id="L58">                Thread.currentThread().interrupt();</span>
 <span class="fc" id="L59">                break;</span>
-<span class="nc" id="L60">            } catch (Exception ex) {</span>
-<span class="nc" id="L61">                System.err.println(&quot;[MP-Pusher] Error: &quot; + ex.getMessage());</span>
-<span class="pc" id="L62">            }</span>
+<span class="fc" id="L60">            } catch (Exception ex) {</span>
+<span class="fc" id="L61">                System.err.println(&quot;[MP-Pusher] Error: &quot; + ex.getMessage());</span>
+<span class="fc" id="L62">            }</span>
         }
 <span class="fc" id="L64">    }</span>
 
     @Override
     public String state() {
-<span class="nc" id="L68">        return manager.stateSnapshot();</span>
+<span class="fc" id="L68">        return manager.stateSnapshot();</span>
     }
 
     @Override
@@ -92,17 +92,14 @@ public class MessagePassingEngine implements Engine {
 
     @Override
     public boolean remove(String doctorId, String imageCode) throws InterruptedException {
-        // 1) eliminar si aún estaba esperando en incomingQueue
-<span class="pc bnc" id="L96" title="All 4 branches missed.">        incomingQueue.removeIf(m -&gt; m.doctorId.equals(doctorId) &amp;&amp; m.imageCode.equals(imageCode));</span>
+<span class="pc bpc" id="L95" title="2 of 4 branches missed.">        incomingQueue.removeIf(m -&gt; m.doctorId.equals(doctorId) &amp;&amp; m.imageCode.equals(imageCode));</span>
 
-        // 2) eliminar de la cola del doctor
-<span class="fc" id="L99">        boolean ok = manager.remove(doctorId, imageCode);</span>
+<span class="fc" id="L97">        boolean ok = manager.remove(doctorId, imageCode);</span>
 
-        // 3) push update si se eliminó
-<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (ok) {</span>
-<span class="fc" id="L103">            updatesQueue.put(manager.buildUpdate(doctorId));</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        if (ok) {</span>
+<span class="fc" id="L100">            updatesQueue.put(manager.buildUpdate(doctorId));</span>
         }
-<span class="fc" id="L105">        return ok;</span>
+<span class="fc" id="L102">        return ok;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

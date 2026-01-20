@@ -5,38 +5,45 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.stream.Collectors;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class HttpWebhookUpdateSink implements UpdateSink {
-<span class="fc" id="L9">    private final HttpClient client = HttpClient.newHttpClient();</span>
+<span class="fc" id="L12">    private static final Logger LOGGER = Logger.getLogger(HttpWebhookUpdateSink.class.getName());</span>
+<span class="fc" id="L13">    private final HttpClient client = HttpClient.newHttpClient();</span>
     private final URI webhookUri;
 
-<span class="fc" id="L12">    public HttpWebhookUpdateSink(String webhookUrl) {</span>
-<span class="fc" id="L13">        this.webhookUri = URI.create(webhookUrl);</span>
-<span class="fc" id="L14">    }</span>
+<span class="fc" id="L16">    public HttpWebhookUpdateSink(String webhookUrl) {</span>
+<span class="fc" id="L17">        this.webhookUri = URI.create(webhookUrl);</span>
+<span class="fc" id="L18">    }</span>
 
     @Override
     public void push(QueueUpdate update) {
         try {
-<span class="fc" id="L19">            String queueJson = update.queueOrdered.stream()</span>
-<span class="fc" id="L20">                    .map(i -&gt; String.format(&quot;{\&quot;imageCode\&quot;:\&quot;%s\&quot;,\&quot;urgency\&quot;:\&quot;%s\&quot;,\&quot;createdAt\&quot;:%d}&quot;,</span>
-<span class="fc" id="L21">                            i.imageCode, i.urgency, i.createdAt))</span>
-<span class="fc" id="L22">                    .collect(Collectors.joining(&quot;,&quot;));</span>
-
-<span class="fc" id="L24">            String sizesJson = update.sizes.entrySet().stream()</span>
-<span class="fc" id="L25">                    .map(e -&gt; String.format(&quot;\&quot;%s\&quot;:%d&quot;, e.getKey(), e.getValue()))</span>
+<span class="fc" id="L23">            String queueJson = update.queueOrdered.stream()</span>
+<span class="fc" id="L24">                    .map(i -&gt; String.format(&quot;{\&quot;imageCode\&quot;:\&quot;%s\&quot;,\&quot;urgency\&quot;:\&quot;%s\&quot;,\&quot;createdAt\&quot;:%d}&quot;,</span>
+<span class="fc" id="L25">                            i.imageCode, i.urgency, i.createdAt))</span>
 <span class="fc" id="L26">                    .collect(Collectors.joining(&quot;,&quot;));</span>
 
-<span class="fc" id="L28">            String json = String.format(&quot;{\&quot;doctorId\&quot;:\&quot;%s\&quot;,\&quot;queue\&quot;:[%s],\&quot;sizes\&quot;:{%s}}&quot;,</span>
+<span class="fc" id="L28">            String sizesJson = update.sizes.entrySet().stream()</span>
+<span class="fc" id="L29">                    .map(e -&gt; String.format(&quot;\&quot;%s\&quot;:%d&quot;, e.getKey(), e.getValue()))</span>
+<span class="fc" id="L30">                    .collect(Collectors.joining(&quot;,&quot;));</span>
+
+<span class="fc" id="L32">            String json = String.format(&quot;{\&quot;doctorId\&quot;:\&quot;%s\&quot;,\&quot;queue\&quot;:[%s],\&quot;sizes\&quot;:{%s}}&quot;,</span>
                     update.doctorId, queueJson, sizesJson);
 
-<span class="fc" id="L31">            HttpRequest req = HttpRequest.newBuilder(webhookUri)</span>
-<span class="fc" id="L32">                    .header(&quot;Content-Type&quot;, &quot;application/json&quot;)</span>
-<span class="fc" id="L33">                    .POST(HttpRequest.BodyPublishers.ofString(json))</span>
-<span class="fc" id="L34">                    .build();</span>
+<span class="fc" id="L35">            HttpRequest req = HttpRequest.newBuilder(webhookUri)</span>
+<span class="fc" id="L36">                    .header(&quot;Content-Type&quot;, &quot;application/json&quot;)</span>
+<span class="fc" id="L37">                    .POST(HttpRequest.BodyPublishers.ofString(json))</span>
+<span class="fc" id="L38">                    .build();</span>
 
-<span class="fc" id="L36">            client.send(req, HttpResponse.BodyHandlers.discarding());</span>
-<span class="fc" id="L37">        } catch (Exception e) {</span>
-<span class="fc" id="L38">            System.err.println(&quot;[PUSH-HTTP] Error pushing update: &quot; + e.getMessage());</span>
-<span class="fc" id="L39">        }</span>
-<span class="fc" id="L40">    }</span>
+<span class="fc" id="L40">            client.send(req, HttpResponse.BodyHandlers.discarding());</span>
+<span class="fc" id="L41">        } catch (InterruptedException e) {</span>
+<span class="fc" id="L42">            LOGGER.log(Level.SEVERE, &quot;[PUSH-HTTP] Thread interrupted during send&quot;, e);</span>
+<span class="fc" id="L43">            Thread.currentThread().interrupt(); </span>
+<span class="fc" id="L44">        } catch (Exception e) {</span>
+<span class="fc" id="L45">            LOGGER.log(Level.SEVERE, &quot;[PUSH-HTTP] Error pushing update&quot;, e);</span>
+<span class="fc" id="L46">        }</span>
+<span class="fc" id="L47">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

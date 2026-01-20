@@ -97,7 +97,6 @@ public class Main {
 
                 String doctorIdStr = "D" + dto.doctorId;
                 
-                // CORRECCIÓN LÍNEA 106: Se extrae la operación ternaria anidada
                 PhotoMsg.Urgency urgencyEnum;
                 if (dto.urgency >= 3) {
                     urgencyEnum = PhotoMsg.Urgency.ALTO;
@@ -277,7 +276,7 @@ public class Main {
                 sendResponse(exchange, 200, "{\"current_mode\":\"" + active.mode.get() + "\"}");
 
             } catch (InterruptedException e) {
-                LOGGER.log(Level.SEVERE, "Interrupción en config", e);
+                LOGGER.log(Level.SEVERE, "Interrupcion en config", e);
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);
@@ -312,7 +311,6 @@ public class Main {
         return (msg == null) ? "unknown" : msg.replace("\"", "'");
     }
 
-    // CORRECCIÓN LÍNEAS 318 y 319: Declaración de campos en líneas separadas para evitar issues de estilo
     public static class TaskDto { 
         String imageCode; 
         int doctorId; 

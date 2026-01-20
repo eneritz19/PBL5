@@ -1,4 +1,3 @@
-// DRAG & DROP para subir imágenes
 const dropZone = document.getElementById('dropZone');
 if (dropZone) {
     dropZone.addEventListener('dragover', (e) => {

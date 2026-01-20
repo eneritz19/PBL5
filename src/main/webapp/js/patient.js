@@ -6,22 +6,18 @@ async function loadPatientHistory() {
         const list = document.getElementById("patientHistoryList");
         list.innerHTML = "";
 
-        // Filtrar solo los casos que tienen doctor_notes (ya fueron revisados por el doctor)
         let completedCases = history.filter(h => h.doctor_notes && h.doctor_notes.trim() !== '');
 
-        // Eliminar duplicados: Si hay varios registros con la misma imagen (file_path),
-        // solo quedarse con UNO (el más reciente o el que tenga confidence = 100 del doctor)
         const uniqueCases = {};
         completedCases.forEach(h => {
-            const key = h.file_path || h.id_request; // Usar file_path como identificador único
-
-            // Si ya existe este caso, comparar y quedarse con el mejor
+            const key = h.file_path || h.id_request; 
+            
             if (uniqueCases[key]) {
-                // Priorizar el que tiene confidence = 100 (diagnóstico del doctor)
+                
                 if (h.confidence === 100 && uniqueCases[key].confidence !== 100) {
                     uniqueCases[key] = h;
                 }
-                // Si ambos tienen confidence 100, quedarse con el más reciente
+                
                 else if (h.confidence === 100 && uniqueCases[key].confidence === 100) {
                     const currentDate = new Date(h.diagnosis_date);
                     const existingDate = new Date(uniqueCases[key].diagnosis_date);
@@ -34,7 +30,6 @@ async function loadPatientHistory() {
             }
         });
 
-        // Convertir el objeto de vuelta a array
         completedCases = Object.values(uniqueCases);
 
         if (!completedCases.length) {

@@ -28,7 +28,6 @@ public class DoctorQueueManager {
         );
     }
 
-    // NUEVO: dump de todas las colas
     public Map<String, List<QueueUpdate.QueueItem>> dumpAll() {
         Map<String, List<QueueUpdate.QueueItem>> out = new java.util.LinkedHashMap<>();
         for (var e : inboxes.entrySet()) {
@@ -37,7 +36,6 @@ public class DoctorQueueManager {
         return out;
     }
 
-    // NUEVO: cargar colas (rehydrate/migración)
     public void loadAll(Map<String, List<QueueUpdate.QueueItem>> state) throws InterruptedException {
         for (var e : state.entrySet()) {
             String doctorId = e.getKey();
@@ -49,7 +47,6 @@ public class DoctorQueueManager {
         }
     }
 
-    // NUEVO: eliminar elemento
     public boolean remove(String doctorId, String imageCode) throws InterruptedException {
         return getOrCreate(doctorId).removeByImageCode(imageCode);
     }

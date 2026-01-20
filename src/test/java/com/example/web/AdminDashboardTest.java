@@ -22,7 +22,6 @@ class AdminDashboardTest {
                 wait = new WebDriverWait(driver, Duration.ofSeconds(25));
                 driver.get(BASE_URL);
 
-                // Pasar pantalla inicial (si existe)
                 try {
                         WebElement loginButtonMain = wait.until(ExpectedConditions.elementToBeClickable(
                                         By.xpath("//button[contains(text(),'Login')]")));
@@ -31,7 +30,6 @@ class AdminDashboardTest {
                         System.out.println("Pantalla inicial no encontrada, continuando con el flujo.");
                 }
 
-                // Esperar login
                 wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
         }
 
@@ -53,7 +51,6 @@ class AdminDashboardTest {
 
                 JavascriptExecutor js = (JavascriptExecutor) driver;
 
-                /* ---------- PANEL DOCTORS ---------- */
 
                 WebElement doctorsPanel = wait.until(
                                 ExpectedConditions.visibilityOfElementLocated(By.id("admin-doctors")));
@@ -72,9 +69,6 @@ class AdminDashboardTest {
                 js.executeScript("arguments[0].click();", cancelBtn);
                 wait.until(ExpectedConditions.invisibilityOf(modal));
 
-                /* ---------- PANEL PATIENTS ---------- */
-
-                // IMPORTANTE: volver arriba
                 js.executeScript("window.scrollTo(0, 0);");
 
                 WebElement patientsTab = adminDashboard.findElement(
@@ -101,7 +95,6 @@ class AdminDashboardTest {
                 wait.until(ExpectedConditions.invisibilityOf(patientModal));
         }
 
-        /* ---------- MÉTODO UTIL ---------- */
         private void login(String email, String password) {
                 WebElement emailInput = driver.findElement(By.id("email"));
                 WebElement passwordInput = driver.findElement(By.id("password"));

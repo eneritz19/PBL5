@@ -56,8 +56,6 @@ class QueueUpdateTest {
 
     @Test
     void fields_areEffectivelyImmutablePublicFinalButUnderlyingCollectionsCanMutate() {
-        // Este test documenta el comportamiento actual:
-        // QueueUpdate tiene campos final, pero NO hace copia defensiva de las colecciones.
         List<QueueUpdate.QueueItem> queue = new ArrayList<>();
         Map<String, Integer> sizes = new LinkedHashMap<>();
 

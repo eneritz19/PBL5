@@ -18,7 +18,6 @@ class PhotoMsgTest {
         assertEquals("D1", msg.doctorId);
         assertEquals(PhotoMsg.Urgency.ALTO, msg.urgency);
 
-        // El timestamp debe caer entre before y after (tolerando pequeñas variaciones)
         assertTrue(msg.createdAtMillis >= before, "createdAtMillis should be >= before");
         assertTrue(msg.createdAtMillis <= after, "createdAtMillis should be <= after");
     }

@@ -1,4 +1,3 @@
-// FILTROS DE BÚSQUEDA
 function filterDoctors(query) {
     const cards = document.querySelectorAll('#adminDoctorsList .case-card');
     cards.forEach(card => {

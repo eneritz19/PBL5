@@ -9,9 +9,8 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 
 app = FastAPI(title="SkinXpert API (Keras)")
 
-# ============================================================
-# 0) CONFIG
-# ============================================================
+
+# CONFIG
 SEED = 42
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
@@ -25,9 +24,7 @@ MODEL1_PATH = MODELS_DIR / "model1_triage_final.keras"
 MODEL2_PATH = MODELS_DIR / "model2_final.keras"
 MODEL3_PATH = MODELS_DIR / "model3_best_finetuned.keras"
 
-# ============================================================
-# 1) CLASES
-# ============================================================
+# CLASES FIJAS
 CLASSES_M1 = ["Cancer", "Nevus", "Other_Benign"]
 CLASSES_M2 = ["AK", "BCC", "MEL", "SCC"]
 CLASSES_M3 = [
@@ -35,164 +32,220 @@ CLASSES_M3 = [
     "Nevus", "Psoriasis", "Systemic", "Urticaria", "Viral_Infection"
 ]
 
-# ============================================================
-# 2) MAPEO IA
-# ============================================================
+# MAPEO DE PREDICCION A ID DE BASE DE DATOS
 DISEASE_TO_ID = {
-    "AK": 2,
-    "BCC": 3,
-    "MEL": 4,
-    "SCC": 5,
-
-    "Acne_Rosacea": 1,
-    "Benign_Tumor": 6,
-    "Dermatitis": 7,
-    "Fungal_Infection": 8,
-    "Hair_Disorder": 9,
-    "Nevus": 10,
-    "Psoriasis": 11,
-    "Systemic": 12,
-    "Urticaria": 13,
-    "Viral_Infection": 14
+    # Modelo 2 (canceres y lesiones premalignas)
+    "AK": 2,        # Actinic Keratosis
+    "BCC": 3,       # Basal Cell Carcinoma
+    "MEL": 4,       # Melanoma
+    "SCC": 5,       # Squamous Cell Carcinoma
+    
+    # Modelo 3 (benignas y otras enfermedades)
+    "Acne_Rosacea": 1,       # Acne and Rosacea
+    "Benign_Tumor": 6,       # Benign Tumor
+    "Dermatitis": 7,         # Dermatitis
+    "Fungal_Infection": 8,   # Fungal Infection
+    "Hair_Disorder": 9,      # Hair Disorder
+    "Nevus": 10,             # Nevus
+    "Psoriasis": 11,         # Psoriasis
+    "Systemic": 12,          # Systemic Disease
+    "Urticaria": 13,         # Urticaria
+    "Viral_Infection": 14    # Viral Infection
 }
 
+# URGENCIA / RIESGO
+HIGH_URGENCY = {"MEL", "SCC"}
+MEDIUM_URGENCY = {"BCC", "AK"}
+LOW_BENIGN = {"Nevus", "Benign_Tumor", "Acne_Rosacea"}
+MEDIUM_BENIGN = {"Fungal_Infection", "Systemic", "Viral_Infection"}
 
-# ============================================================
-# 3) UMBRALES (IGUAL QUE NOTEBOOK)
-# ============================================================
-P_CANCER_HIGH = 0.55
-P_CANCER_LOW  = 0.25
-REJECT_MARGIN = 0.05   # notebook
+# UMBRALES DE CONFIANZA (REJECT)
+THRESH_M1_CANCER = 0.35
+REJECT_TOP1 = 0.45
+REJECT_MARGIN = 0.10
 TOPK = 3
 
-# ============================================================
-# 4) CARGA MODELOS
-# ============================================================
-def _check_exists(p: Path):
-    if not p.exists():
-        raise FileNotFoundError(f"Modelo no encontrado: {p}")
+# CARGA MODELOS (global)
+print("Buscando modelos en:", MODELS_DIR)
+print("=" * 60)
 
-_check_exists(MODEL1_PATH)
-_check_exists(MODEL2_PATH)
-_check_exists(MODEL3_PATH)
+# VERIFICACION 
+if not MODEL1_PATH.exists():
+    print(f"NO ENCONTRADO: {MODEL1_PATH}")
+    print(f"   Contenido de {MODELS_DIR}:")
+    for f in MODELS_DIR.iterdir():
+        print(f"   - {f.name}")
+else:
+    print(f"Encontrado: {MODEL1_PATH}")
 
-print("⏳ Cargando modelos...")
+if not MODEL2_PATH.exists():
+    print(f"NO ENCONTRADO: {MODEL2_PATH}")
+else:
+    print(f"Encontrado: {MODEL2_PATH}")
+
+if not MODEL3_PATH.exists():
+    print(f"NO ENCONTRADO: {MODEL3_PATH}")
+else:
+    print(f"Encontrado: {MODEL3_PATH}")
+
+print("=" * 60)
+print("Cargando modelos en memoria...")
+
 model1 = tf.keras.models.load_model(MODEL1_PATH)
 model2 = tf.keras.models.load_model(MODEL2_PATH)
 model3 = tf.keras.models.load_model(MODEL3_PATH)
-print("✅ Modelos cargados.")
 
-# ============================================================
-# 5) HELPERS
-# ============================================================
+print("Modelos cargados correctamente.")
+print(f"   M1 output: {model1.output_shape} | classes: {len(CLASSES_M1)}")
+print(f"   M2 output: {model2.output_shape} | classes: {len(CLASSES_M2)}")
+print(f"   M3 output: {model3.output_shape} | classes: {len(CLASSES_M3)}")
+print("=" * 60)
+
+# HELPERS
+
 def pil_to_tensor(image: Image.Image) -> np.ndarray:
+    """PIL -> np array (1, IMG_SIZE, IMG_SIZE, 3) preprocesado como EfficientNet."""
     img = image.convert("RGB").resize((IMG_SIZE, IMG_SIZE))
     arr = np.array(img).astype(np.float32)
     arr = np.expand_dims(arr, axis=0)
     arr = preprocess_input(arr)
     return arr
 
+def softmax_np(x: np.ndarray) -> np.ndarray:
+    """Aplica softmax manualmente a un array."""
+    x = x.astype(np.float32)
+    x = x - np.max(x, axis=-1, keepdims=True)
+    e = np.exp(x)
+    return e / np.sum(e, axis=-1, keepdims=True)
+
 def looks_like_softmax(vec: np.ndarray) -> bool:
+    """Verifica si un vector parece ser resultado de softmax (suma ~1, valores 0-1)"""
     v = np.asarray(vec).ravel()
     if np.any(v < 0) or np.any(v > 1.0):
         return False
     s = float(np.sum(v))
     return abs(s - 1.0) < 1e-2
 
-def softmax_np(x: np.ndarray) -> np.ndarray:
-    x = x.astype(np.float32)
-    x = x - np.max(x, axis=-1, keepdims=True)
-    e = np.exp(x)
-    return e / np.sum(e, axis=-1, keepdims=True)
-
 def probs_from_model_output(raw: np.ndarray) -> np.ndarray:
-    # Si ya parece softmax -> usar tal cual, si no -> aplicar softmax
+    """
+    Si ya parece softmax → usar tal cual
+    Si no → aplicar softmax
+    Esto evita aplicar softmax dos veces y distorsionar las probabilidades.
+    """
     v = np.asarray(raw).ravel()
     if looks_like_softmax(v):
         return v
     return softmax_np(v)
 
 def topk(probs: np.ndarray, class_names: list, k: int = 3):
+    """Devuelve las top-k predicciones con sus probabilidades."""
     probs = np.asarray(probs).ravel()
     idx = np.argsort(probs)[::-1][:k]
     return [{"label": class_names[i], "prob": float(probs[i])} for i in idx]
 
-def reject_by_margin(probs: np.ndarray) -> bool:
-    s = np.sort(np.asarray(probs).ravel())[::-1]
-    if len(s) < 2:
+def reject_rule(probs: np.ndarray) -> bool:
+    """Reject si el modelo está poco seguro."""
+    s = np.sort(probs)[::-1]
+    top1 = s[0]
+    top2 = s[1] if len(s) > 1 else 0.0
+    if top1 < REJECT_TOP1:
         return True
-    margin = float(s[0] - s[1])
-    return margin < REJECT_MARGIN
+    if (top1 - top2) < REJECT_MARGIN:
+        return True
+    return False
+
+def urgency_from_result(stage: str, label: str) -> str:
+    """Devuelve ALTO / MEDIO / BAJO según predicción final."""
+    if stage == "M2":
+        if label in HIGH_URGENCY:
+            return "ALTO"
+        if label in MEDIUM_URGENCY:
+            return "MEDIO"
+        return "MEDIO"
+    if stage == "M3":
+        if label in LOW_BENIGN:
+            return "BAJO"
+        if label in MEDIUM_BENIGN:
+            return "MEDIO"
+        return "MEDIO"
+    return "MEDIO"
 
 def pipeline_predict(img_arr: np.ndarray):
-    # ---------- M1: TRIAGE ----------
+    """
+    Pipeline completo:
+      1) M1 triage => decide ruta (M2 vs M3)
+      2) M2 o M3 => predicción final
+    """
+
+    # M1 TRIAGE 
     raw1 = model1.predict(img_arr, verbose=0)[0]
-    p1 = probs_from_model_output(raw1)
+    probs1 = probs_from_model_output(raw1)  
+    top1_m1 = topk(probs1, CLASSES_M1, k=3)
 
-    idx = {c: i for i, c in enumerate(CLASSES_M1)}
-    p_cancer = float(p1[idx["Cancer"]])
-    p_nevus  = float(p1[idx["Nevus"]])
-    p_other  = float(p1[idx["Other_Benign"]])
+    p_cancer = float(probs1[CLASSES_M1.index("Cancer")])
+    pred_m1 = CLASSES_M1[int(np.argmax(probs1))]
 
-    # Decision routing (igual notebook)
-    if p_cancer >= P_CANCER_HIGH:
+    # Decision de ruta
+    if pred_m1 == "Cancer" or p_cancer >= THRESH_M1_CANCER:
         route = "M2"
-        reason = "P(Cancer) alta"
-    elif p_cancer <= P_CANCER_LOW:
+        raw2 = model2.predict(img_arr, verbose=0)[0]
+        probs2 = probs_from_model_output(raw2)  
+        top_final = topk(probs2, CLASSES_M2, k=TOPK)
+        pred_final_label = top_final[0]["label"]
+        pred_confidence = top_final[0]["prob"]
+        reject = reject_rule(probs2)
+        urgency = urgency_from_result("M2", pred_final_label)
+        explanation = f"M1 detecta Cancer (p={p_cancer:.3f}) → se usa M2 (tipo de cáncer)."
+    else:
         route = "M3"
-        reason = "P(Cancer) baja"
+        raw3 = model3.predict(img_arr, verbose=0)[0]
+        probs3 = probs_from_model_output(raw3)  
+        top_final = topk(probs3, CLASSES_M3, k=TOPK)
+        pred_final_label = top_final[0]["label"]
+        pred_confidence = top_final[0]["prob"]
+        reject = reject_rule(probs3)
+        urgency = urgency_from_result("M3", pred_final_label)
+        explanation = f"M1 NO detecta Cancer (p={p_cancer:.3f}) → se usa M3 (benigno/enfermedades)."
+
+    if reject:
+        status = "REVISAR"
     else:
-        top1_idx = int(np.argmax(p1))
-        top1_lab = CLASSES_M1[top1_idx]
-        route = "M2" if top1_lab == "Cancer" else "M3"
-        reason = f"Zona gris → clase dominante: {top1_lab}"
+        status = "OK"
 
-    # ---------- Clasificación final ----------
-    if route == "M2":
-        raw = model2.predict(img_arr, verbose=0)[0]
-        probs = probs_from_model_output(raw)
-        class_names = CLASSES_M2
-    else:
-        raw = model3.predict(img_arr, verbose=0)[0]
-        probs = probs_from_model_output(raw)
-        class_names = CLASSES_M3
-
-    top_final = topk(probs, class_names, k=TOPK)
-    pred_label = top_final[0]["label"]
-    pred_conf = float(top_final[0]["prob"])          # 0..1
-    pred_conf_pct = float(pred_conf * 100.0)         # 0..100
-
-    reject = reject_by_margin(probs)
-
-    disease_id = DISEASE_TO_ID.get(pred_label, 1)
+    disease_id = DISEASE_TO_ID.get(pred_final_label, 1)
 
     return {
-        # CAMPOS PARA NODE-RED:
-        "id_skindiseases": int(disease_id),
-        "disease_name": pred_label,
-        "confianza": pred_conf,                 # 0..1
-        "confidence_percent": pred_conf_pct,    # 0..100
+        # CAMPOS PRINCIPALES PARA NODE-RED:
+        "id_skindiseases": disease_id,
+        "confianza": pred_confidence, 
+        "disease_name": pred_final_label,
+        "urgency_label": urgency,
+        
+        # INFORMACION ADICIONAL:
+        "status": status,
         "route_used": route,
-
-        # INFO EXTRA DEBUG:
         "m1": {
             "p_cancer": p_cancer,
-            "p_nevus": p_nevus,
-            "p_other": p_other,
-            "reason": reason,
-            "top3": topk(p1, CLASSES_M1, 3)
+            "top3": top1_m1,
+            "pred": pred_m1
         },
         "final": {
+            "pred": pred_final_label,
             "topk": top_final,
+            "urgency": urgency,
             "reject": reject
-        }
+        },
+        "decision_explanation": explanation
     }
 
-# ============================================================
-# 6) ENDPOINTS
-# ============================================================
+# ENDPOINTS
+
 @app.post("/predecir")
 async def predict(file: UploadFile = File(...)):
+    """
+    Endpoint principal para predicción de enfermedades de piel.
+    Recibe una imagen y devuelve el diagnóstico con confianza.
+    """
     try:
         contents = await file.read()
         image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -205,6 +258,12 @@ async def predict(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+
 @app.get("/")
 async def health():
-    return {"status": "SkinXpert AI running", "version": "1.1.0"}
+    """Health check endpoint."""
+    return {
+        "status": "SkinXpert AI running",
+        "models_loaded": ["M1", "M2", "M3"],
+        "version": "1.1.0"
+    }

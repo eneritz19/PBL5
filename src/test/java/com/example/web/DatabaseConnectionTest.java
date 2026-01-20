@@ -19,7 +19,6 @@ class DatabaseConnectionTest {
         try (Connection conn = DriverManager.getConnection(url);
              Statement st = conn.createStatement()) {
 
-            // Crear tabla patients (estructura coherente con tu proyecto)
             st.execute(
                     "CREATE TABLE patients (" +
                             "id INT PRIMARY KEY AUTO_INCREMENT, " +
@@ -28,13 +27,11 @@ class DatabaseConnectionTest {
                             ")"
             );
 
-            // Insertar paciente de prueba
             st.execute(
                     "INSERT INTO patients(email, password_hash) " +
                             "VALUES ('ana@example.com', 'hash_prueba')"
             );
 
-            // Verificar que se insertó correctamente
             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM patients");
             assertTrue(rs.next());
 

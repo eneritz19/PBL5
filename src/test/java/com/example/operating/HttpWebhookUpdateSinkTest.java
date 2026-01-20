@@ -77,14 +77,12 @@ class HttpWebhookUpdateSinkTest {
 
     @Test
     void push_doesNotThrowIfServerIsDown_printsErrorToStderr() {
-        // Configuramos una URL que fallará (servidor caído)
+    
         String url = "http://localhost:1/webhook";
         HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink(url);
 
         QueueUpdate update = new QueueUpdate("D9", List.of(), Map.of());
 
-        // El test valida que, aunque el servidor esté caído,
-        // el método atrapa la excepción internamente y no rompe el programa.
         assertDoesNotThrow(() -> sink.push(update),
                 "El sink debe gestionar el error de conexión internamente sin lanzar excepciones");
     }
@@ -92,8 +90,8 @@ class HttpWebhookUpdateSinkTest {
     @Test
     void push_whenInterrupted_restoresStatus() throws Exception {
         HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink("http://localhost:1234");
-        Thread.currentThread().interrupt(); // Forzamos interrupción
+        Thread.currentThread().interrupt(); 
         sink.push(new QueueUpdate("D1", List.of(), Map.of()));
-        assertTrue(Thread.interrupted()); // Verificamos que se restauró el estado
+        assertTrue(Thread.interrupted()); 
     }
 }

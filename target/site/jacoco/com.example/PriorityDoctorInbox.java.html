@@ -1,201 +1,182 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PriorityDoctorInbox.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">pbl5</a> &gt; <a href="index.source.html" class="el_package">com.example</a> &gt; <span class="el_source">PriorityDoctorInbox.java</span></div><h1>PriorityDoctorInbox.java</h1><pre class="source lang-java linenums">package com.example;
+
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PriorityDoctorInbox implements DoctorInbox {
+<span class="fc" id="L10">    private static final Logger LOGGER = Logger.getLogger(PriorityDoctorInbox.class.getName());</span>
     private final String doctorId;
 
     private final Semaphore slots; // huecos
     private final Semaphore items; // items
 
-<span class="fc" id="L12">    private final ReentrantLock lock = new ReentrantLock();</span>
+<span class="fc" id="L16">    private final ReentrantLock lock = new ReentrantLock();</span>
 
-<span class="fc" id="L14">    private final Deque&lt;PhotoMsg&gt; high = new ArrayDeque&lt;&gt;();</span>
-<span class="fc" id="L15">    private final Deque&lt;PhotoMsg&gt; med  = new ArrayDeque&lt;&gt;();</span>
-<span class="fc" id="L16">    private final Deque&lt;PhotoMsg&gt; low  = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L18">    private final Deque&lt;PhotoMsg&gt; high = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L19">    private final Deque&lt;PhotoMsg&gt; med  = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L20">    private final Deque&lt;PhotoMsg&gt; low  = new ArrayDeque&lt;&gt;();</span>
 
-    // =========================================================================
-    // AGING (evita starvation) - umbrales en minutos
-    // =========================================================================
-    private static final long MIN = 60_000L; // 1 minuto en milisegundos
+    private static final long MIN = 60_000L; 
+    private static final long T_LOW_TO_MED_MS  = 15 * MIN; 
+    private static final long T_MED_TO_HIGH_MS = 45 * MIN; 
+    private static final long T_LOW_TO_HIGH_MS = 120 * MIN; 
 
-    // Ajusta estos valores según criterio clínico / demo
-    private static final long T_LOW_TO_MED_MS  = 15 * MIN; // BAJO -&gt; MEDIO tras 15 min
-    private static final long T_MED_TO_HIGH_MS = 45 * MIN; // MEDIO -&gt; ALTO tras 20 min
-    private static final long T_LOW_TO_HIGH_MS = 120 * MIN; // BAJO -&gt; ALTO tras 40 min (opcional)
-
-<span class="fc" id="L28">    public PriorityDoctorInbox(String doctorId, int capacity) {</span>
-<span class="fc" id="L29">        this.doctorId = doctorId;</span>
-<span class="fc" id="L30">        this.slots = new Semaphore(capacity, true);</span>
-<span class="fc" id="L31">        this.items = new Semaphore(0, true);</span>
-<span class="fc" id="L32">    }</span>
+<span class="fc" id="L27">    public PriorityDoctorInbox(String doctorId, int capacity) {</span>
+<span class="fc" id="L28">        this.doctorId = doctorId;</span>
+<span class="fc" id="L29">        this.slots = new Semaphore(capacity, true);</span>
+<span class="fc" id="L30">        this.items = new Semaphore(0, true);</span>
+<span class="fc" id="L31">    }</span>
 
     @Override
     public void enqueue(PhotoMsg msg) throws InterruptedException {
-        // Capacidad: evita overflow sin busy-wait
-<span class="fc" id="L37">        slots.acquire();</span>
-
-<span class="fc" id="L39">        lock.lock();</span>
+<span class="fc" id="L35">        slots.acquire();</span>
+<span class="fc" id="L36">        lock.lock();</span>
         try {
-<span class="pc bpc" id="L41" title="1 of 4 branches missed.">            switch (msg.urgency) {</span>
-<span class="fc" id="L42">                case ALTO -&gt; high.addLast(msg);</span>
-<span class="fc" id="L43">                case MEDIO -&gt; med.addLast(msg);</span>
-<span class="fc" id="L44">                case BAJO -&gt; low.addLast(msg);</span>
+<span class="pc bpc" id="L38" title="1 of 4 branches missed.">            switch (msg.urgency) {</span>
+<span class="fc" id="L39">                case ALTO -&gt; high.addLast(msg);</span>
+<span class="fc" id="L40">                case MEDIO -&gt; med.addLast(msg);</span>
+<span class="fc" id="L41">                case BAJO -&gt; low.addLast(msg);</span>
             }
         } finally {
-<span class="fc" id="L47">            lock.unlock();</span>
+<span class="fc" id="L44">            lock.unlock();</span>
         }
+<span class="fc" id="L46">        items.release();</span>
+<span class="fc" id="L47">    }</span>
 
-<span class="fc" id="L50">        items.release();</span>
-<span class="fc" id="L51">    }</span>
-
-    /**
-     * Urgencia &quot;efectiva&quot; según tiempo de espera (aging).
-     * - BAJO puede subir a MEDIO o ALTO si espera demasiado
-     * - MEDIO puede subir a ALTO si espera demasiado
-     */
     private static PhotoMsg.Urgency effectiveUrgency(PhotoMsg msg, long nowMillis) {
-<span class="fc" id="L59">        long wait = nowMillis - msg.createdAtMillis;</span>
+<span class="fc" id="L50">        long wait = nowMillis - msg.createdAtMillis;</span>
 
-<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (msg.urgency == PhotoMsg.Urgency.BAJO) {</span>
-<span class="pc bpc" id="L62" title="1 of 2 branches missed.">            if (wait &gt;= T_LOW_TO_HIGH_MS) return PhotoMsg.Urgency.ALTO;</span>
-<span class="nc bnc" id="L63" title="All 2 branches missed.">            if (wait &gt;= T_LOW_TO_MED_MS)  return PhotoMsg.Urgency.MEDIO;</span>
-<span class="nc" id="L64">            return PhotoMsg.Urgency.BAJO;</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (msg.urgency == PhotoMsg.Urgency.BAJO) {</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">            if (wait &gt;= T_LOW_TO_HIGH_MS) return PhotoMsg.Urgency.ALTO;</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            if (wait &gt;= T_LOW_TO_MED_MS)  return PhotoMsg.Urgency.MEDIO;</span>
+<span class="nc" id="L55">            return PhotoMsg.Urgency.BAJO;</span>
         }
 
-<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        if (msg.urgency == PhotoMsg.Urgency.MEDIO) {</span>
-<span class="pc bpc" id="L68" title="1 of 2 branches missed.">            if (wait &gt;= T_MED_TO_HIGH_MS) return PhotoMsg.Urgency.ALTO;</span>
-<span class="nc" id="L69">            return PhotoMsg.Urgency.MEDIO;</span>
+<span class="pc bpc" id="L58" title="2 of 4 branches missed.">        if (msg.urgency == PhotoMsg.Urgency.MEDIO &amp;&amp; wait &gt;= T_MED_TO_HIGH_MS) {</span>
+<span class="fc" id="L59">            return PhotoMsg.Urgency.ALTO;</span>
         }
 
-<span class="nc" id="L72">        return PhotoMsg.Urgency.ALTO;</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        return msg.urgency == PhotoMsg.Urgency.MEDIO ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.ALTO;</span>
     }
 
-    /**
-     * Aplica aging moviendo mensajes entre colas.
-     * Debe llamarse siempre con el lock cogido.
-     */
     private void applyAgingLocked() {
-<span class="fc" id="L80">        long now = System.currentTimeMillis();</span>
+<span class="fc" id="L66">        long now = System.currentTimeMillis();</span>
+<span class="fc" id="L67">        processLowAging(now);</span>
+<span class="fc" id="L68">        processMedAging(now);</span>
+<span class="fc" id="L69">    }</span>
 
-        // Revisa BAJO -&gt; MEDIO/ALTO
-<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (!low.isEmpty()) {</span>
-<span class="fc" id="L84">            Iterator&lt;PhotoMsg&gt; it = low.iterator();</span>
-<span class="fc bfc" id="L85" title="All 2 branches covered.">            while (it.hasNext()) {</span>
-<span class="fc" id="L86">                PhotoMsg m = it.next();</span>
-<span class="fc" id="L87">                PhotoMsg.Urgency eff = effectiveUrgency(m, now);</span>
-<span class="pc bpc" id="L88" title="1 of 2 branches missed.">                if (eff != PhotoMsg.Urgency.BAJO) {</span>
-<span class="fc" id="L89">                    it.remove();</span>
-<span class="pc bpc" id="L90" title="1 of 2 branches missed.">                    if (eff == PhotoMsg.Urgency.MEDIO) med.addLast(m);</span>
-<span class="fc" id="L91">                    else high.addLast(m);</span>
-                }
-<span class="fc" id="L93">            }</span>
-        }
+    private void processLowAging(long now) {
+<span class="fc" id="L72">        Iterator&lt;PhotoMsg&gt; it = low.iterator();</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        while (it.hasNext()) {</span>
+<span class="fc" id="L74">            PhotoMsg m = it.next();</span>
+<span class="fc" id="L75">            PhotoMsg.Urgency eff = effectiveUrgency(m, now);</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">            if (eff != PhotoMsg.Urgency.BAJO) {</span>
+<span class="fc" id="L77">                it.remove();</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">                if (eff == PhotoMsg.Urgency.MEDIO) med.addLast(m);</span>
+<span class="fc" id="L79">                else high.addLast(m);</span>
+            }
+<span class="fc" id="L81">        }</span>
+<span class="fc" id="L82">    }</span>
 
-        // Revisa MEDIO -&gt; ALTO
-<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (!med.isEmpty()) {</span>
-<span class="fc" id="L98">            Iterator&lt;PhotoMsg&gt; it = med.iterator();</span>
-<span class="fc bfc" id="L99" title="All 2 branches covered.">            while (it.hasNext()) {</span>
-<span class="fc" id="L100">                PhotoMsg m = it.next();</span>
-<span class="fc" id="L101">                PhotoMsg.Urgency eff = effectiveUrgency(m, now);</span>
-<span class="pc bpc" id="L102" title="1 of 2 branches missed.">                if (eff == PhotoMsg.Urgency.ALTO) {</span>
-<span class="fc" id="L103">                    it.remove();</span>
-<span class="fc" id="L104">                    high.addLast(m);</span>
-                }
-<span class="fc" id="L106">            }</span>
-        }
-<span class="fc" id="L108">    }</span>
+    private void processMedAging(long now) {
+<span class="fc" id="L85">        Iterator&lt;PhotoMsg&gt; it = med.iterator();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        while (it.hasNext()) {</span>
+<span class="fc" id="L87">            PhotoMsg m = it.next();</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">            if (effectiveUrgency(m, now) == PhotoMsg.Urgency.ALTO) {</span>
+<span class="fc" id="L89">                it.remove();</span>
+<span class="fc" id="L90">                high.addLast(m);</span>
+            }
+<span class="fc" id="L92">        }</span>
+<span class="fc" id="L93">    }</span>
 
-    // (Opcional) si más adelante quieres &quot;sacar siguiente&quot; para médico:
     public PhotoMsg takeNext() throws InterruptedException {
-<span class="fc" id="L112">        items.acquire();</span>
-<span class="fc" id="L113">        lock.lock();</span>
+<span class="fc" id="L96">        items.acquire();</span>
+<span class="fc" id="L97">        lock.lock();</span>
         try {
-            // ✅ Evita starvation: antes de elegir, promovemos por antigüedad
-<span class="fc" id="L116">            applyAgingLocked();</span>
-
+<span class="fc" id="L99">            applyAgingLocked();</span>
             PhotoMsg msg;
-<span class="pc bpc" id="L119" title="1 of 2 branches missed.">            if (!high.isEmpty()) msg = high.removeFirst();</span>
-<span class="nc bnc" id="L120" title="All 2 branches missed.">            else if (!med.isEmpty()) msg = med.removeFirst();</span>
-<span class="nc" id="L121">            else msg = low.removeFirst();</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">            if (!high.isEmpty()) msg = high.removeFirst();</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            else if (!med.isEmpty()) msg = med.removeFirst();</span>
+<span class="nc" id="L103">            else msg = low.removeFirst();</span>
 
-<span class="fc" id="L123">            slots.release();</span>
-<span class="fc" id="L124">            return msg;</span>
+<span class="fc" id="L105">            slots.release();</span>
+<span class="fc" id="L106">            return msg;</span>
         } finally {
-<span class="fc" id="L126">            lock.unlock();</span>
+<span class="fc" id="L108">            lock.unlock();</span>
         }
     }
 
     @Override
     public List&lt;QueueUpdate.QueueItem&gt; snapshotOrdered() {
-<span class="fc" id="L132">        lock.lock();</span>
+<span class="fc" id="L114">        lock.lock();</span>
         try {
-            // ✅ El snapshot refleja la prioridad efectiva (sin starvation)
-<span class="fc" id="L135">            applyAgingLocked();</span>
-
-<span class="fc" id="L137">            ArrayList&lt;QueueUpdate.QueueItem&gt; out = new ArrayList&lt;&gt;(high.size() + med.size() + low.size());</span>
-
-            // ✅ Urgencia efectiva: al estar en &quot;high/med/low&quot; ya es su prioridad actual
-<span class="fc bfc" id="L140" title="All 2 branches covered.">            for (PhotoMsg m : high) out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.ALTO.name(),  m.createdAtMillis));</span>
-<span class="pc bpc" id="L141" title="1 of 2 branches missed.">            for (PhotoMsg m : med)  out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.MEDIO.name(), m.createdAtMillis));</span>
-<span class="pc bpc" id="L142" title="1 of 2 branches missed.">            for (PhotoMsg m : low)  out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.BAJO.name(),  m.createdAtMillis));</span>
-
-<span class="fc" id="L144">            return out;</span>
+<span class="fc" id="L116">            applyAgingLocked();</span>
+<span class="fc" id="L117">            ArrayList&lt;QueueUpdate.QueueItem&gt; out = new ArrayList&lt;&gt;(high.size() + med.size() + low.size());</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">            for (PhotoMsg m : high) out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.ALTO.name(),  m.createdAtMillis));</span>
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">            for (PhotoMsg m : med)  out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.MEDIO.name(), m.createdAtMillis));</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">            for (PhotoMsg m : low)  out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.BAJO.name(),  m.createdAtMillis));</span>
+<span class="fc" id="L121">            return out;</span>
         } finally {
-<span class="fc" id="L146">            lock.unlock();</span>
+<span class="fc" id="L123">            lock.unlock();</span>
         }
     }
 
     @Override
     public Map&lt;String, Integer&gt; sizesSnapshot() {
-<span class="fc" id="L152">        lock.lock();</span>
+<span class="fc" id="L129">        lock.lock();</span>
         try {
-            // Si quieres que los contadores también reflejen aging, descomenta:
-            // applyAgingLocked();
-
-<span class="fc" id="L157">            int h = high.size(), m = med.size(), l = low.size();</span>
-<span class="fc" id="L158">            Map&lt;String, Integer&gt; map = new LinkedHashMap&lt;&gt;();</span>
-<span class="fc" id="L159">            map.put(&quot;ALTO&quot;, h);</span>
-<span class="fc" id="L160">            map.put(&quot;MEDIO&quot;, m);</span>
-<span class="fc" id="L161">            map.put(&quot;BAJO&quot;, l);</span>
-<span class="fc" id="L162">            map.put(&quot;TOTAL&quot;, h + m + l);</span>
-<span class="fc" id="L163">            return map;</span>
+<span class="fc" id="L131">            int h = high.size();</span>
+<span class="fc" id="L132">            int m = med.size();</span>
+<span class="fc" id="L133">            int l = low.size();</span>
+            
+<span class="fc" id="L135">            Map&lt;String, Integer&gt; map = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L136">            map.put(&quot;ALTO&quot;, h);</span>
+<span class="fc" id="L137">            map.put(&quot;MEDIO&quot;, m);</span>
+<span class="fc" id="L138">            map.put(&quot;BAJO&quot;, l);</span>
+<span class="fc" id="L139">            map.put(&quot;TOTAL&quot;, h + m + l);</span>
+<span class="fc" id="L140">            return map;</span>
         } finally {
-<span class="fc" id="L165">            lock.unlock();</span>
+<span class="fc" id="L142">            lock.unlock();</span>
         }
     }
+
     @Override
-public boolean removeByImageCode(String imageCode) {
-<span class="fc" id="L170">    lock.lock();</span>
-    try {
-<span class="fc" id="L172">        boolean removed =</span>
-<span class="fc bfc" id="L173" title="All 2 branches covered.">            removeFromDeque(high, imageCode) ||</span>
-<span class="pc bpc" id="L174" title="1 of 2 branches missed.">            removeFromDeque(med, imageCode)  ||</span>
-<span class="pc bpc" id="L175" title="1 of 2 branches missed.">            removeFromDeque(low, imageCode);</span>
+    public boolean removeByImageCode(String imageCode) {
+<span class="fc" id="L148">        lock.lock();</span>
+        try {
+<span class="fc bfc" id="L150" title="All 2 branches covered.">            boolean removed = removeFromDeque(high, imageCode) ||</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">                             removeFromDeque(med, imageCode)  ||</span>
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">                             removeFromDeque(low, imageCode);</span>
 
-<span class="fc bfc" id="L177" title="All 2 branches covered.">        if (removed) {</span>
-            // Ajuste contadores: había 1 item real
-<span class="fc" id="L179">            items.tryAcquire(); // decrementa items si podía (no bloquea)</span>
-<span class="fc" id="L180">            slots.release();    // libera capacidad</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">            if (removed) {</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">                if (!items.tryAcquire()) {</span>
+<span class="nc" id="L156">                    LOGGER.log(Level.WARNING, &quot;No se pudo adquirir el permiso del ítem tras borrado manual&quot;);</span>
+                }
+<span class="fc" id="L158">                slots.release();</span>
+            }
+<span class="fc" id="L160">            return removed;</span>
+        } finally {
+<span class="fc" id="L162">            lock.unlock();</span>
         }
-<span class="fc" id="L182">        return removed;</span>
-    } finally {
-<span class="fc" id="L184">        lock.unlock();</span>
     }
-}
 
-private boolean removeFromDeque(java.util.Deque&lt;PhotoMsg&gt; dq, String imageCode) {
-<span class="fc" id="L189">    var it = dq.iterator();</span>
-<span class="fc bfc" id="L190" title="All 2 branches covered.">    while (it.hasNext()) {</span>
-<span class="fc" id="L191">        PhotoMsg m = it.next();</span>
-<span class="fc bfc" id="L192" title="All 2 branches covered.">        if (m.imageCode.equals(imageCode)) {</span>
-<span class="fc" id="L193">            it.remove();</span>
-<span class="fc" id="L194">            return true;</span>
-        }
-<span class="fc" id="L196">    }</span>
-<span class="fc" id="L197">    return false;</span>
-}
-
+    private boolean removeFromDeque(java.util.Deque&lt;PhotoMsg&gt; dq, String imageCode) {
+<span class="fc" id="L167">        var it = dq.iterator();</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        while (it.hasNext()) {</span>
+<span class="fc" id="L169">            PhotoMsg m = it.next();</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">            if (m.imageCode.equals(imageCode)) {</span>
+<span class="fc" id="L171">                it.remove();</span>
+<span class="fc" id="L172">                return true;</span>
+            }
+<span class="nc" id="L174">        }</span>
+<span class="fc" id="L175">        return false;</span>
+    }
+    
+    public String getDoctorId() {
+<span class="nc" id="L179">        return this.doctorId;</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

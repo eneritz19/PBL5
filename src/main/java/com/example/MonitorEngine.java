@@ -24,8 +24,8 @@ public class MonitorEngine implements Engine {
 
     @Override
     public void shutdown() {
-        // El motor de tipo Monitor es síncrono y no gestiona hilos de ejecución propios.
-        // No se requiere ninguna acción de limpieza específica al apagar.
+        // The Monitor type engine is synchronous and does not manage its own execution threads.
+        // No specific cleaning action is required when turning off.
      }
 
     @Override

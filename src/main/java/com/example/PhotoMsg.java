@@ -10,12 +10,10 @@ public final class PhotoMsg {
     public final Urgency urgency;
     public final long createdAtMillis;
 
-    // Nuevo mensaje “normal”
     public PhotoMsg(String imageCode, String doctorId, Urgency urgency) {
         this(imageCode, doctorId, urgency, Instant.now().toEpochMilli());
     }
 
-    // Rehydrate / migración: respetar antigüedad real
     public PhotoMsg(String imageCode, String doctorId, Urgency urgency, long createdAtMillis) {
         this.imageCode = Objects.requireNonNull(imageCode);
         this.doctorId = Objects.requireNonNull(doctorId);

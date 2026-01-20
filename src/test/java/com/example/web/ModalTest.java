@@ -22,7 +22,6 @@ class ModalTest {
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
         driver.get(BASE_URL);
 
-        // Forzar landing page visible (sin login)
         ((JavascriptExecutor) driver).executeScript(
                 "document.getElementById('loginPage')?.classList.add('hidden');" +
                 "document.getElementById('landingPage')?.classList.remove('hidden');"
@@ -44,14 +43,12 @@ class ModalTest {
 
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
-        // Abrir modal (forzado)
         js.executeScript("document.getElementById('modal').classList.remove('hidden');");
 
         WebElement modal = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.id("modal")));
         assertTrue(modal.isDisplayed(), "El modal debería mostrarse");
 
-        // Simular contenido dinámico
         js.executeScript(
                 "document.getElementById('modal-title').innerText = 'Título de prueba';" +
                 "document.getElementById('modal-body').innerText = 'Contenido de prueba';"
@@ -63,7 +60,6 @@ class ModalTest {
         assertFalse(modalTitle.getText().isBlank(), "El título no debería estar vacío");
         assertFalse(modalBody.getText().isBlank(), "El cuerpo no debería estar vacío");
 
-        // Cerrar modal
         WebElement cancelBtn = modal.findElement(
                 By.xpath(".//button[contains(text(),'Cancel')]"));
         js.executeScript("arguments[0].click();", cancelBtn);
@@ -77,7 +73,6 @@ class ModalTest {
 
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
-        // Abrir image modal
         js.executeScript(
                 "document.getElementById('imageModal').classList.remove('hidden');");
 
@@ -85,7 +80,6 @@ class ModalTest {
                 ExpectedConditions.visibilityOfElementLocated(By.id("imageModal")));
         assertTrue(imageModal.isDisplayed(), "El image modal debería mostrarse");
 
-        // Cerrar image modal
         js.executeScript(
                 "document.getElementById('imageModal').classList.add('hidden');");
 

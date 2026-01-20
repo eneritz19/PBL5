@@ -24,7 +24,6 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// LOADING SPINNER
 function showLoading(text = 'Processing...') {
     const existing = document.getElementById('loadingSpinner');
     if (existing) return;
@@ -44,7 +43,6 @@ function hideLoading() {
     if (spinner) spinner.remove();
 }
 
-// MODAL DE CONFIRMACIÓN PERSONALIZADO
 function showConfirm(title, message, icon = '⚠️', onConfirm) {
     const modal = document.createElement('div');
     modal.className = 'confirm-modal';
@@ -72,15 +70,12 @@ function showConfirm(title, message, icon = '⚠️', onConfirm) {
     };
 }
 
-// Función de toggle modo oscuro
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
 
-    // Guardar preferencia
     const isDark = document.body.classList.contains('dark-mode');
     localStorage.setItem('darkMode', isDark);
 
-    // Actualizar iconos y textos
     const icons = ['darkModeIcon', 'darkModeIconDoctor', 'darkModeIconAdmin'];
     const texts = ['darkModeText', 'darkModeTextDoctor', 'darkModeTextAdmin'];
 
@@ -101,7 +96,6 @@ function toggleDarkMode() {
     showToast(isDark ? 'Dark mode activated' : 'Light mode activated', 'info');
 }
 
-// Cargar preferencia de modo oscuro al iniciar
 window.addEventListener('DOMContentLoaded', () => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode === 'true') {
@@ -157,7 +151,6 @@ function scrollToBottom() {
     }, 150);
 }
 
-// VALIDACIÓN DE INPUTS
 function validateInput(input, rules) {
     const value = input.value.trim();
     const errorDiv = document.getElementById(input.id + 'Error');
@@ -198,7 +191,6 @@ function validateInput(input, rules) {
     return true;
 }
 
-// CONTADOR DE CARACTERES
 function updateCharCount(textarea) {
     const maxLength = textarea.getAttribute('maxlength') || 500;
     const current = textarea.value.length;
@@ -225,7 +217,6 @@ function updateCharCount(textarea) {
     }
 }
 
-// CAMBIO 5: Funciones para modal de imagen
 function openImageModal(imageSrc) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');

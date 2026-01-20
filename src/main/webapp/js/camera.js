@@ -1,4 +1,3 @@
-// CAMBIO 3: Funciones para cámara y eliminar foto
 function previewImage(event) {
     const file = event.target.files[0];
     const preview = document.getElementById("imagePreview");
@@ -25,13 +24,11 @@ async function captureFromCamera() {
             video: { facingMode: 'environment' }
         });
 
-        // Crear elemento de video para capturar
         const video = document.createElement('video');
         video.srcObject = stream;
         video.autoplay = true;
         video.playsInline = true;
 
-        // Crear modal para la cámara
         const cameraModal = document.createElement('div');
         cameraModal.style.cssText = `
                     position: fixed;
@@ -86,7 +83,6 @@ async function captureFromCamera() {
         cameraModal.appendChild(cancelBtn);
         document.body.appendChild(cameraModal);
 
-        // Función para capturar la foto
         captureBtn.onclick = () => {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
@@ -99,19 +95,16 @@ async function captureFromCamera() {
                 dataTransfer.items.add(file);
                 document.getElementById('uploadImage').files = dataTransfer.files;
 
-                // Mostrar preview
                 const preview = document.getElementById("imagePreview");
                 preview.src = URL.createObjectURL(blob);
                 preview.style.display = "block";
                 document.getElementById("deletePhotoBtn").style.display = "inline-block";
 
-                // Cerrar modal
                 stream.getTracks().forEach(track => track.stop());
                 document.body.removeChild(cameraModal);
             }, 'image/jpeg', 0.95);
         };
 
-        // Cancelar
         cancelBtn.onclick = () => {
             stream.getTracks().forEach(track => track.stop());
             document.body.removeChild(cameraModal);

@@ -3,9 +3,7 @@ CREATE SCHEMA skinXpert;
 USE skinXpert;
 
 
-/* ===========================================================
-   1. CLINICAS
-   =========================================================== */
+/* 1. CLINICAS*/
 
 DROP TABLE IF EXISTS clinics;
 CREATE TABLE clinics (
@@ -15,9 +13,7 @@ CREATE TABLE clinics (
 );
 
 
-/* ===========================================================
-   2. ADMIN
-   =========================================================== */
+/* 2. ADMIN */
 
 DROP TABLE IF EXISTS admin;
 CREATE TABLE admin (
@@ -29,9 +25,7 @@ CREATE TABLE admin (
 );
 
 
-/* ===========================================================
-   3. MEDICOS
-   =========================================================== */
+/* 3. MEDICOS */
 
 DROP TABLE IF EXISTS doctors;
 CREATE TABLE doctors (
@@ -47,9 +41,7 @@ CREATE TABLE doctors (
 );
 
 
-/* ===========================================================
-   4. PACIENTES
-   =========================================================== */
+/* 4. PACIENTES */
 
 DROP TABLE IF EXISTS patients;
 CREATE TABLE patients (
@@ -66,9 +58,7 @@ CREATE TABLE patients (
 
 
 
-/* ===========================================================
-   5. CITAS (Medico <-> Paciente)
-   =========================================================== */
+/* 5. CITAS */
 
 DROP TABLE IF EXISTS appointments;
 CREATE TABLE appointments (
@@ -85,9 +75,7 @@ CREATE TABLE appointments (
 );
 
 
-/* ===========================================================
-   6. SOLICITUDES DE FOTOS
-   =========================================================== */
+/* 6. SOLICITUDES DE FOTOS */
 
 DROP TABLE IF EXISTS photo_requests;
 CREATE TABLE photo_requests (
@@ -101,9 +89,7 @@ CREATE TABLE photo_requests (
 );
 
 
-/* ===========================================================
-   7. IMAGENES
-   =========================================================== */
+/* 7. IMAGENES */
 
 DROP TABLE IF EXISTS images;
 CREATE TABLE images (
@@ -117,9 +103,7 @@ CREATE TABLE images (
 
 
 
-/* ===========================================================
-   8. ENFERMEDADES 
-   =========================================================== */
+/* 8. ENFERMEDADES  */
 
 DROP TABLE IF EXISTS skin_diseases;
 CREATE TABLE skin_diseases (
@@ -135,9 +119,7 @@ CREATE TABLE skin_diseases (
 );
 
 
-/* ===========================================================
-   9. DIAGNOSTICOS MEDICOS
-   =========================================================== */
+/* 9. DIAGNOSTICOS MEDICOS */
 
 DROP TABLE IF EXISTS diagnoses;
 CREATE TABLE diagnoses (
@@ -159,26 +141,16 @@ CREATE TABLE diagnoses (
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-/* ===========================================================
-   1. CLINICS
-   =========================================================== */
+/* INSERTS */
 
 INSERT INTO clinics (name, address) VALUES
 ('Central Dermatology Clinic', 'Health Ave 123'),
 ('Southern Specialists Clinic', 'Medicine Street 45');
 
 
-/* ===========================================================
-   2. ADMIN
-   =========================================================== */
-
 INSERT INTO admin (name, email, password) VALUES
 ('Admin1', 'admin@skinXpert.com', SHA2('admin123',256));
 
-
-/* ===========================================================
-   3. DOCTORS
-   =========================================================== */
 
 INSERT INTO doctors (doctor_code, name, email, password, id_clinic) VALUES
 ('MED001', 'Dr. Juan Perez', 'jperez@clinic.com', SHA2('med123',256), 1),
@@ -186,19 +158,11 @@ INSERT INTO doctors (doctor_code, name, email, password, id_clinic) VALUES
 ('MED003', 'Dr. Carlos Ruiz', 'cruiz@clinic.com', SHA2('med123',256), 2);
 
 
-/* ===========================================================
-   4. PATIENTS
-   =========================================================== */
-
 INSERT INTO patients (dni, name, email, password, id_doctor) VALUES
 ('12345678A', 'Ana Martinez', 'ana@example.com', SHA2('ana123',256), 1),
 ('87654321B', 'Pedro Lopez', 'pedro@example.com', SHA2('pedro123',256), 1),
 ('11223344C', 'Carla Torres', 'carla@example.com', SHA2('carla123',256), 2);
 
-
-/* ===========================================================
-   5. APPOINTMENTS
-   =========================================================== */
 
 INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES
 (1, 1, '2025-02-15 10:00:00', 'pending', 'Initial check-up'),
@@ -206,29 +170,17 @@ INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES
 (3, 2, '2025-02-20 09:30:00', 'pending', 'Lesion assessment');
 
 
-/* ===========================================================
-   6. PHOTO REQUESTS
-   =========================================================== */
-
 INSERT INTO photo_requests (id_patient, urgency, status) VALUES
 (1, 3, 'pending'),
 (2, 1, 'reviewing'),
 (3, 2, 'pending');
 
 
-/* ===========================================================
-   7. IMAGES
-   =========================================================== */
-
 INSERT INTO images (id_request, file_path) VALUES
 (1, '/uploads/ana_photo_01.jpg'),
 (2, '/uploads/pedro_photo_01.jpg'),
 (3, '/uploads/carla_photo_01.jpg');
 
-
-/* ===========================================================
-   8. SKIN DISEASES
-   =========================================================== */
 
 INSERT INTO skin_diseases
 (disease, ICD_code, standard_treatment, medications, alternatives, recommendations, referral, source)
@@ -345,10 +297,6 @@ VALUES
 'Dermatology',
 'Viral infection guidelines');
 
-
-/* ===========================================================
-   9. DIAGNOSES
-   =========================================================== */
 
 INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) VALUES
 (1, 1, 1, 1, 87.5, 'Lesion compatible with mild acne.'),

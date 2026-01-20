@@ -23,28 +23,31 @@ public class MonitorEngine implements Engine {
     }
 
     @Override
-<span class="nc" id="L26">    public void shutdown() { }</span>
+    public void shutdown() {
+        // The Monitor type engine is synchronous and does not manage its own execution threads.
+        // No specific cleaning action is required when turning off.
+<span class="fc" id="L29">     }</span>
 
     @Override
     public QueueUpdate getQueue(String doctorId) {
-<span class="fc" id="L30">        return manager.buildUpdate(doctorId);</span>
+<span class="fc" id="L33">        return manager.buildUpdate(doctorId);</span>
     }
 
     @Override
     public Map&lt;String, List&lt;QueueUpdate.QueueItem&gt;&gt; dumpAll() {
-<span class="nc" id="L35">        return manager.dumpAll();</span>
+<span class="fc" id="L38">        return manager.dumpAll();</span>
     }
 
     @Override
     public void loadAll(Map&lt;String, List&lt;QueueUpdate.QueueItem&gt;&gt; state) throws InterruptedException {
-<span class="nc" id="L40">        manager.loadAll(state);</span>
-<span class="nc" id="L41">    }</span>
+<span class="fc" id="L43">        manager.loadAll(state);</span>
+<span class="fc" id="L44">    }</span>
 
     @Override
     public boolean remove(String doctorId, String imageCode) throws InterruptedException {
-<span class="fc" id="L45">        boolean ok = manager.remove(doctorId, imageCode);</span>
-<span class="pc bpc" id="L46" title="1 of 2 branches missed.">        if (ok) sink.push(manager.buildUpdate(doctorId));</span>
-<span class="fc" id="L47">        return ok;</span>
+<span class="fc" id="L48">        boolean ok = manager.remove(doctorId, imageCode);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (ok) sink.push(manager.buildUpdate(doctorId));</span>
+<span class="fc" id="L50">        return ok;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

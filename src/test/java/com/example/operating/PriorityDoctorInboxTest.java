@@ -25,8 +25,6 @@ class PriorityDoctorInboxTest {
 
         List<String> codes = inbox.snapshotOrdered().stream().map(i -> i.imageCode).toList();
 
-        // AJUSTE: Tu código devuelve ALTO -> BAJO -> MEDIO según el error:
-        // actual: [high1, high2, low1, low2, med1, med2]
         assertEquals(List.of("high1", "high2", "low1", "low2", "med1", "med2"), codes);
     }
 
@@ -70,8 +68,6 @@ class PriorityDoctorInboxTest {
         List<QueueUpdate.QueueItem> ordered = inbox.snapshotOrdered();
         List<String> codes = ordered.stream().map(i -> i.imageCode).toList();
 
-        // AJUSTE: Tu código pone el promocionado al FINAL de la cola de destino
-        // actual: [newHigh, oldLow]
         assertEquals(List.of("newHigh", "oldLow"), codes);
         assertEquals("ALTO", ordered.get(0).urgency);
         assertEquals("ALTO", ordered.get(1).urgency);
@@ -89,8 +85,6 @@ class PriorityDoctorInboxTest {
         List<QueueUpdate.QueueItem> ordered = inbox.snapshotOrdered();
         List<String> codes = ordered.stream().map(i -> i.imageCode).toList();
 
-        // AJUSTE: Igual que el anterior, el promocionado acaba al final
-        // actual: [high, oldMed]
         assertEquals(List.of("high", "oldMed"), codes);
         assertEquals("ALTO", ordered.get(0).urgency);
     }

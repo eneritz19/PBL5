@@ -39,11 +39,9 @@ public class HttpWebhookUpdateSink implements UpdateSink {
 
             client.send(req, HttpResponse.BodyHandlers.discarding());
         } catch (InterruptedException e) {
-            // RESTAURAR EL ESTADO DE INTERRUPCIÓN (Esto soluciona el issue de Sonar)
             LOGGER.log(Level.SEVERE, "[PUSH-HTTP] Thread interrupted during send", e);
             Thread.currentThread().interrupt(); 
         } catch (Exception e) {
-            // Usamos el Logger que ya aprendimos para el resto de excepciones
             LOGGER.log(Level.SEVERE, "[PUSH-HTTP] Error pushing update", e);
         }
     }

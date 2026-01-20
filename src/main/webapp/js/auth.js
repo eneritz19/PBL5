@@ -4,7 +4,6 @@ async function handleLogin() {
     const email = emailInput.value.trim();
     const password = passwordInput.value.trim();
 
-    // Validar inputs
     const emailValid = validateInput(emailInput, { required: true });
     const passwordValid = validateInput(passwordInput, { required: true, minLength: 4 });
 
@@ -77,22 +76,17 @@ async function handleLogin() {
 }
 
 function logout() {
-    // Detener speech si está activo
     stopSpeech();
 
-    // Limpiar la foto seleccionada
     deleteSelectedPhoto();
 
-    // Volver al login en lugar de landing
     document.getElementById('patientDashboard').classList.add('hidden');
     document.getElementById('doctorDashboard').classList.add('hidden');
     document.getElementById('adminDashboard').classList.add('hidden');
     document.getElementById('landingPage').classList.add('hidden');
     document.getElementById('loginPage').classList.remove('hidden');
 
-    // Limpiar datos
     localStorage.clear();
 
-    // Scroll top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }

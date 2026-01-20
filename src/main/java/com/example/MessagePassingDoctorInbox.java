@@ -28,7 +28,7 @@ public class MessagePassingDoctorInbox implements DoctorInbox {
 
     @Override
     public void enqueue(PhotoMsg msg) {
-        q.put(msg); // message passing: el productor “manda” el msg al buzón del médico
+        q.put(msg); 
     }
 
     @Override
@@ -38,10 +38,6 @@ public class MessagePassingDoctorInbox implements DoctorInbox {
 
     @Override
     public List<QueueUpdate.QueueItem> snapshotOrdered() {
-        // Ojo: snapshot no bloquea a productores; es “consistente suficiente” para
-        // monitoring.
-        // Si quieres snapshot 100% congelado, habría que copiar y ordenar, como hacemos
-        // aquí.
         ArrayList<PhotoMsg> copy = new ArrayList<>(q);
         copy.sort(Comparator
                 .comparingInt((PhotoMsg m) -> urgencyRank(m.urgency))

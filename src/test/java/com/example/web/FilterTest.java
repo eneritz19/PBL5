@@ -66,7 +66,6 @@ class FilterTest {
         String searchText = "XXX_NoExiste_XXX";
         searchInput.sendKeys(searchText);
 
-        // CORRECCIÓN LÍNEA 108: Se limpia el comentario para que Sonar no lo detecte como tarea pendiente
         wait.until(d -> {
             List<WebElement> patientsAfter = d.findElements(By.cssSelector("#doctorPatientsList .patient-card"));
             return patientsAfter.size() <= countBefore;
