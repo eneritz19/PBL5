@@ -1,4 +1,5 @@
 package com.example.operating;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -100,5 +101,12 @@ class PriorityDoctorInboxTest {
         inbox.enqueue(new PhotoMsg("img1", "D1", PhotoMsg.Urgency.ALTO, 1L));
         assertTrue(inbox.removeByImageCode("img1"));
         assertEquals(0, inbox.sizesSnapshot().get("TOTAL"));
+    }
+
+    @Test
+    void removeByImageCode_whenNotExists_returnsFalse() {
+        PriorityDoctorInbox inbox = new PriorityDoctorInbox("D1", 10);
+        boolean result = inbox.removeByImageCode("NON_EXISTENT");
+        assertFalse(result);
     }
 }

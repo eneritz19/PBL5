@@ -22,7 +22,8 @@ class HttpWebhookUpdateSinkTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        if (server != null) server.shutdown();
+        if (server != null)
+            server.shutdown();
     }
 
     @Test
@@ -36,8 +37,7 @@ class HttpWebhookUpdateSinkTest {
 
         List<QueueUpdate.QueueItem> queue = List.of(
                 new QueueUpdate.QueueItem("img1", "ALTO", 10L),
-                new QueueUpdate.QueueItem("img2", "MEDIO", 20L)
-        );
+                new QueueUpdate.QueueItem("img2", "MEDIO", 20L));
 
         Map<String, Integer> sizes = new LinkedHashMap<>();
         sizes.put("ALTO", 1);
@@ -61,8 +61,7 @@ class HttpWebhookUpdateSinkTest {
 
         String body = req.getBody().readString(StandardCharsets.UTF_8);
 
-        String expected =
-                "{\"doctorId\":\"D1\"," +
+        String expected = "{\"doctorId\":\"D1\"," +
                 "\"queue\":[" +
                 "{\"imageCode\":\"img1\",\"urgency\":\"ALTO\",\"createdAt\":10}," +
                 "{\"imageCode\":\"img2\",\"urgency\":\"MEDIO\",\"createdAt\":20}" +
@@ -77,8 +76,9 @@ class HttpWebhookUpdateSinkTest {
 
     @Test
     void push_doesNotThrowIfServerIsDown_printsErrorToStderr() {
-        // CORRECCIÓN LÍNEA 80: Se elimina "throws Exception" de la firma porque el cuerpo ya no la lanza
-        String url = "http://localhost:1/webhook"; 
+        // CORRECCIÓN LÍNEA 80: Se elimina "throws Exception" de la firma porque el
+        // cuerpo ya no la lanza
+        String url = "http://localhost:1/webhook";
         HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink(url);
 
         QueueUpdate update = new QueueUpdate("D9", List.of(), Map.of());
@@ -90,12 +90,21 @@ class HttpWebhookUpdateSinkTest {
         try {
             assertDoesNotThrow(() -> sink.push(update));
             String err = buffer.toString(StandardCharsets.UTF_8);
-            
-            // CORRECCIÓN LÍNEA 81: Se eliminó cualquier bloque de código comentado que pudiera haber en esta sección
+
+            // CORRECCIÓN LÍNEA 81: Se eliminó cualquier bloque de código comentado que
+            // pudiera haber en esta sección
             assertTrue(err.contains("[PUSH-HTTP] Error pushing update"),
                     "Should log error prefix to stderr");
         } finally {
             System.setErr(originalErr);
         }
+    }
+
+    @Test
+    void push_whenInterrupted_restoresStatus() throws Exception {
+        HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink("http://localhost:1234");
+        Thread.currentThread().interrupt(); // Forzamos interrupción
+        sink.push(new QueueUpdate("D1", List.of(), Map.of()));
+        assertTrue(Thread.interrupted()); // Verificamos que se restauró el estado
     }
 }
