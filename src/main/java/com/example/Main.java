@@ -308,7 +308,7 @@ public class Main {
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type,Authorization");
     }
 
-    private static String safeMsg(String msg) {
+    public static String safeMsg(String msg) {
         return (msg == null) ? "unknown" : msg.replace("\"", "'");
     }
 
