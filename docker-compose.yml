@@ -87,7 +87,9 @@ services:
       - skinxpert_network
       
   operating:
-    build: ./Operating
+    build: 
+      context: .
+      dockerfile: Dockerfile.operating
     container_name: skinxpert_operating
     ports:
       - "8082:8082"

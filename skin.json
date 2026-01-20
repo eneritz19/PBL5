@@ -7,6 +7,13 @@
         "info": ""
     },
     {
+        "id": "rehydrate_tab",
+        "type": "tab",
+        "label": "REHYDRATE FIX",
+        "disabled": false,
+        "info": "Fixed rehydrate flow - click inject to test"
+    },
+    {
         "id": "9c12c0e15685ca58",
         "type": "MySQLdatabase",
         "name": "skinxpert_mysql",
@@ -25,10 +32,30 @@
         }
     },
     {
+        "id": "db_conf",
+        "type": "MySQLdatabase",
+        "name": "skinxpert_mysql",
+        "host": "db",
+        "port": "3306",
+        "db": "skinXpert",
+        "tz": "+01:00",
+        "charset": "UTF8"
+    },
+    {
+        "id": "skinxpert_mysql_cfg",
+        "type": "MySQLdatabase",
+        "name": "skinxpert_mysql",
+        "host": "db",
+        "port": "3306",
+        "db": "skinXpert",
+        "tz": "+01:00",
+        "charset": "UTF8"
+    },
+    {
         "id": "3cc11d24.ff01a2",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "LOGIN - Para la base de datos ",
+        "name": "LOGIN - Database",
         "info": "",
         "x": 190,
         "y": 140,
@@ -57,7 +84,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 1",
-        "func": "msg.topic = `\nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n` ;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT id_patient, name, email, dni \nFROM patients \nWHERE id_doctor = ?\n`;\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -98,69 +125,6 @@
         "wires": []
     },
     {
-        "id": "980e17674fcde667",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "url": "/doctor/pending",
-        "method": "get",
-        "upload": false,
-        "skipBodyParsing": false,
-        "swaggerDoc": "",
-        "x": 150,
-        "y": 560,
-        "wires": [
-            [
-                "d8e4286ca87f6aa0"
-            ]
-        ]
-    },
-    {
-        "id": "d8e4286ca87f6aa0",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Preparar Pendientes (Urgencia + %)",
-        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,           -- Aquí llega 1, 2 o 3\n    p.name,\n    p.id_patient,\n    i.file_path,\n    sd.disease AS ia_suggestion,\n    d.confidence AS ia_confidence\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nLEFT JOIN diagnoses d ON pr.id_request = d.id_request\nLEFT JOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nWHERE p.id_doctor = ?\nAND pr.status != 'diagnosticada'\n-- ORDEN CRUCIAL:\n-- 1º Nivel de Urgencia (3, 2, 1)\n-- 2º Porcentaje de riesgo (Confidence) si empatan en nivel\nORDER BY pr.urgency DESC, d.confidence DESC;\n` ;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 380,
-        "y": 560,
-        "wires": [
-            [
-                "843a7ca03e63f3f1"
-            ]
-        ]
-    },
-    {
-        "id": "843a7ca03e63f3f1",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "",
-        "x": 580,
-        "y": 560,
-        "wires": [
-            [
-                "207665b27bf8a7f8"
-            ]
-        ]
-    },
-    {
-        "id": "207665b27bf8a7f8",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "statusCode": "",
-        "headers": {},
-        "x": 750,
-        "y": 560,
-        "wires": []
-    },
-    {
         "id": "d87e923c38b0e254",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
@@ -183,7 +147,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 5",
-        "func": "msg.topic = `\nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n` ;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    a.id_appointment,\n    a.date,\n    a.status,\n    p.name AS patient_name\nFROM appointments a\nJOIN patients p ON a.id_patient = p.id_patient\nWHERE a.id_doctor = ?\nORDER BY a.date ASC\n`;\n\nmsg.payload = [msg.req.query.id_doctor];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -227,7 +191,7 @@
         "id": "5631dba213510e33",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "DOCTORS - base de datos",
+        "name": "DOCTORS - Database",
         "info": "",
         "x": 170,
         "y": 340,
@@ -237,7 +201,7 @@
         "id": "042a781ea857a9cc",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "PACIENTS - base de datos",
+        "name": "PATIENTS - Database",
         "info": "",
         "x": 170,
         "y": 780,
@@ -266,7 +230,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 6",
-        "func": "msg.topic = `\nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nORDER BY d.diagnosis_date DESC\n` ;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    d.diagnosis_date,\n    sd.disease,\n    d.doctor_notes,\n    i.file_path\nFROM diagnoses d\nJOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nLEFT JOIN photo_requests pr ON d.id_request = pr.id_request\nLEFT JOIN images i ON pr.id_request = i.id_request\nWHERE d.id_patient = ?\nAND d.confidence = 100\nORDER BY d.diagnosis_date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -329,7 +293,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "function 7",
-        "func": "msg.topic = `\nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n` ;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
+        "func": "msg.topic = `\nSELECT \n    a.date,\n    a.status,\n    d.name AS doctor_name\nFROM appointments a\nJOIN doctors d ON a.id_doctor = d.id_doctor\nWHERE a.id_patient = ?\nORDER BY a.date DESC\n`;\nmsg.payload = [msg.req.query.id_patient];\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -373,203 +337,11 @@
         "id": "e6a0c5f2.1b3b38",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "NUEVO: DOCTOR - ENVIAR INFORME",
+        "name": "NEW: DOCTOR - SEND REPORT",
         "info": "",
-        "x": 200,
-        "y": 2020,
+        "x": 180,
+        "y": 2080,
         "wires": []
-    },
-    {
-        "id": "http_in_report",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "url": "/doctor/send_report",
-        "method": "post",
-        "upload": false,
-        "skipBodyParsing": false,
-        "swaggerDoc": "",
-        "x": 170,
-        "y": 2360,
-        "wires": [
-            [
-                "debug_raw_input",
-                "func_prepare_simple"
-            ]
-        ]
-    },
-    {
-        "id": "debug_raw_input",
-        "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "name": "1. LLEGA ESTO",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 420,
-        "y": 2300,
-        "wires": []
-    },
-    {
-        "id": "func_prepare_simple",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Preparar SQL (Forzado)",
-        "func": "const d = msg.payload;\n\n// 1. Extraer datos con valores por defecto para seguridad\nconst id_req = d.id_request || d.requestId || 0;\nconst id_doc = d.id_doctor || d.doctorId || 1;\nconst id_pat = d.id_patient || d.patientId || 1;\nconst id_dis = d.id_skindiseases || 1;\nconst conf = d.confidence || 100;\nconst notes = d.doctor_notes || d.notes || \"Diagnostico guardado\";\n// Esto quita la 'T' del formato HTML y asegura que MySQL lo lea como texto plano sin zonas horarias\nconst app_date = d.appointment_date ? d.appointment_date.substring(0, 16).replace('T', ' ') : null;\n\n// 2. Mensaje para el Puerto 1 (Tabla diagnoses)\nconst msgDiagnosis = {\n    ...msg,\n    topic: `INSERT INTO diagnoses \n            (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) \n            VALUES (?, ?, ?, ?, ?, ?)`,\n    payload: [id_req, id_doc, id_pat, id_dis, conf, notes],\n    request_id: id_req // Para el siguiente nodo Update Status\n};\n\n// 3. Mensaje para el Puerto 2 (Tabla appointments)\nlet msgAppointment = null;\nif (app_date && app_date !== \"\") {\n    msgAppointment = {\n        topic: `INSERT INTO appointments (id_patient, id_doctor, date, status, comments) \n                VALUES (?, ?, ?, 'pendiente', ?)`,\n        payload: [id_pat, id_doc, app_date, \"Cita programada tras informe médico\"]\n    };\n}\n\n// 4. Retornar los dos mensajes por sus respectivos puertos\nreturn [msgDiagnosis, msgAppointment];",
-        "outputs": 2,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 450,
-        "y": 2360,
-        "wires": [
-            [
-                "mysql_insert_diag"
-            ],
-            [
-                "2201348d70eabd60"
-            ]
-        ]
-    },
-    {
-        "id": "mysql_insert_diag",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Guardar Diagnosis",
-        "x": 710,
-        "y": 2360,
-        "wires": [
-            [
-                "func_update_req_simple",
-                "debug_success"
-            ]
-        ]
-    },
-    {
-        "id": "debug_success",
-        "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "name": "2. GUARDADO OK",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 930,
-        "y": 2300,
-        "wires": []
-    },
-    {
-        "id": "func_update_req_simple",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Update Request",
-        "func": "msg.topic = \"UPDATE photo_requests SET status = 'diagnosticada' WHERE id_request = ?\";\nmsg.payload = [msg.request_id];\nreturn msg;",
-        "outputs": 1,
-        "timeout": "",
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 920,
-        "y": 2360,
-        "wires": [
-            [
-                "mysql_update_status"
-            ]
-        ]
-    },
-    {
-        "id": "mysql_update_status",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Update Status",
-        "x": 1120,
-        "y": 2360,
-        "wires": [
-            [
-                "http_response_ok"
-            ]
-        ]
-    },
-    {
-        "id": "http_response_ok",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "OK",
-        "statusCode": "200",
-        "headers": {},
-        "x": 1290,
-        "y": 2360,
-        "wires": []
-    },
-    {
-        "id": "catch_errors",
-        "type": "catch",
-        "z": "f6f2187d.f17ca8",
-        "name": "Capturar Errores",
-        "scope": null,
-        "uncaught": false,
-        "x": 980,
-        "y": 2440,
-        "wires": [
-            [
-                "debug_error_critico",
-                "http_response_error"
-            ]
-        ]
-    },
-    {
-        "id": "debug_error_critico",
-        "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "name": "ERROR",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "error",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1180,
-        "y": 2440,
-        "wires": []
-    },
-    {
-        "id": "http_response_error",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "Error",
-        "statusCode": "500",
-        "headers": {},
-        "x": 1190,
-        "y": 2480,
-        "wires": []
-    },
-    {
-        "id": "2201348d70eabd60",
-        "type": "mysql",
-        "z": "f6f2187d.f17ca8",
-        "mydb": "9c12c0e15685ca58",
-        "name": "Guardar citas",
-        "x": 700,
-        "y": 2460,
-        "wires": [
-            []
-        ]
     },
     {
         "id": "53efef56eb1bc4ff",
@@ -593,7 +365,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Query Doctors",
-        "func": "msg.topic = `\nSELECT d.id_doctor, d.doctor_code, d.name, d.email, c.name AS clinic\nFROM doctors d\nLEFT JOIN clinics c ON d.id_clinic = c.id_clinic\n` ;\nreturn msg;",
+        "func": "msg.topic = `\nSELECT d.id_doctor, d.doctor_code, d.name, d.email, c.name AS clinic\nFROM doctors d\nLEFT JOIN clinics c ON d.id_clinic = c.id_clinic\n`;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -630,7 +402,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Query Patients",
-        "func": "msg.topic = `\nSELECT p.id_patient, p.dni, p.name, p.email, d.name AS doctor\nFROM patients p\nLEFT JOIN doctors d ON p.id_doctor = d.id_doctor\n` ;\nreturn msg;",
+        "func": "msg.topic = `\nSELECT p.id_patient, p.dni, p.name, p.email, d.name AS doctor\nFROM patients p\nLEFT JOIN doctors d ON p.id_doctor = d.id_doctor\n`;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -674,7 +446,7 @@
         "id": "f44f5a3b05da6447",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "Admin- base de datos",
+        "name": "Admin - Database",
         "info": "",
         "x": 160,
         "y": 1060,
@@ -700,8 +472,8 @@
         "id": "login_prepare_query",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Preparar Query Login UNION",
-        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email y password requeridos' };\n    return msg;\n}\n\nmsg.topic = `\nSELECT 'Admin' AS role, id_admin AS id, name, email\nFROM admin\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Patient', id_patient AS id, name, email\nFROM patients\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Doctor', id_doctor AS id, name, email\nFROM doctors\nWHERE email=? AND password=SHA2(?,256)\nLIMIT 1\n` ;\n\nmsg.payload = [email, password, email, password, email, password];\nreturn msg;",
+        "name": "Prepare Login UNION Query",
+        "func": "const { email, password } = msg.payload;\n\nif (!email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { success: false, message: 'Email and password required' };\n    return msg;\n}\n\nmsg.topic = `\nSELECT 'Admin' AS role, id_admin AS id, name, email\nFROM admin\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Patient', id_patient AS id, name, email\nFROM patients\nWHERE email=? AND password=SHA2(?,256)\nUNION\nSELECT 'Doctor', id_doctor AS id, name, email\nFROM doctors\nWHERE email=? AND password=SHA2(?,256)\nLIMIT 1\n`;\n\nmsg.payload = [email, password, email, password, email, password];\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -734,8 +506,8 @@
         "id": "login_process_result",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Procesar resultado login",
-        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 401;\n    msg.payload = { success: false, message: 'Credenciales incorrectas' };\n} else {\n    const user = msg.payload[0];\n    msg.payload = { success: true, role: user.role, user: { id: user.id, name: user.name, email: user.email } };\n    msg.statusCode = 200;\n}\nreturn msg;",
+        "name": "Process Login Result",
+        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 401;\n    msg.payload = { success: false, message: 'Invalid credentials' };\n} else {\n    const user = msg.payload[0];\n    msg.payload = { success: true, role: user.role, user: { id: user.id, name: user.name, email: user.email } };\n    msg.statusCode = 200;\n}\nreturn msg;",
         "outputs": 1,
         "x": 880,
         "y": 240,
@@ -749,7 +521,7 @@
         "id": "login_http_response",
         "type": "http response",
         "z": "f6f2187d.f17ca8",
-        "name": "Respuesta Login",
+        "name": "Login Response",
         "statusCode": "",
         "headers": {},
         "x": 1130,
@@ -777,8 +549,8 @@
         "id": "5d60b3a3e85b8150",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Delete patient SQL",
-        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM patients\nWHERE id_patient = ?\n` ;\n\nmsg.payload = [id];\nreturn msg;",
+        "name": "Delete Patient SQL",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM patients\nWHERE id_patient = ?\n`;\n\nmsg.payload = [id];\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -814,8 +586,8 @@
         "id": "94f21896c6bd30ee",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Delete doctor SQL",
-        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM doctors\nWHERE id_doctor = ?\n` ;\n\nmsg.payload = [id];\nreturn msg;",
+        "name": "Delete Doctor SQL",
+        "func": "const id = msg.req.params.id;\n\nmsg.topic = `\nDELETE FROM doctors\nWHERE id_doctor = ?\n`;\n\nmsg.payload = [id];\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -897,7 +669,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Prepare Doctor Insert",
-        "func": "const { doctor_code, name, email, password, id_clinic } = msg.payload;\n\nif (!doctor_code || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required doctor fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO doctors (\n  doctor_code,\n  name,\n  email,\n  password,\n  id_clinic\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n` ;\n\nmsg.payload = [\n    doctor_code,\n    name,\n    email,\n    password,\n    id_clinic || null\n];\n\nreturn msg;",
+        "func": "const { doctor_code, name, email, password, id_clinic } = msg.payload;\n\nif (!doctor_code || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required doctor fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO doctors (\n  doctor_code,\n  name,\n  email,\n  password,\n  id_clinic\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n`;\n\nmsg.payload = [\n    doctor_code,\n    name,\n    email,\n    password,\n    id_clinic || null\n];\n\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -934,7 +706,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Prepare Patient Insert",
-        "func": "const { dni, name, email, password, id_doctor } = msg.payload;\n\nif (!dni || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required patient fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO patients (\n  dni,\n  name,\n  email,\n  password,\n  id_doctor\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n` ;\n\nmsg.payload = [\n    dni,\n    name,\n    email,\n    password,\n    id_doctor || null\n];\n\nreturn msg;",
+        "func": "const { dni, name, email, password, id_doctor } = msg.payload;\n\nif (!dni || !name || !email || !password) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"Missing required patient fields\" };\n    return msg;\n}\n\nmsg.topic = `\nINSERT INTO patients (\n  dni,\n  name,\n  email,\n  password,\n  id_doctor\n)\nVALUES (?, ?, ?, SHA2(?,256), ?)\n`;\n\nmsg.payload = [\n    dni,\n    name,\n    email,\n    password,\n    id_doctor || null\n];\n\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1029,7 +801,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Clean Patient Fields",
-        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Paciente no encontrado\" };\n    return msg;\n}\nlet patient = msg.payload[0];\nfor (let key in patient) {\n    if (patient[key] === null || patient[key] === undefined) {\n        patient[key] = \"\";\n    }\n}\nmsg.payload = patient;\nreturn msg;",
+        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Patient not found\" };\n    return msg;\n}\nlet patient = msg.payload[0];\nfor (let key in patient) {\n    if (patient[key] === null || patient[key] === undefined) {\n        patient[key] = \"\";\n    }\n}\nmsg.payload = patient;\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1171,7 +943,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Clean Doctor Fields",
-        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Doctor no encontrado\" };\n    return msg;\n}\nlet doctor = msg.payload[0];\nfor (let key in doctor) {\n    if (doctor[key] === null || doctor[key] === undefined) {\n        doctor[key] = \"\";\n    }\n}\nmsg.payload = doctor;\nreturn msg;",
+        "func": "if (msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Doctor not found\" };\n    return msg;\n}\nlet doctor = msg.payload[0];\nfor (let key in doctor) {\n    if (doctor[key] === null || doctor[key] === undefined) {\n        doctor[key] = \"\";\n    }\n}\nmsg.payload = doctor;\nreturn msg;",
         "outputs": 1,
         "x": 750,
         "y": 1900,
@@ -1257,10 +1029,11 @@
         "id": "edit_appointment",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
-        "name": "Editar cita",
+        "name": "Edit Appointment",
         "url": "/appointment/:id",
         "method": "put",
         "upload": false,
+        "skipBodyParsing": false,
         "swaggerDoc": "",
         "x": 140,
         "y": 2620,
@@ -1274,7 +1047,7 @@
         "id": "update_appointment",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Set SQL para actualizar cita",
+        "name": "Set SQL to Update Appointment",
         "func": "const id = msg.req.params.id;\nconst newDate = msg.req.body.date;\n\nmsg.topic = `UPDATE appointments SET date = ? WHERE id_appointment = ?`;\nmsg.payload = [newDate, id];\nreturn msg;",
         "outputs": 1,
         "timeout": "",
@@ -1308,7 +1081,7 @@
         "id": "respond_update",
         "type": "http response",
         "z": "f6f2187d.f17ca8",
-        "name": "Responder PUT",
+        "name": "Respond PUT",
         "statusCode": "",
         "headers": {},
         "x": 820,
@@ -1319,7 +1092,7 @@
         "id": "http_delete_appointment",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
-        "name": "DELETE appointment",
+        "name": "DELETE Appointment",
         "url": "/appointment/:id",
         "method": "delete",
         "upload": false,
@@ -1336,7 +1109,7 @@
         "id": "fn_check_appointment",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Check appointment exists",
+        "name": "Check Appointment Exists",
         "func": "const id = msg.req.params.id;\n\nmsg.topic = \"SELECT id_appointment FROM appointments WHERE id_appointment = ?\";\nmsg.payload = [id];\n\nmsg.appointmentId = id;\nreturn msg;",
         "outputs": 1,
         "x": 400,
@@ -1352,7 +1125,7 @@
         "type": "mysql",
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
-        "name": "MySQL check",
+        "name": "MySQL Check",
         "x": 640,
         "y": 2740,
         "wires": [
@@ -1365,7 +1138,7 @@
         "id": "fn_decide_delete",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "If exists → delete",
+        "name": "If Exists → Delete",
         "func": "if (!msg.payload || msg.payload.length === 0) {\n    msg.statusCode = 404;\n    msg.payload = { error: \"Appointment not found\" };\n    return msg;\n}\n\nmsg.topic = \"DELETE FROM appointments WHERE id_appointment = ?\";\nmsg.payload = [msg.appointmentId];\nreturn msg;",
         "outputs": 1,
         "x": 880,
@@ -1381,7 +1154,7 @@
         "type": "mysql",
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
-        "name": "MySQL delete",
+        "name": "MySQL Delete",
         "x": 1130,
         "y": 2740,
         "wires": [
@@ -1405,13 +1178,13 @@
         "id": "126a0cd737267399",
         "type": "http in",
         "z": "f6f2187d.f17ca8",
-        "name": "Recibir Foto",
+        "name": "Receive Photo",
         "url": "/upload-case",
         "method": "post",
         "upload": true,
         "skipBodyParsing": false,
         "swaggerDoc": "",
-        "x": 150,
+        "x": 140,
         "y": 2140,
         "wires": [
             [
@@ -1423,15 +1196,15 @@
         "id": "9a584b9d8cca6530",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Preparar Form Data",
-        "func": "// El archivo llega con el nombre 'foto' (porque así lo pusiste en formData.append(\"foto\", file))\nconst file = msg.req.files[0]; \nconst patientId = msg.req.body.id_patient;\n\n// Guardamos estos datos en el flujo para usarlos después de que la IA responda\nmsg.id_patient = patientId;\nmsg.filename = `piel_${patientId}_${Date.now()}.jpg`;\n\n// Configuramos la petición para el contenedor skinxpert_ai\nmsg.headers = {\n    \"Content-Type\": \"multipart/form-data\"\n};\n\nmsg.payload = {\n    \"file\": {\n        \"value\": file.buffer,\n        \"options\": {\n            \"filename\": file.originalname,\n            \"contentType\": file.mimetype\n        }\n    }\n};\n\nreturn msg;",
+        "name": "Prepare Form Data",
+        "func": "const file = msg.req.files[0]; \nconst patientId = msg.req.body.id_patient;\n\nmsg.id_patient = patientId;\nmsg.filename = `piel_${patientId}_${Date.now()}.jpg`;\n\nmsg.headers = {\n    \"Content-Type\": \"multipart/form-data\"\n};\n\nmsg.payload = {\n    \"file\": {\n        \"value\": file.buffer,\n        \"options\": {\n            \"filename\": file.originalname,\n            \"contentType\": file.mimetype\n        }\n    }\n};\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 380,
+        "x": 370,
         "y": 2140,
         "wires": [
             [
@@ -1443,7 +1216,7 @@
         "id": "e6b26f271ebc7303",
         "type": "http request",
         "z": "f6f2187d.f17ca8",
-        "name": "IA PREDICT",
+        "name": "AI PREDICT",
         "method": "POST",
         "ret": "obj",
         "paytoqs": "ignore",
@@ -1467,8 +1240,8 @@
         "id": "c117a32f741028a1",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Guardar Foto + IA + SQL",
-        "func": "// ============================================================\n// 1. DEFINIR RUTAS Y EXTRAER ARCHIVO\n// ============================================================\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst file = msg.req.files[0]; \nconst id_patient = msg.req.body.id_patient || 1;\n\nif (!file) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"No se recibió ninguna imagen\" };\n    return msg;\n}\n\n// ============================================================\n// 2. GENERAR NOMBRE Y GUARDAR FÍSICAMENTE EN DISCO\n// ============================================================\nconst uniqueFileName = `piel_${id_patient}_${Date.now()}.jpg`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\ntry {\n    // Usamos el módulo 'fs' cargado en la pestaña 'libs'\n    fs.writeFileSync(fullPath, file.buffer); \n    node.warn(`✅ Imagen física guardada en: ${fullPath}`);\n} catch (e) {\n    node.error(\"❌ Error escribiendo archivo: \" + e.message);\n    msg.statusCode = 500;\n    msg.payload = { error: \"Error al guardar el archivo en el servidor\" };\n    return msg;\n}\n\n// ============================================================\n// 3. EXTRAER RESULTADO DE LA IA (AHORA CON CAMPOS CORRECTOS)\n// ============================================================\nvar iaResult = msg.payload || {};\nvar diseaseId = iaResult.id_skindiseases || 1;\nvar probabilidad = iaResult.confianza || 0.0;\nvar diseaseName = iaResult.disease_name || \"Unknown\";\n\nnode.warn(`🤖 IA Resultado: diseaseId=${diseaseId}, confianza=${probabilidad}, nombre=${diseaseName}`);\n\n// ============================================================\n// 4. CALCULAR URGENCIA BASADA EN SEVERIDAD\n// ============================================================\nvar severityMap = {\n    2: 1.0, 12: 1.0, 24: 1.0,                   // Cánceres y Carcinomas (Crítico)\n    4: 0.7, 5: 0.6, 11: 0.7, 22: 0.7,  // Bullous, Cellulitis, Lupus, Vasculitis\n    1: 0.3, 3: 0.3, 6: 0.3, 10: 0.2,   // Acne, Dermatitis, Eczema\n    20: 0.3, 23: 0.2, 19: 0.3          // Urticaria, Warts, Tinea\n};\n\nvar gravedad = severityMap[diseaseId] || 0.5;\nvar score = (gravedad * gravedad) * probabilidad;\n\nvar urgenciaFinal = 1; \nif (score >= 0.25) {\n    urgenciaFinal = 3; // ALTO\n} else if (score >= 0.05) {\n    urgenciaFinal = 2; // MEDIO\n}\n\nnode.warn(`📊 Urgencia calculada: ${urgenciaFinal} (score=${score.toFixed(3)})`);\n\n// ============================================================\n// 5. ASIGNAR DOCTOR ALEATORIO (O PUEDES USAR LÓGICA DE ROUND-ROBIN)\n// ============================================================\nvar doctorId = Math.floor(Math.random() * 3) + 1;\n\n// ============================================================\n// 6. PREPARAR CONSULTA SQL (AHORA INCLUYE DIAGNÓSTICO)\n// ============================================================\nvar riskPercent = Math.round(probabilidad * 100);\n//var riskPercent = +(probabilidad * 100).toFixed(2);\n\nmsg.topic = `\n    -- 1️⃣ Guardar solicitud de foto\n    INSERT INTO photo_requests (id_patient, urgency, status)\n    VALUES (${id_patient}, ${urgenciaFinal}, 'pendiente');\n\n    SET @last_id = LAST_INSERT_ID();\n\n    -- 2️⃣ Guardar la imagen\n    INSERT INTO images (id_request, file_path)\n    VALUES (@last_id, '${webPath}');\n\n    -- 3️⃣ ✅ NUEVO: Guardar el diagnóstico de la IA\n    INSERT INTO diagnoses (\n        id_request, \n        id_doctor, \n        id_patient, \n        id_skindiseases, \n        confidence, \n        doctor_notes\n    )\n    VALUES (\n        @last_id, \n        ${doctorId}, \n        ${id_patient}, \n        ${diseaseId}, \n        ${riskPercent}, \n        'AI prediction: ${diseaseName} (${riskPercent}% confidence). Pending doctor review.'\n    );\n`;\n\nnode.warn(`📝 SQL preparado con diagnóstico incluido`);\n\n// ============================================================\n// 7. PREPARAR DATOS PARA JAVA (OPERATING)\n// ============================================================\nmsg.javaData = {\n    \"imageCode\": uniqueFileName,\n    \"doctorId\": parseInt(doctorId),\n    \"urgency\": parseInt(urgenciaFinal),\n    \"diseaseId\": parseInt(diseaseId),\n    \"confidence\": parseFloat(probabilidad)\n};\n\nreturn msg;",
+        "name": "Save Photo + AI + SQL",
+        "func": "// ============================================================\n// 1. DEFINE PATHS AND EXTRACT FILE\n// ============================================================\nconst UPLOADS_DIR = '/usr/share/nginx/html/uploads/';\nconst file = msg.req.files[0]; \nconst id_patient = msg.req.body.id_patient || 1;\n\nif (!file) {\n    msg.statusCode = 400;\n    msg.payload = { error: \"No image received\" };\n    return msg;\n}\n\n// ============================================================\n// 2. GENERATE NAME AND SAVE PHYSICALLY TO DISK\n// ============================================================\nconst uniqueFileName = `piel_${id_patient}_${Date.now()}.jpg`;\nconst fullPath = UPLOADS_DIR + uniqueFileName;\nconst webPath = `/uploads/${uniqueFileName}`;\n\ntry {\n    fs.writeFileSync(fullPath, file.buffer); \n    node.warn(`✅ Physical image saved at: ${fullPath}`);\n} catch (e) {\n    node.error(\"❌ Error writing file: \" + e.message);\n    msg.statusCode = 500;\n    msg.payload = { error: \"Error saving file to server\" };\n    return msg;\n}\n\n// ============================================================\n// 3. EXTRACT AI RESULT\n// ============================================================\nvar iaResult = msg.payload || {};\nvar diseaseId = iaResult.id_skindiseases || 1;\nvar probabilidad = iaResult.confianza || 0.0;\nvar diseaseName = iaResult.disease_name || \"Unknown\";\n\nnode.warn(`🤖 AI Result: diseaseId=${diseaseId}, confidence=${probabilidad}, name=${diseaseName}`);\n\n// ============================================================\n// 4. CALCULATE URGENCY BASED ON SEVERITY (NEW DB)\n// ============================================================\nvar severityMap = {\n    // CRITICAL (Cancers and premalignant lesions)\n    4: 1.0,  // Melanoma\n    5: 1.0,  // Squamous Cell Carcinoma\n    3: 0.9,  // Basal Cell Carcinoma\n    2: 0.8,  // Actinic Keratosis\n    \n    // MODERATE-HIGH (Severe inflammatory diseases)\n    11: 0.4, // Psoriasis\n    12: 0.6, // Systemic Disease\n    \n    // MODERATE (Infections and dermatitis)\n    7: 0.3,  // Dermatitis\n    8: 0.4,  // Fungal Infection\n    \n    // LOW (Benign and mild)\n    1: 0.1,  // Acne Rosacea\n    6: 0.2,  // Benign Tumor\n    9: 0.3,  // Hair Disorder\n    10: 0.5, // Nevus\n    13: 0.1, // Urticaria\n    14: 0.3  // Viral Infection\n};\n\nvar gravedad = severityMap[diseaseId] || 0.5;\nvar score = gravedad * probabilidad;\n\nvar urgenciaFinal = 1; // LOW by default\nif (score >= 0.5) {\n    urgenciaFinal = 3; // HIGH\n} else if (score >= 0.2) {\n    urgenciaFinal = 2; // MEDIUM\n}\n\nnode.warn(`📊 Calculated urgency: ${urgenciaFinal} (score=${score.toFixed(3)})`);\n\n// ============================================================\n// 5. PREPARE SQL QUERY (NOW INCLUDES DIAGNOSIS)\n// ============================================================\nvar riskPercent = Math.round(score * 100);\n\nmsg.topic = `\n    -- 1️⃣ Get patient's doctor\n    SELECT @doctor_id := id_doctor FROM patients WHERE id_patient = ${id_patient};\n\n    -- 2️⃣ Save photo request\n    INSERT INTO photo_requests (id_patient, urgency, status)\n    VALUES (${id_patient}, ${urgenciaFinal}, 'pending');\n\n    SET @last_id = LAST_INSERT_ID();\n\n    -- 3️⃣ Save image\n    INSERT INTO images (id_request, file_path)\n    VALUES (@last_id, '${webPath}');\n\n    -- 4️⃣ Save AI diagnosis\n    INSERT INTO diagnoses (\n        id_request, \n        id_doctor, \n        id_patient, \n        id_skindiseases, \n        confidence, \n        doctor_notes\n    )\n    VALUES (\n        @last_id, \n        @doctor_id, \n        ${id_patient}, \n        ${diseaseId}, \n        ${riskPercent}, \n        'The request has been analyzed by SkinXpert AI. Pending doctor review.'\n    );\n    \n    -- 5️⃣ Return doctor_id for Java\n    SELECT @doctor_id as doctor_id;\n`;\n\nnode.warn(`📝 SQL prepared with diagnosis included`);\n\n// ============================================================\n// 6. PREPARE DATA FOR JAVA (OPERATING)\n// ============================================================\nmsg.javaData = {\n    \"imageCode\": uniqueFileName,\n    \"urgency\": parseInt(urgenciaFinal),\n    \"diseaseId\": parseInt(diseaseId),\n    \"confidence\": parseFloat(probabilidad)\n};\n\nreturn msg;",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -1480,7 +1253,7 @@
                 "module": "fs"
             }
         ],
-        "x": 810,
+        "x": 830,
         "y": 2140,
         "wires": [
             [
@@ -1493,8 +1266,8 @@
         "type": "mysql",
         "z": "f6f2187d.f17ca8",
         "mydb": "9c12c0e15685ca58",
-        "name": "Guardar en BD",
-        "x": 1020,
+        "name": "Save to DB",
+        "x": 1040,
         "y": 2140,
         "wires": [
             [
@@ -1506,15 +1279,15 @@
         "id": "c606ac8aa9421b6c",
         "type": "function",
         "z": "f6f2187d.f17ca8",
-        "name": "Recuperar datos Java",
-        "func": "// Recuperamos los datos que guardamos antes de entrar a la base de datos\nmsg.payload = msg.javaData;\nreturn msg;",
+        "name": "Recover Java Data",
+        "func": "// Extract doctor_id from SQL result\nvar doctorId = 1; // Default value\n\nif (msg.payload && Array.isArray(msg.payload)) {\n    // Search for the last query result (SELECT @doctor_id)\n    for (let i = msg.payload.length - 1; i >= 0; i--) {\n        if (Array.isArray(msg.payload[i]) && msg.payload[i].length > 0) {\n            if (msg.payload[i][0].doctor_id) {\n                doctorId = msg.payload[i][0].doctor_id;\n                break;\n            }\n        }\n    }\n}\n\nnode.warn(`👨‍⚕️ Assigned doctor: ${doctorId}`);\n\n// Add doctorId to Java data\nmsg.javaData.doctorId = parseInt(doctorId);\nmsg.payload = msg.javaData;\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1260,
+        "x": 1250,
         "y": 2140,
         "wires": [
             [
@@ -1526,7 +1299,7 @@
         "id": "0b87c951244e8fa1",
         "type": "http request",
         "z": "f6f2187d.f17ca8",
-        "name": "Enviar a operating",
+        "name": "Send to Operating",
         "method": "POST",
         "ret": "obj",
         "paytoqs": "ignore",
@@ -1542,7 +1315,8 @@
         "y": 2140,
         "wires": [
             [
-                "f446149b7ef44157"
+                "f446149b7ef44157",
+                "fn_log_operating_update"
             ]
         ]
     },
@@ -1550,41 +1324,79 @@
         "id": "f446149b7ef44157",
         "type": "http response",
         "z": "f6f2187d.f17ca8",
-        "name": "FIN",
+        "name": "END",
         "statusCode": "200",
         "headers": {
             "Content-Type": "application/json"
         },
-        "x": 1670,
+        "x": 1690,
         "y": 2140,
         "wires": []
     },
     {
-        "id": "e2931a5f4c34cbc2",
+        "id": "fn_log_operating_update",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Show added new element",
+        "func": "// Se ejecuta cuando Operating responde al POST /add-task\n// Construye un mensaje en 1 sola línea con la info del NUEVO elemento añadido a la cola.\n\nconst data = msg.javaData || {};        // lo que enviamos a Operating (tarea nueva)\nconst resp = msg.payload || {};         // respuesta de Operating (HTTP request node)\n\nconst doctorId = (data.doctorId !== undefined) ? data.doctorId : \"N/A\";\nconst imageCode = data.imageCode || \"N/A\";\nconst urgencyNum = (data.urgency !== undefined) ? Number(data.urgency) : NaN;\nconst diseaseId = (data.diseaseId !== undefined) ? data.diseaseId : \"N/A\";\n\nlet urgencyTxt = \"N/A\";\nif (urgencyNum === 1) urgencyTxt = \"Baja\";\nelse if (urgencyNum === 2) urgencyTxt = \"Media\";\nelse if (urgencyNum === 3) urgencyTxt = \"Alta\";\n\nlet confTxt = \"N/A\";\nif (data.confidence !== undefined && data.confidence !== null && data.confidence !== \"\") {\n  const c = Number(data.confidence);\n  if (!Number.isNaN(c)) confTxt = `${(c * 100).toFixed(1)}%`;\n}\n\n// Si la respuesta trae algo típico tipo \"ok\"/\"message\", lo añadimos al final (opcional)\nlet respTxt = \"\";\nif (resp && typeof resp === \"object\") {\n  const ok = (resp.ok !== undefined) ? resp.ok : (resp.success !== undefined ? resp.success : undefined);\n  const msgText = resp.message || resp.msg || resp.status || \"\";\n  if (ok !== undefined || msgText) respTxt = `, Respuesta: ${ok !== undefined ? ok : msgText}`;\n}\n\nmsg.payload = `Medico: D${doctorId}, Urgencia: ${urgencyTxt}, Imagen: ${imageCode}, EnfermedadID: ${diseaseId}, Confianza: ${confTxt}${respTxt}`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1490,
+        "y": 2080,
+        "wires": [
+            [
+                "dbg_operating_update"
+            ]
+        ]
+    },
+    {
+        "id": "dbg_operating_update",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Show msg",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1710,
+        "y": 2080,
+        "wires": []
+    },
+    {
+        "id": "abaf97c46c64f2db",
         "type": "inject",
         "z": "f6f2187d.f17ca8",
-        "name": "Poll /status (cada 2s)",
+        "name": "Poll /status (cada 1 min)",
         "props": [
             {
                 "p": "payload"
             }
         ],
-        "repeat": "2",
+        "repeat": "60",
         "crontab": "",
         "once": true,
         "onceDelay": 1,
+        "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 220,
-        "y": 2940,
+        "x": 210,
+        "y": 3000,
         "wires": [
             [
-                "923907bd14cbd4c6"
+                "b328089146137ee9"
             ]
         ]
     },
     {
-        "id": "923907bd14cbd4c6",
+        "id": "b328089146137ee9",
         "type": "http request",
         "z": "f6f2187d.f17ca8",
         "name": "GET operating /status",
@@ -1599,64 +1411,72 @@
         "authType": "",
         "senderr": true,
         "headers": [],
-        "x": 470,
-        "y": 2940,
+        "x": 450,
+        "y": 3000,
         "wires": [
             [
-                "44bdfa027c109f53"
+                "5026cb5d260ffac8"
             ]
         ]
     },
     {
-        "id": "4ca477820e5b2b3a",
+        "id": "a3c41cde7f39e975",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "ERROR polling /status",
         "active": true,
         "tosidebar": true,
+        "console": false,
+        "tostatus": false,
         "complete": "error",
         "targetType": "msg",
-        "x": 740,
-        "y": 3000,
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 420,
+        "y": 3060,
         "wires": []
     },
     {
-        "id": "44bdfa027c109f53",
+        "id": "5026cb5d260ffac8",
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Parse state + compute load + store",
-        "func": "// Expected Java /status response ideally:\n// { mode: \"monitor\"|\"mp\", state: <object OR string> }\n// Some implementations return state as stringified JSON.\n\nconst resp = msg.payload || {};\nconst mode = resp.mode || resp.current_mode || \"unknown\";\nlet state = resp.state;\n\n// If /status returns a JSON-string (e.g. \"{...}\"), try parsing\nif (typeof state === \"string\") {\n  // It might be a plain string, or JSON-string, or stringified JSON inside JSON\n  try {\n    // If it's quoted JSON from gson.toJson(currentState) it may be \"...\" with escapes.\n    // Attempt 1: parse as JSON directly\n    const parsed = JSON.parse(state);\n    state = parsed;\n  } catch (e1) {\n    // Attempt 2: if resp itself is a string (rare)\n    try {\n      const parsed2 = JSON.parse(resp);\n      state = parsed2.state || parsed2;\n    } catch (e2) {\n      // Keep as string\n    }\n  }\n}\n\n// Compute load if possible\n// We support a few shapes:\n// A) state.doctors[doctorId].sizes.TOTAL\n// B) state.doctors is array with sizes\n// C) state contains TOTAL at top\nlet total = 0;\n\nfunction addIfNumber(x){\n  if (typeof x === 'number' && !isNaN(x)) total += x;\n}\n\nif (state && typeof state === \"object\") {\n  if (typeof state.TOTAL === \"number\") {\n    total = state.TOTAL;\n  } else if (state.doctors && typeof state.doctors === \"object\") {\n    // object map\n    for (const k of Object.keys(state.doctors)) {\n      const d = state.doctors[k];\n      if (d && d.sizes && typeof d.sizes.TOTAL === \"number\") addIfNumber(d.sizes.TOTAL);\n      else if (d && typeof d.TOTAL === \"number\") addIfNumber(d.TOTAL);\n    }\n  } else if (Array.isArray(state)) {\n    // array list of doctors\n    for (const d of state) {\n      if (d && d.sizes && typeof d.sizes.TOTAL === \"number\") addIfNumber(d.sizes.TOTAL);\n      else if (d && typeof d.TOTAL === \"number\") addIfNumber(d.TOTAL);\n    }\n  }\n}\n\n// Store latest snapshot in flow context for other tabs/nodes\nflow.set(\"os_latest\", { ts: Date.now(), mode, state, total });\n\nmsg.payload = { ts: Date.now(), mode, total, state };\nmsg.os = { mode, total, state };\nreturn msg;",
+        "func": "// Expected Java /status response ideally:\n// { mode: \"monitor\"|\"mp\", state: <object OR string> }\n\nconst resp = msg.payload || {};\nconst mode = resp.mode || resp.current_mode || \"unknown\";\nlet state = resp.state;\n\nlet total = 0;\n\n// 1) Si state es un string con \"TOTAL=...\"\nif (typeof state === \"string\") {\n  // Suma todos los \"TOTAL=<num>\" que aparezcan (uno por doctor normalmente)\n  const matches = state.match(/TOTAL=(\\d+)/g) || [];\n  for (const m of matches) {\n    const n = parseInt(m.split(\"=\")[1], 10);\n    if (!isNaN(n)) total += n;\n  }\n\n  // (Opcional) Si en el futuro state viniera como JSON-string, intentamos parsear\n  // pero tu formato actual NO es JSON (es texto), así que esto normalmente fallará.\n  try {\n    const parsed = JSON.parse(state);\n    state = parsed;\n    // si se pudiera parsear, recalculamos total desde objeto:\n    if (state && typeof state === \"object\") {\n      total = 0;\n      if (typeof state.TOTAL === \"number\") total = state.TOTAL;\n      else if (state.doctors && typeof state.doctors === \"object\") {\n        for (const k of Object.keys(state.doctors)) {\n          const d = state.doctors[k];\n          const t = d?.sizes?.TOTAL ?? d?.TOTAL;\n          if (typeof t === \"number\") total += t;\n        }\n      }\n    }\n  } catch (e) {\n    // ignore: se queda como texto\n  }\n}\n\n// 2) Si state es objeto, calcula total como antes\nif (state && typeof state === \"object\") {\n  if (typeof state.TOTAL === \"number\") {\n    total = state.TOTAL;\n  } else if (state.doctors && typeof state.doctors === \"object\") {\n    total = 0;\n    for (const k of Object.keys(state.doctors)) {\n      const d = state.doctors[k];\n      const t = d?.sizes?.TOTAL ?? d?.TOTAL;\n      if (typeof t === \"number\") total += t;\n    }\n  } else if (Array.isArray(state)) {\n    total = 0;\n    for (const d of state) {\n      const t = d?.sizes?.TOTAL ?? d?.TOTAL;\n      if (typeof t === \"number\") total += t;\n    }\n  }\n}\n\n// Store latest snapshot in flow context\nflow.set(\"os_latest\", { ts: Date.now(), mode, state, total });\n\nmsg.payload = { ts: Date.now(), mode, total, state };\nmsg.os = { mode, total, state };\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 750,
-        "y": 2940,
+        "x": 730,
+        "y": 3000,
         "wires": [
             [
-                "ece1b54dca3e6146",
-                "d3873c02f1eb376a",
-                "f4f299f7555c9db9"
+                "3568244c458c2a85",
+                "447e6ef0db979d6a",
+                "d27b2a9ebc979952"
             ]
         ]
     },
     {
-        "id": "ece1b54dca3e6146",
+        "id": "3568244c458c2a85",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "STATUS (real time)",
         "active": true,
         "tosidebar": true,
+        "console": false,
+        "tostatus": false,
         "complete": "payload",
         "targetType": "msg",
-        "x": 1040,
-        "y": 2900,
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1110,
+        "y": 3000,
         "wires": []
     },
     {
-        "id": "d3873c02f1eb376a",
+        "id": "447e6ef0db979d6a",
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Auto-control: decide mode (hysteresis)",
@@ -1667,16 +1487,16 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 810,
-        "y": 3060,
+        "x": 750,
+        "y": 3140,
         "wires": [
             [
-                "88e5c039ea467080"
+                "c0eaa1760e9478a7"
             ]
         ]
     },
     {
-        "id": "88e5c039ea467080",
+        "id": "c0eaa1760e9478a7",
         "type": "http request",
         "z": "f6f2187d.f17ca8",
         "name": "POST operating /config (auto)",
@@ -1691,16 +1511,16 @@
         "authType": "",
         "senderr": true,
         "headers": [],
-        "x": 1120,
-        "y": 3060,
+        "x": 1090,
+        "y": 3140,
         "wires": [
             [
-                "dcaaa0908cda182a"
+                "1ac7af24c5cff434"
             ]
         ]
     },
     {
-        "id": "dcaaa0908cda182a",
+        "id": "1ac7af24c5cff434",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "CONFIG change OK",
@@ -1713,24 +1533,28 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 1360,
-        "y": 3040,
+        "y": 3140,
         "wires": []
     },
     {
-        "id": "f3b9389d4e025424",
+        "id": "ff2264914a6440ea",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "CONFIG change ERROR",
         "active": true,
         "tosidebar": true,
+        "console": false,
+        "tostatus": false,
         "complete": "error",
         "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
         "x": 1370,
-        "y": 3080,
+        "y": 3180,
         "wires": []
     },
     {
-        "id": "f4f299f7555c9db9",
+        "id": "d27b2a9ebc979952",
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Format text for visualization",
@@ -1741,16 +1565,16 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 790,
-        "y": 3180,
+        "x": 1000,
+        "y": 2920,
         "wires": [
             [
-                "15200e02a00d1da3"
+                "b286b768714656d5"
             ]
         ]
     },
     {
-        "id": "15200e02a00d1da3",
+        "id": "b286b768714656d5",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "VIEW (text)",
@@ -1758,8 +1582,1661 @@
         "tosidebar": true,
         "complete": "payload",
         "targetType": "msg",
-        "x": 1060,
-        "y": 3180,
+        "x": 1270,
+        "y": 2920,
         "wires": []
+    },
+    {
+        "id": "f220c30c6aa0a4e2",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "GESTION STATE Y MODE OPERATING",
+        "info": "",
+        "x": 240,
+        "y": 2880,
+        "wires": []
+    },
+    {
+        "id": "fb79d08d97d17c17",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "1) STATUS + CHANGE MODE",
+        "info": "",
+        "x": 180,
+        "y": 3540,
+        "wires": []
+    },
+    {
+        "id": "0fa55359c99b208d",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET /status",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 160,
+        "y": 3600,
+        "wires": [
+            [
+                "296fe6444dc56456"
+            ]
+        ]
+    },
+    {
+        "id": "296fe6444dc56456",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET operating /status",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://operating:8082/status",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 400,
+        "y": 3600,
+        "wires": [
+            [
+                "104faa5b6ce7b31b"
+            ]
+        ]
+    },
+    {
+        "id": "104faa5b6ce7b31b",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "STATUS (payload)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 630,
+        "y": 3600,
+        "wires": []
+    },
+    {
+        "id": "13bbed2ab1a3b5d4",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /config -> monitor",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"mode\":\"monitor\"}",
+        "payloadType": "json",
+        "x": 190,
+        "y": 3650,
+        "wires": [
+            [
+                "c73b91e4a85d6d42"
+            ]
+        ]
+    },
+    {
+        "id": "2b9978b5b5316f5a",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /config -> mp",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"mode\":\"mp\"}",
+        "payloadType": "json",
+        "x": 180,
+        "y": 3700,
+        "wires": [
+            [
+                "c73b91e4a85d6d42"
+            ]
+        ]
+    },
+    {
+        "id": "c73b91e4a85d6d42",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set headers + url (/config)",
+        "func": "msg.method = \"POST\";\nmsg.url = \"http://operating:8082/config\";\nmsg.headers = {\"Content-Type\":\"application/json\"};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "x": 430,
+        "y": 3680,
+        "wires": [
+            [
+                "c3f073b1d8cc067c"
+            ]
+        ]
+    },
+    {
+        "id": "c3f073b1d8cc067c",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST operating /config",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 660,
+        "y": 3680,
+        "wires": [
+            [
+                "cf650340e984b811"
+            ]
+        ]
+    },
+    {
+        "id": "cf650340e984b811",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "CONFIG response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 920,
+        "y": 3680,
+        "wires": []
+    },
+    {
+        "id": "5a18a2f96ab1412d",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "2)ADD ELEMENT (createdAtMillis para probar aging)",
+        "info": "Crea casos en D1 y D2. Incluye 2 casos muy antiguos en BAJO/MEDIO para ver si en MONITOR suben por aging.",
+        "x": 260,
+        "y": 3780,
+        "wires": []
+    },
+    {
+        "id": "2a70dad9c6fb731f",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "ADD sample batch (D1+D2)",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 210,
+        "y": 3830,
+        "wires": [
+            [
+                "4b09d96675706004"
+            ]
+        ]
+    },
+    {
+        "id": "4b09d96675706004",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build sample tasks array",
+        "func": "const now = Date.now();\nconst MIN = 60_000;\n\n// Ojo: tu aging en MONITOR (PriorityDoctorInbox) usa:\n// BAJO->MEDIO 10 min, MEDIO->ALTO 20 min, BAJO->ALTO 40 min\n\nconst tasks = [\n  // D1: uno BAJO MUY antiguo => en MONITOR debería aparecer como ALTO por aging\n  { imageCode: \"img_D1_low_old_45m\", doctorId: 1, urgency: 1, createdAtMillis: now - 45*MIN },\n\n  // D1: uno MEDIO antiguo => en MONITOR debería subir a ALTO si pasa 20 min\n  { imageCode: \"img_D1_med_old_25m\", doctorId: 1, urgency: 2, createdAtMillis: now - 25*MIN },\n\n  // D1: recientes\n  { imageCode: \"img_D1_high_new\", doctorId: 1, urgency: 3, createdAtMillis: now - 1*MIN },\n  { imageCode: \"img_D1_low_new\",  doctorId: 1, urgency: 1, createdAtMillis: now - 0.5*MIN },\n\n  // D2: mezcla\n  { imageCode: \"img_D2_low_old_12m\", doctorId: 2, urgency: 1, createdAtMillis: now - 12*MIN },\n  { imageCode: \"img_D2_med_new\",     doctorId: 2, urgency: 2, createdAtMillis: now - 2*MIN },\n  { imageCode: \"img_D2_high_new\",    doctorId: 2, urgency: 3, createdAtMillis: now - 0.2*MIN }\n];\n\nmsg.payload = tasks;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "x": 450,
+        "y": 3830,
+        "wires": [
+            [
+                "9f6874d17b40ccac"
+            ]
+        ]
+    },
+    {
+        "id": "9f6874d17b40ccac",
+        "type": "split",
+        "z": "f6f2187d.f17ca8",
+        "name": "Split tasks",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "task",
+        "x": 640,
+        "y": 3830,
+        "wires": [
+            [
+                "04ed447c4a3c2743"
+            ]
+        ]
+    },
+    {
+        "id": "04ed447c4a3c2743",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Delay 150ms (no flood)",
+        "pauseType": "delay",
+        "timeout": "150",
+        "timeoutUnits": "milliseconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 840,
+        "y": 3830,
+        "wires": [
+            [
+                "2aeda46d74d099b9"
+            ]
+        ]
+    },
+    {
+        "id": "2aeda46d74d099b9",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /add-task (set url+headers)",
+        "func": "msg.method = \"POST\";\nmsg.url = \"http://operating:8082/add-task\";\nmsg.headers = {\"Content-Type\":\"application/json\"};\n// msg.payload ya es {imageCode, doctorId, urgency, createdAtMillis}\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "x": 1100,
+        "y": 3830,
+        "wires": [
+            [
+                "27f576671d46b6dd"
+            ]
+        ]
+    },
+    {
+        "id": "27f576671d46b6dd",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST operating /add-task",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 1330,
+        "y": 3830,
+        "wires": [
+            [
+                "5fbae811ccdefd83"
+            ]
+        ]
+    },
+    {
+        "id": "5fbae811ccdefd83",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "ADD response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1520,
+        "y": 3830,
+        "wires": []
+    },
+    {
+        "id": "dab3ec453f200efe",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "3) CONSULTAR COLA POR DOCTOR",
+        "info": "Esto debe devolver la cola REAL ordenada por Operating (QueueUpdate).",
+        "x": 220,
+        "y": 3920,
+        "wires": []
+    },
+    {
+        "id": "c900b9518866a60a",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET /queue?doctorId=1",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 200,
+        "y": 3970,
+        "wires": [
+            [
+                "43e9e720f94b23b2"
+            ]
+        ]
+    },
+    {
+        "id": "374db8463c269cc3",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET /queue?doctorId=2",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 200,
+        "y": 4020,
+        "wires": [
+            [
+                "346e8c5e7c60f775"
+            ]
+        ]
+    },
+    {
+        "id": "43e9e720f94b23b2",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET operating /queue (D1)",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://operating:8082/queue?doctorId=1",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 460,
+        "y": 3970,
+        "wires": [
+            [
+                "5fe4ee9e60dc0eb6"
+            ]
+        ]
+    },
+    {
+        "id": "346e8c5e7c60f775",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET operating /queue (D2)",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://operating:8082/queue?doctorId=2",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 460,
+        "y": 4020,
+        "wires": [
+            [
+                "519a41fb5f24fbde"
+            ]
+        ]
+    },
+    {
+        "id": "5fe4ee9e60dc0eb6",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "QUEUE D1 (payload)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 700,
+        "y": 3970,
+        "wires": []
+    },
+    {
+        "id": "519a41fb5f24fbde",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "QUEUE D2 (payload)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 700,
+        "y": 4020,
+        "wires": []
+    },
+    {
+        "id": "fe71c1e81bd5f41e",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "4) DELETE ELEMENT",
+        "info": "Prueba eliminar un imageCode. Si Operating lo quita, la cola cambia al pedir /queue.",
+        "x": 160,
+        "y": 4100,
+        "wires": []
+    },
+    {
+        "id": "1fb5ead5e6d5be52",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /remove-task (D1 old low)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"doctorId\":1,\"imageCode\":\"img_D1_low_old_45m\"}",
+        "payloadType": "json",
+        "x": 230,
+        "y": 4150,
+        "wires": [
+            [
+                "28972be0ca521487"
+            ]
+        ]
+    },
+    {
+        "id": "28972be0ca521487",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST /remove-task (set url+headers)",
+        "func": "msg.method = \"POST\";\nmsg.url = \"http://operating:8082/remove-task\";\nmsg.headers = {\"Content-Type\":\"application/json\"};\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "x": 530,
+        "y": 4150,
+        "wires": [
+            [
+                "e394f1c334c17159"
+            ]
+        ]
+    },
+    {
+        "id": "e394f1c334c17159",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST operating /remove-task",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 790,
+        "y": 4150,
+        "wires": [
+            [
+                "a27f02558dfcffbd"
+            ]
+        ]
+    },
+    {
+        "id": "a27f02558dfcffbd",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "REMOVE response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1020,
+        "y": 4150,
+        "wires": []
+    },
+    {
+        "id": "b1e0d1c2a0000001",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET /doctor/pending (ordered by OS)",
+        "url": "/doctor/pending",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 210,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000002"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000002",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "DoctorId -> OS /queue url",
+        "func": "const raw = (msg.req?.query?.id_doctor ?? msg.req?.query?.doctorId ?? \"\").toString().trim();\n// Acepta \"1\" o \"D1\"\nlet n = 0;\nif (/^d\\d+$/i.test(raw)) n = parseInt(raw.slice(1), 10);\nelse n = parseInt(raw, 10);\n\nif (!n || n <= 0) {\n  msg.statusCode = 400;\n  msg.payload = { error: \"Missing/invalid id_doctor\" };\n  return [null, msg];\n}\n\nmsg._doctorIdNum = n;\nmsg.method = \"GET\";\nmsg.url = `http://operating:8082/queue?doctorId=${n}`;\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000003"
+            ],
+            [
+                "b1e0d1c2a0000009"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000003",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET operating /queue",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 740,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000004"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000004",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Extract OS order[]",
+        "func": "const os = msg.payload || {};\n// os.queue: [{imageCode,...}, ...]\nconst order = Array.isArray(os.queue) ? os.queue.map(x => x.imageCode).filter(Boolean) : [];\nmsg._osOrder = order;\n// sigue con SQL\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 960,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000005"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000005",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "SQL pending",
+        "func": "msg.topic = `\nSELECT \n    pr.id_request,\n    pr.urgency,\n    p.name,\n    p.id_patient,\n    i.file_path,\n    sd.disease AS ia_suggestion,\n    d.confidence AS ia_confidence\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON pr.id_request = i.id_request\nLEFT JOIN diagnoses d ON pr.id_request = d.id_request\nLEFT JOIN skin_diseases sd ON d.id_skindiseases = sd.id_skindiseases\nWHERE p.id_doctor = ?\n  AND pr.status = 'pending';\n`;\nmsg.payload = [msg._doctorIdNum];\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1150,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000006"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000006",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL pending",
+        "x": 1340,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000007"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000007",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Reorder by OS",
+        "func": "const rows = Array.isArray(msg.payload) ? msg.payload : [];\nconst order = Array.isArray(msg._osOrder) ? msg._osOrder : [];\n\n// mapa imageCode -> index\nconst idx = new Map();\norder.forEach((code, i) => idx.set(code, i));\n\nfunction baseName(path) {\n  if (!path) return \"\";\n  const s = String(path);\n  return s.includes(\"/\") ? s.split(\"/\").pop() : s;\n}\n\nfunction fixConfidence(v) {\n  if (v === null || v === undefined || v === \"\") return v;\n  let n = typeof v === \"number\" ? v : parseFloat(String(v));\n  if (!isFinite(n)) return v;\n\n  // casos típicos:\n  // - si viene 0.50 -> 50\n  if (n > 0 && n <= 1) n = n * 100;\n  // - si viene 5000 -> 50 (porque alguien multiplicó por 100)\n  if (n > 100) n = n / 100;\n\n  // redondeo 2 decimales\n  n = Math.round(n * 100) / 100;\n  return n;\n}\n\n// añade imageCode y arregla confidence\nfor (const r of rows) {\n  r.imageCode = baseName(r.file_path);\n  r.ia_confidence = fixConfidence(r.ia_confidence);\n}\n\n// ordena según OS\nrows.sort((a, b) => {\n  const ia = idx.has(a.imageCode) ? idx.get(a.imageCode) : 1e9;\n  const ib = idx.has(b.imageCode) ? idx.get(b.imageCode) : 1e9;\n  return ia - ib;\n});\n\nmsg.payload = rows;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1540,
+        "y": 540,
+        "wires": [
+            [
+                "b1e0d1c2a0000008"
+            ]
+        ]
+    },
+    {
+        "id": "b1e0d1c2a0000008",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "HTTP 200",
+        "statusCode": "",
+        "headers": {},
+        "x": 1750,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "b1e0d1c2a0000009",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "HTTP 400",
+        "statusCode": "",
+        "headers": {},
+        "x": 710,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "5ad39e6d80c3b5e5",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "url": "/doctor/send_report",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 2340,
+        "wires": [
+            [
+                "4ebbae8c8043f5a0",
+                "2e06e48b68b5dbc5"
+            ]
+        ]
+    },
+    {
+        "id": "4ebbae8c8043f5a0",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "1. INPUT RECEIVED",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 460,
+        "y": 2260,
+        "wires": []
+    },
+    {
+        "id": "2e06e48b68b5dbc5",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare SQL (store ids)",
+        "func": "const d = msg.payload;\n\nconst id_req = d.id_request || d.requestId || 0;\nconst id_doc = d.id_doctor || d.doctorId || 1;\nconst id_pat = d.id_patient || d.patientId || 1;\nconst id_dis = d.id_skindiseases || 1;\nconst conf = d.confidence || 100;\nconst notes = d.doctor_notes || d.notes || \"Diagnosis saved\";\nconst app_date = d.appointment_date ? d.appointment_date.substring(0, 16).replace('T', ' ') : null;\n\n// guardamos para luego (remove-task)\nmsg._id_request = id_req;\nmsg._id_doctor = id_doc;\n\nconst msgDiagnosis = {\n    ...msg,\n    topic: `INSERT INTO diagnoses (id_request, id_doctor, id_patient, id_skindiseases, confidence, doctor_notes) VALUES (?, ?, ?, ?, ?, ?)`,\n    payload: [id_req, id_doc, id_pat, id_dis, conf, notes],\n    request_id: id_req\n};\n\nlet msgAppointment = null;\nif (app_date && app_date !== \"\") {\n    msgAppointment = {\n        topic: `INSERT INTO appointments (id_patient, id_doctor, date, status, comments) VALUES (?, ?, ?, 'pending', ?)`,\n        payload: [id_pat, id_doc, app_date, \"Appointment scheduled after medical report\"]\n    };\n}\n\nreturn [msgDiagnosis, msgAppointment];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 2340,
+        "wires": [
+            [
+                "23dde0fd43bf3846"
+            ],
+            [
+                "ccdc785fbbbff471"
+            ]
+        ]
+    },
+    {
+        "id": "23dde0fd43bf3846",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Save Diagnosis",
+        "x": 700,
+        "y": 2340,
+        "wires": [
+            [
+                "e7ac089065a4da1f",
+                "c521aa15c6440459",
+                "email_prep_query"
+            ]
+        ]
+    },
+    {
+        "id": "email_prep_query",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare Email Query",
+        "func": "// Clonamos el mensaje para no interferir con el flujo principal\nconst emailMsg = {};\n\n// Guardamos datos del diagnóstico original desde msg.req.body\nconst originalPayload = msg.req?.body || msg.payload || {};\n\nemailMsg._diagnosis_data = {\n    id_request: originalPayload.id_request || originalPayload.requestId || 0,\n    id_doctor: originalPayload.id_doctor || originalPayload.doctorId || 1,\n    id_patient: originalPayload.id_patient || originalPayload.patientId || 1,\n    id_skindiseases: originalPayload.id_skindiseases || 1,\n    confidence: originalPayload.confidence || 100,\n    doctor_notes: originalPayload.doctor_notes || originalPayload.notes || \"Diagnosis completed\",\n    appointment_date: originalPayload.appointment_date || null\n};\n\n// Query para obtener datos del paciente, doctor y enfermedad\nconst sql = `\n    SELECT \n        p.name as patient_name,\n        p.email as patient_email,\n        d.name as doctor_name,\n        sd.disease as disease_name,\n        sd.standard_treatment as disease_treatment,\n        'moderate' as disease_severity\n    FROM patients p\n    CROSS JOIN doctors d\n    CROSS JOIN skin_diseases sd\n    WHERE p.id_patient = ?\n      AND d.id_doctor = ?\n      AND sd.id_skindiseases = ?\n    LIMIT 1\n`;\n\nemailMsg.topic = sql;\nemailMsg.payload = [\n    emailMsg._diagnosis_data.id_patient,\n    emailMsg._diagnosis_data.id_doctor,\n    emailMsg._diagnosis_data.id_skindiseases\n];\n\nreturn emailMsg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 2400,
+        "wires": [
+            [
+                "email_query_db"
+            ]
+        ]
+    },
+    {
+        "id": "email_query_db",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Get Email Data",
+        "x": 1160,
+        "y": 2500,
+        "wires": [
+            [
+                "email_build_payload",
+                "email_debug_data"
+            ]
+        ]
+    },
+    {
+        "id": "email_debug_data",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "EMAIL: DB Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1370,
+        "y": 2440,
+        "wires": []
+    },
+    {
+        "id": "email_build_payload",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build Resend Email Payload",
+        "func": "const rows = Array.isArray(msg.payload) ? msg.payload : [];\nif (rows.length === 0) {\n    node.warn(\"No data found for email\");\n    return null;\n}\n\nconst data = rows[0];\nconst diag = msg._diagnosis_data;\n\nconst patientEmail = data.patient_email;\nif (!patientEmail || patientEmail === \"\") {\n    node.warn(\"Patient email not found\");\n    return null;\n}\n\nconst patientFullName = data.patient_name || \"Patient\";\nconst doctorFullName = data.doctor_name || \"Doctor\";\nconst diseaseName = data.disease_name || \"Skin condition\";\nconst treatment = data.disease_treatment || \"Follow medical recommendations\";\nconst severity = data.disease_severity || \"moderate\";\nconst confidence = diag.confidence || 100;\nconst doctorNotes = diag.doctor_notes || \"Please follow the recommended treatment.\";\nconst appointmentDate = diag.appointment_date ? new Date(diag.appointment_date).toLocaleString('en-US', { \n    dateStyle: 'long', \n    timeStyle: 'short' \n}) : null;\n\n// Severity color mapping\nconst severityColors = {\n    'mild': '#10B981',\n    'moderate': '#F59E0B',\n    'severe': '#EF4444'\n};\nconst severityColor = severityColors[severity.toLowerCase()] || '#F59E0B';\n\n// HTML Template with SkinXpert branding\nconst htmlContent = `\n<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>SkinXpert Medical Report</title>\n</head>\n<body style=\"margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;\">\n    <table role=\"presentation\" style=\"width: 100%; border-collapse: collapse;\">\n        <tr>\n            <td style=\"padding: 40px 20px;\">\n                <table role=\"presentation\" style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\">\n                    <!-- Header with brand colors -->\n                    <tr>\n                        <td style=\"background: linear-gradient(135deg, #1C3555 0%, #0EA5E9 100%); padding: 40px 30px; text-align: center;\">\n                            <h1 style=\"margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;\">SkinXpert</h1>\n                            <p style=\"margin: 10px 0 0 0; color: #38BDF8; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px;\">AI-Powered Dermatology</p>\n                        </td>\n                    </tr>\n                    \n                    <!-- Main Content -->\n                    <tr>\n                        <td style=\"padding: 40px 30px;\">\n                            <h2 style=\"margin: 0 0 20px 0; color: #1C3555; font-size: 24px; font-weight: 600;\">Medical Report Ready</h2>\n                            \n                            <p style=\"margin: 0 0 25px 0; color: #4b5563; font-size: 16px; line-height: 1.6;\">\n                                Dear <strong style=\"color: #1C3555;\">${patientFullName}</strong>,\n                            </p>\n                            \n                            <p style=\"margin: 0 0 30px 0; color: #4b5563; font-size: 16px; line-height: 1.6;\">\n                                Your dermatological analysis has been completed by ${doctorFullName}. Below are the details of your diagnosis:\n                            </p>\n                            \n                            <!-- Diagnosis Card -->\n                            <table role=\"presentation\" style=\"width: 100%; border-collapse: collapse; margin-bottom: 30px; background-color: #f9fafb; border-radius: 8px; overflow: hidden;\">\n                                <tr>\n                                    <td style=\"padding: 25px;\">\n                                        <table role=\"presentation\" style=\"width: 100%; border-collapse: collapse;\">\n                                            <tr>\n                                                <td style=\"padding: 10px 0;\">\n                                                    <strong style=\"color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;\">Diagnosis</strong>\n                                                    <p style=\"margin: 5px 0 0 0; color: #1C3555; font-size: 20px; font-weight: 600;\">${diseaseName}</p>\n                                                </td>\n                                            </tr>\n                                        </table>\n                                    </td>\n                                </tr>\n                            </table>\n                            \n                            <!-- Doctor Notes -->\n                            <div style=\"margin-bottom: 30px; padding: 20px; background-color: #eff6ff; border-left: 4px solid #0EA5E9; border-radius: 4px;\">\n                                <strong style=\"color: #1C3555; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;\">Doctor's Notes</strong>\n                                <p style=\"margin: 10px 0 0 0; color: #4b5563; font-size: 15px; line-height: 1.6;\">${doctorNotes}</p>\n                            </div>\n                            \n                            ${appointmentDate ? `\n                            <!-- Appointment Info -->\n                            <div style=\"margin-bottom: 30px; padding: 20px; background-color: #fef3c7; border-left: 4px solid #F59E0B; border-radius: 4px;\">\n                                <strong style=\"color: #1C3555; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;\">Scheduled Appointment</strong>\n                                <p style=\"margin: 10px 0 0 0; color: #4b5563; font-size: 15px; line-height: 1.6;\">\n                                    📅 ${appointmentDate}\n                                </p>\n                            </div>\n                            ` : ''}\n                        </td>\n                    </tr>\n                    \n                    <!-- Footer -->\n                    <tr>\n                        <td style=\"background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;\">\n                            <p style=\"margin: 0 0 10px 0; color: #6b7280; font-size: 14px; line-height: 1.6;\">\n                                This is an automated medical report from SkinXpert AI Dermatology Platform.\n                            </p>\n                            <p style=\"margin: 0; color: #9ca3af; font-size: 12px;\">\n                                © ${new Date().getFullYear()} SkinXpert. All rights reserved.\n                            </p>\n                        </td>\n                    </tr>\n                </table>\n            </td>\n        </tr>\n    </table>\n</body>\n</html>\n`;\n\n// Plain text version\nconst textContent = `\nSkinXpert - Medical Report\n\nDear ${patientFullName},\n\nYour dermatological analysis has been completed by ${doctorFullName}.\n\nDIAGNOSIS: ${diseaseName}\n\nDOCTOR'S NOTES:\n${doctorNotes}\n\n${appointmentDate ? `SCHEDULED APPOINTMENT: ${appointmentDate}\\\\n\\\\n` : ''}---\nSkinXpert AI Dermatology Platform\n© ${new Date().getFullYear()} SkinXpert. All rights reserved.\n`;\n\n// Prepare Resend API payload\nmsg.method = \"POST\";\nmsg.url = \"https://api.resend.com/emails\";\nmsg.headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer re_N1gLfSVH_H11k1mpAjMyZJTFBtEmBZLU9\"\n};\n\nmsg.payload = {\n    from: \"SkinXpert <onboarding@resend.dev>\",\n    to: [patientEmail],\n    subject: `Your SkinXpert Medical Report is Ready - ${diseaseName}`,\n    html: htmlContent,\n    text: textContent\n};\n\nmsg._email_debug = {\n    to: patientEmail,\n    patient: patientFullName,\n    disease: diseaseName,\n    confidence: confidence\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1410,
+        "y": 2500,
+        "wires": [
+            [
+                "email_send_request",
+                "email_debug_payload"
+            ]
+        ]
+    },
+    {
+        "id": "email_debug_payload",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "EMAIL: Payload Ready",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "_email_debug",
+        "targetType": "msg",
+        "x": 1680,
+        "y": 2440,
+        "wires": []
+    },
+    {
+        "id": "email_send_request",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send via Resend API",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1680,
+        "y": 2500,
+        "wires": [
+            [
+                "email_debug_response"
+            ]
+        ]
+    },
+    {
+        "id": "email_debug_response",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "EMAIL: Sent ✓",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 1900,
+        "y": 2500,
+        "wires": []
+    },
+    {
+        "id": "c521aa15c6440459",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "2. SAVED OK",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 920,
+        "y": 2280,
+        "wires": []
+    },
+    {
+        "id": "e7ac089065a4da1f",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Update Request",
+        "func": "msg.topic = \"UPDATE photo_requests SET status = 'diagnosed' WHERE id_request = ?\";\nmsg.payload = [msg.request_id];\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 910,
+        "y": 2340,
+        "wires": [
+            [
+                "5b22c0ea2c1c8ca7"
+            ]
+        ]
+    },
+    {
+        "id": "5b22c0ea2c1c8ca7",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Update Status",
+        "x": 1100,
+        "y": 2340,
+        "wires": [
+            [
+                "4d301316f1dc05b9"
+            ]
+        ]
+    },
+    {
+        "id": "4d301316f1dc05b9",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "SQL: get image_path",
+        "func": "const idReq = msg._id_request || msg.request_id;\nmsg.topic = \"SELECT file_path FROM images WHERE id_request = ? LIMIT 1\";\nmsg.payload = [idReq];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1300,
+        "y": 2340,
+        "wires": [
+            [
+                "d0fea66d7440e649"
+            ]
+        ]
+    },
+    {
+        "id": "d0fea66d7440e649",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Select image path",
+        "x": 1510,
+        "y": 2340,
+        "wires": [
+            [
+                "109774c7060fa380"
+            ]
+        ]
+    },
+    {
+        "id": "109774c7060fa380",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build /remove-task payload",
+        "func": "const rows = Array.isArray(msg.payload) ? msg.payload : [];\nconst filePath = rows[0]?.file_path || \"\";\nconst imageCode = filePath ? String(filePath).split('/').pop() : (msg.payload?.imageCode || msg._imageCode || \"\");\n\nconst doctorId = msg._id_doctor || msg.payload?.doctorId || 1;\n\nmsg._remove_debug = { doctorId, imageCode, filePath };\n\nmsg.method = \"POST\";\nmsg.url = \"http://operating:8082/remove-task\";\nmsg.headers = { \"Content-Type\": \"application/json\" };\nmsg.payload = { doctorId, imageCode };\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1740,
+        "y": 2340,
+        "wires": [
+            [
+                "65cd0be67ad37033",
+                "26952d5fd063a28e"
+            ]
+        ]
+    },
+    {
+        "id": "26952d5fd063a28e",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "REMOVE payload (debug)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "_remove_debug",
+        "targetType": "msg",
+        "x": 2020,
+        "y": 2280,
+        "wires": []
+    },
+    {
+        "id": "65cd0be67ad37033",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST operating /remove-task",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 2030,
+        "y": 2340,
+        "wires": [
+            [
+                "b6e345e3c50d7ae9"
+            ]
+        ]
+    },
+    {
+        "id": "b6e345e3c50d7ae9",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "HTTP response body",
+        "func": "const removed = (msg.payload && typeof msg.payload.removed === 'boolean') ? msg.payload.removed : false;\nmsg.statusCode = 200;\nmsg.payload = { ok: true, diagnosed: true, removedFromOperating: removed };\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2300,
+        "y": 2340,
+        "wires": [
+            [
+                "701734155fb055fd"
+            ]
+        ]
+    },
+    {
+        "id": "701734155fb055fd",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "OK",
+        "statusCode": "",
+        "headers": {},
+        "x": 2490,
+        "y": 2340,
+        "wires": []
+    },
+    {
+        "id": "d653cf87ddc302d8",
+        "type": "catch",
+        "z": "f6f2187d.f17ca8",
+        "name": "Catch Errors",
+        "scope": null,
+        "uncaught": false,
+        "x": 690,
+        "y": 2500,
+        "wires": [
+            [
+                "0276641ee3551a09",
+                "76188760d48f449d"
+            ]
+        ]
+    },
+    {
+        "id": "0276641ee3551a09",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "ERROR",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "error",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 880,
+        "y": 2460,
+        "wires": []
+    },
+    {
+        "id": "76188760d48f449d",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "Error",
+        "statusCode": "500",
+        "headers": {},
+        "x": 870,
+        "y": 2520,
+        "wires": []
+    },
+    {
+        "id": "ccdc785fbbbff471",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "Save Appointments",
+        "x": 710,
+        "y": 2400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "05937d5caf051975",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "Cron: completar citas pasadas",
+        "props": [],
+        "repeat": "60",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "x": 200,
+        "y": 4320,
+        "wires": [
+            [
+                "6d39a75671b7633f"
+            ]
+        ]
+    },
+    {
+        "id": "6d39a75671b7633f",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "SQL: pending -> completed si date < NOW()",
+        "func": "msg.topic = `\nUPDATE appointments\nSET status = 'completed'\nWHERE status = 'pending'\n  AND date < NOW();\n`;\nmsg.payload = [];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 4320,
+        "wires": [
+            [
+                "80fe4517c7bf67cd"
+            ]
+        ]
+    },
+    {
+        "id": "80fe4517c7bf67cd",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL",
+        "x": 820,
+        "y": 4320,
+        "wires": [
+            [
+                "ba868f491b0e8125"
+            ]
+        ]
+    },
+    {
+        "id": "ba868f491b0e8125",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Format: log & status",
+        "func": "const result = msg.payload;\n\nlet updated = 0;\nif (result && typeof result.affectedRows === \"number\") {\n    updated = result.affectedRows;\n}\n\n// Mensaje bonito para Debug\nmsg.payload = {\n    message: updated > 0\n        ? `✅ Checking appointments… ${updated} marked as completed`\n        : `⏳ Checking appointments… nothing to update`,\n    updatedRows: updated,\n    timestampMadrid: new Date().toLocaleString(\"es-ES\", { timeZone: \"Europe/Madrid\" })\n};\n\n// Status visual en el nodo (muy útil)\nnode.status({\n    fill: updated > 0 ? \"green\" : \"blue\",\n    shape: \"dot\",\n    text: updated > 0\n        ? `${updated} completed`\n        : \"checked – no changes\"\n});\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1030,
+        "y": 4320,
+        "wires": [
+            [
+                "66c01f43769c99f8"
+            ]
+        ]
+    },
+    {
+        "id": "66c01f43769c99f8",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Rows updated",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1260,
+        "y": 4320,
+        "wires": []
+    },
+    {
+        "id": "4b1c04b0d792bb0d",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "REVIEW APPOIMENTS TIME",
+        "info": "",
+        "x": 170,
+        "y": 4260,
+        "wires": []
+    },
+    {
+        "id": "77559ff8c21504ea",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "REHYDRATE OS: Load Operating +Database",
+        "info": "",
+        "x": 230,
+        "y": 3300,
+        "wires": []
+    },
+    {
+        "id": "inject_rehydrate",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "MANUAL REHYDRATE TEST",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 260,
+        "y": 3420,
+        "wires": [
+            [
+                "fn_init_retry"
+            ]
+        ]
+    },
+    {
+        "id": "fn_init_retry",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Init retry counter",
+        "func": "msg.retries = 0;\nnode.warn('🚀 Starting rehydrate...');\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 3380,
+        "wires": [
+            [
+                "http_wait_os"
+            ]
+        ]
+    },
+    {
+        "id": "http_wait_os",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "WAIT: GET operating /status",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://operating:8082/status",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 1000,
+        "y": 3380,
+        "wires": [
+            [
+                "fn_check_os"
+            ]
+        ]
+    },
+    {
+        "id": "fn_check_os",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "If OS ready → MySQL, else retry",
+        "func": "const ok = !msg.error;\n\nif (ok) {\n  node.warn('✅ Operating ready. Checking MySQL...');\n  return [msg, null];\n}\n\nmsg.retries = (msg.retries || 0) + 1;\nnode.warn(`⏳ Operating not ready yet (retry ${msg.retries}). Waiting 5s...`);\nreturn [null, msg];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1580,
+        "y": 3380,
+        "wires": [
+            [
+                "fn_sql_ping"
+            ],
+            [
+                "delay_5s"
+            ]
+        ]
+    },
+    {
+        "id": "delay_5s",
+        "type": "delay",
+        "z": "f6f2187d.f17ca8",
+        "name": "Delay 5s",
+        "pauseType": "delay",
+        "timeout": "5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 2240,
+        "y": 3300,
+        "wires": [
+            [
+                "http_wait_os"
+            ]
+        ]
+    },
+    {
+        "id": "fn_sql_ping",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build SQL ping",
+        "func": "msg.topic = 'SELECT 1 AS ok';\nmsg.payload = [];\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1000,
+        "y": 3480,
+        "wires": [
+            [
+                "mysql_ping"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_ping",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL: ping",
+        "x": 1190,
+        "y": 3480,
+        "wires": [
+            [
+                "fn_check_mysql"
+            ]
+        ]
+    },
+    {
+        "id": "fn_check_mysql",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "If MySQL OK → load DB, else retry",
+        "func": "const ok = !msg.error;\n\nif (ok) {\n  node.warn('✅ MySQL ready. Starting rehydrate...');\n  msg.retries = 0;\n  return [msg, null];\n}\n\nmsg.retries = (msg.retries || 0) + 1;\n\nif (msg.retries >= 30) {\n  node.error('❌ MySQL not ready after 30 retries. Giving up.');\n  return [null, null];\n}\n\nnode.warn(`⏳ MySQL not ready yet (retry ${msg.retries}). Waiting 5s...`);\nreturn [null, msg];",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1440,
+        "y": 3480,
+        "wires": [
+            [
+                "fn_sql_pending"
+            ],
+            [
+                "delay_5s"
+            ]
+        ]
+    },
+    {
+        "id": "fn_sql_pending",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Build SQL: pending cases",
+        "func": "msg.topic = `\nSELECT \n  pr.id_request,\n  pr.urgency,\n  p.id_doctor,\n  i.file_path,\n  UNIX_TIMESTAMP(pr.upload_date) * 1000 AS createdAtMillis\nFROM photo_requests pr\nJOIN patients p ON pr.id_patient = p.id_patient\nLEFT JOIN images i ON i.id_request = pr.id_request\nWHERE pr.status = 'pending'\nORDER BY pr.urgency DESC, pr.upload_date ASC\n`;\nmsg.payload = [];\nnode.warn('🔍 Querying DB for pending cases...');\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1830,
+        "y": 3480,
+        "wires": [
+            [
+                "mysql_pending"
+            ]
+        ]
+    },
+    {
+        "id": "mysql_pending",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "9c12c0e15685ca58",
+        "name": "MySQL: select pending",
+        "x": 2210,
+        "y": 3480,
+        "wires": [
+            [
+                "fn_log_rows",
+                "switch_rows"
+            ]
+        ]
+    },
+    {
+        "id": "fn_log_rows",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Log rows",
+        "func": "const rows = msg.payload || [];\nnode.warn(`📥 Loaded from DB: ${rows.length} pending cases`);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1940,
+        "y": 3580,
+        "wires": [
+            [
+                "debug_rows"
+            ]
+        ]
+    },
+    {
+        "id": "debug_rows",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "DB rows loaded",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2180,
+        "y": 3740,
+        "wires": []
+    },
+    {
+        "id": "switch_rows",
+        "type": "switch",
+        "z": "f6f2187d.f17ca8",
+        "name": "If no rows → stop",
+        "property": "payload.length",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 2570,
+        "y": 3480,
+        "wires": [
+            [
+                "debug_no_rows"
+            ],
+            [
+                "split_rows"
+            ]
+        ]
+    },
+    {
+        "id": "debug_no_rows",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "No pending cases",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2870,
+        "y": 3480,
+        "wires": []
+    },
+    {
+        "id": "split_rows",
+        "type": "split",
+        "z": "f6f2187d.f17ca8",
+        "name": "Split rows",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "row",
+        "x": 2480,
+        "y": 3560,
+        "wires": [
+            [
+                "fn_row_to_task"
+            ]
+        ]
+    },
+    {
+        "id": "fn_row_to_task",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Row → /add-task payload",
+        "func": "const r = msg.payload || {};\n\nlet imageCode = r.file_path || 'unknown';\nif (typeof imageCode === 'string') imageCode = imageCode.split('/').pop();\n\nconst doctorId = parseInt(r.id_doctor || 1, 10);\nconst urgency  = parseInt(r.urgency || 1, 10);\n\nconst createdAtMillis = (r.createdAtMillis != null) ? Number(r.createdAtMillis) : undefined;\n\nmsg.payload = { imageCode, doctorId, urgency };\nif (!isNaN(createdAtMillis)) msg.payload.createdAtMillis = createdAtMillis;\n\nmsg.headers = { 'Content-Type': 'application/json' };\nmsg.method  = 'POST';\nmsg.url     = 'http://operating:8082/add-task';\n\nmsg._rehydrate_info = { id_request: r.id_request, doctorId, urgency, imageCode, createdAtMillis };\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2210,
+        "y": 3640,
+        "wires": [
+            [
+                "debug_sending",
+                "http_add_task"
+            ]
+        ]
+    },
+    {
+        "id": "debug_sending",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Sending item",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "_rehydrate_info",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2510,
+        "y": 3720,
+        "wires": []
+    },
+    {
+        "id": "http_add_task",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "POST operating /add-task",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": true,
+        "headers": [],
+        "x": 2530,
+        "y": 3640,
+        "wires": [
+            [
+                "debug_os_ok"
+            ]
+        ]
+    },
+    {
+        "id": "debug_os_ok",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Operating OK",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2880,
+        "y": 3680,
+        "wires": []
+    },
+    {
+        "id": "inject_auto_start",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "AUTO on Node-RED start",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 2,
+        "topic": "",
+        "x": 250,
+        "y": 3360,
+        "wires": [
+            [
+                "fn_init_retry"
+            ]
+        ]
     }
 ]

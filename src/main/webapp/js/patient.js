@@ -51,16 +51,16 @@ async function loadPatientHistory() {
             const imagePath = h.file_path ? `http://localhost:8080${h.file_path}` : 'https://via.placeholder.com/100';
 
             list.innerHTML += `
-            <div class="case-card urgency-low">
-                <p style="font-size:14px; color:#888;">${fecha}</p>
-                <div style="display:flex; gap:15px; margin-top:10px;">
-                    <img src="${imagePath}" style="width:80px; height:80px; border-radius:8px; object-fit: cover; cursor: pointer;" onclick="openImageModal('${imagePath}')">
-                    <div>
-                        <strong>${h.disease || 'Diagnosis'}</strong>
-                        <p style="margin-top:5px; font-size:14px;">${h.doctor_notes}</p>
-                    </div>
-                </div>
-            </div>`;
+    <div class="case-card urgency-low">
+        <p style="font-size:14px; color:#888;">${fecha}</p>
+        <div style="display:flex; gap:15px; margin-top:10px;">
+            <img src="${imagePath}" style="width:80px; height:80px; border-radius:8px; object-fit: cover; cursor: pointer;" onclick="openImageModal('${imagePath}')">
+            <div>
+                <strong>${h.disease || 'Diagnosis'}</strong>
+                <p style="margin-top:5px; font-size:14px;">${h.doctor_notes}</p>
+            </div>
+        </div>
+    </div>`;
         });
         initScrollAnimations();
     } catch (err) { console.error(err); }

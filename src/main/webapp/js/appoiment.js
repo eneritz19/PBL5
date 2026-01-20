@@ -3,7 +3,6 @@ async function editAppointment(id_appointment, currentDate, patientId) {
     modal.className = 'confirm-modal';
     modal.innerHTML = `
                 <div class="confirm-content">
-                    <div class="confirm-icon">📅</div>
                     <h3 class="confirm-title">Edit Appointment</h3>
                     <p class="confirm-message">Select the new date and time for the appointment</p>
                     <input type="datetime-local" id="editAppointmentDate" value="${currentDate.slice(0, 16)}" 

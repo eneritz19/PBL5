@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessagePassingDoctorInbox.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">pbl5</a> &gt; <a href="index.source.html" class="el_package">com.example</a> &gt; <span class="el_source">MessagePassingDoctorInbox.java</span></div><h1>MessagePassingDoctorInbox.java</h1><pre class="source lang-java linenums">package com.example;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.PriorityBlockingQueue;
+
+public class MessagePassingDoctorInbox implements DoctorInbox {
+    private final String doctorId;
+
+    private final PriorityBlockingQueue&lt;PhotoMsg&gt; q;
+
+<span class="fc" id="L14">    public MessagePassingDoctorInbox(String doctorId) {</span>
+<span class="fc" id="L15">        this.doctorId = doctorId;</span>
+<span class="fc" id="L16">        this.q = new PriorityBlockingQueue&lt;&gt;(11, Comparator</span>
+<span class="fc" id="L17">                .comparingInt((PhotoMsg m) -&gt; urgencyRank(m.urgency))</span>
+<span class="fc" id="L18">                .thenComparingLong(m -&gt; m.createdAtMillis));</span>
+<span class="fc" id="L19">    }</span>
+
+    private static int urgencyRank(PhotoMsg.Urgency u) {
+<span class="fc bfc" id="L22" title="All 3 branches covered.">        return switch (u) {</span>
+<span class="fc" id="L23">            case ALTO -&gt; 0;</span>
+<span class="fc" id="L24">            case MEDIO -&gt; 1;</span>
+<span class="fc" id="L25">            case BAJO -&gt; 2;</span>
+        };
+    }
+
+    @Override
+    public void enqueue(PhotoMsg msg) {
+<span class="fc" id="L31">        q.put(msg); // message passing: el productor “manda” el msg al buzón del médico</span>
+<span class="fc" id="L32">    }</span>
+
+    @Override
+    public boolean removeByImageCode(String imageCode) {
+<span class="fc" id="L36">        return q.removeIf(m -&gt; m.imageCode.equals(imageCode));</span>
+    }
+
+    @Override
+    public List&lt;QueueUpdate.QueueItem&gt; snapshotOrdered() {
+        // Ojo: snapshot no bloquea a productores; es “consistente suficiente” para
+        // monitoring.
+        // Si quieres snapshot 100% congelado, habría que copiar y ordenar, como hacemos
+        // aquí.
+<span class="fc" id="L45">        ArrayList&lt;PhotoMsg&gt; copy = new ArrayList&lt;&gt;(q);</span>
+<span class="fc" id="L46">        copy.sort(Comparator</span>
+<span class="fc" id="L47">                .comparingInt((PhotoMsg m) -&gt; urgencyRank(m.urgency))</span>
+<span class="fc" id="L48">                .thenComparingLong(m -&gt; m.createdAtMillis));</span>
+
+<span class="fc" id="L50">        ArrayList&lt;QueueUpdate.QueueItem&gt; out = new ArrayList&lt;&gt;(copy.size());</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        for (PhotoMsg m : copy) {</span>
+<span class="fc" id="L52">            out.add(new QueueUpdate.QueueItem(m.imageCode, m.urgency.name(), m.createdAtMillis));</span>
+<span class="fc" id="L53">        }</span>
+<span class="fc" id="L54">        return out;</span>
+    }
+
+    @Override
+    public Map&lt;String, Integer&gt; sizesSnapshot() {
+<span class="fc" id="L59">        int h = 0, m = 0, l = 0;</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        for (PhotoMsg msg : q) {</span>
+<span class="pc bpc" id="L61" title="1 of 4 branches missed.">            switch (msg.urgency) {</span>
+<span class="fc" id="L62">                case ALTO -&gt; h++;</span>
+<span class="fc" id="L63">                case MEDIO -&gt; m++;</span>
+<span class="fc" id="L64">                case BAJO -&gt; l++;</span>
+            }
+<span class="fc" id="L66">        }</span>
+<span class="fc" id="L67">        Map&lt;String, Integer&gt; map = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L68">        map.put(&quot;ALTO&quot;, h);</span>
+<span class="fc" id="L69">        map.put(&quot;MEDIO&quot;, m);</span>
+<span class="fc" id="L70">        map.put(&quot;BAJO&quot;, l);</span>
+<span class="fc" id="L71">        map.put(&quot;TOTAL&quot;, h + m + l);</span>
+<span class="fc" id="L72">        return map;</span>
+    }
+
+    public String doctorId() {
+<span class="fc" id="L76">        return doctorId;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
