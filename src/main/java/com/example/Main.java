@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 
 public class Main {
 
-    // --- CONSTANTES (Corrige duplicados en líneas 37, 91, 138, 139) ---
     private static final String MODE_MONITOR = "monitor";
     private static final String MODE_MP = "mp";
     private static final String METHOD_OPTIONS = "OPTIONS";
@@ -37,7 +36,6 @@ public class Main {
     private static final Object modeLock = new Object();
     private static final int PER_DOCTOR_CAPACITY = 20;
 
-    // --- LINEA 36: Uso de AtomicReference para Thread-Safety ---
     static class ActiveEngine {
         final AtomicReference<Engine> current = new AtomicReference<>();
         final AtomicReference<String> mode = new AtomicReference<>(MODE_MONITOR);
@@ -70,10 +68,6 @@ public class Main {
         System.out.println("Servidor escuchando en: http://localhost:" + port);
     }
 
-    // =========================================================================
-    // HANDLERS
-    // =========================================================================
-
     static class TaskHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -102,8 +96,14 @@ public class Main {
                 }
 
                 String doctorIdStr = "D" + dto.doctorId;
-                PhotoMsg.Urgency urgencyEnum = (dto.urgency >= 3) ? PhotoMsg.Urgency.ALTO : 
-                                               (dto.urgency == 2) ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.BAJO;
+                
+                // CORRECCIÓN LÍNEA 106: Se extrae la operación ternaria anidada
+                PhotoMsg.Urgency urgencyEnum;
+                if (dto.urgency >= 3) {
+                    urgencyEnum = PhotoMsg.Urgency.ALTO;
+                } else {
+                    urgencyEnum = (dto.urgency == 2) ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.BAJO;
+                }
 
                 PhotoMsg photo = (dto.createdAtMillis != null)
                         ? new PhotoMsg(dto.imageCode, doctorIdStr, urgencyEnum, dto.createdAtMillis)
@@ -119,10 +119,10 @@ public class Main {
                 engineSnapshot.accept(photo);
                 sendResponse(exchange, 200, "{\"status\":\"ok\",\"mode\":\"" + modeSnapshot + "\"}");
 
-            } catch (InterruptedException e) { // LINEA 137: Re-interrupt
+            } catch (InterruptedException e) {
                 LOGGER.log(Level.SEVERE, "Interrumpido durante add-task", e);
                 Thread.currentThread().interrupt();
-            } catch (Exception e) { // LINEA 138: Constant
+            } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);
                 sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + "\"}");
             }
@@ -139,7 +139,7 @@ public class Main {
                 return;
             }
             
-            processRemoveRequest(exchange); // LINEA 179: Extract nested try
+            processRemoveRequest(exchange);
         }
 
         private void processRemoveRequest(HttpExchange exchange) throws IOException {
@@ -182,7 +182,7 @@ public class Main {
 
             try {
                 String q = exchange.getRequestURI().getQuery();
-                String raw = extractQuery(q, "doctorId"); // LINEA 261: Move method into here
+                String raw = extractQuery(q, "doctorId");
 
                 if (raw == null || raw.isBlank()) {
                     sendResponse(exchange, 400, JSON_ERROR_PREFIX + "Missing/invalid doctorId\"}");
@@ -276,7 +276,7 @@ public class Main {
                 }
                 sendResponse(exchange, 200, "{\"current_mode\":\"" + active.mode.get() + "\"}");
 
-            } catch (InterruptedException e) { // LINEA 366: Re-interrupt
+            } catch (InterruptedException e) {
                 LOGGER.log(Level.SEVERE, "Interrupción en config", e);
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
@@ -312,10 +312,20 @@ public class Main {
         return (msg == null) ? "unknown" : msg.replace("\"", "'");
     }
 
-    // LINEA 407: extractIntQuery eliminado por ser código muerto.
-
-    // DTOs
-    static class TaskDto { String imageCode; int doctorId; int urgency; Long createdAtMillis; }
-    static class RemoveDto { int doctorId; String imageCode; }
-    static class ConfigDto { String mode; }
+    // CORRECCIÓN LÍNEAS 318 y 319: Declaración de campos en líneas separadas para evitar issues de estilo
+    static class TaskDto { 
+        String imageCode; 
+        int doctorId; 
+        int urgency; 
+        Long createdAtMillis; 
+    }
+    
+    static class RemoveDto { 
+        int doctorId; 
+        String imageCode; 
+    }
+    
+    static class ConfigDto { 
+        String mode; 
+    }
 }
