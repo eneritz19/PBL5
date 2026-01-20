@@ -23,7 +23,10 @@ public class MonitorEngine implements Engine {
     }
 
     @Override
-    public void shutdown() { }
+    public void shutdown() {
+        // El motor de tipo Monitor es síncrono y no gestiona hilos de ejecución propios.
+        // No se requiere ninguna acción de limpieza específica al apagar.
+     }
 
     @Override
     public QueueUpdate getQueue(String doctorId) {

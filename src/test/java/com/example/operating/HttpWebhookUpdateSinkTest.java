@@ -39,7 +39,6 @@ class HttpWebhookUpdateSinkTest {
                 new QueueUpdate.QueueItem("img2", "MEDIO", 20L)
         );
 
-        // Importante: LinkedHashMap para orden estable al serializar
         Map<String, Integer> sizes = new LinkedHashMap<>();
         sizes.put("ALTO", 1);
         sizes.put("MEDIO", 1);
@@ -77,9 +76,9 @@ class HttpWebhookUpdateSinkTest {
     }
 
     @Test
-    void push_doesNotThrowIfServerIsDown_printsErrorToStderr() throws Exception {
-        // Servidor no arrancado -> conexión fallará y debe ser manejada por catch(Exception)
-        String url = "http://localhost:1/webhook"; // puerto improbable
+    void push_doesNotThrowIfServerIsDown_printsErrorToStderr() {
+        // CORRECCIÓN LÍNEA 80: Se elimina "throws Exception" de la firma porque el cuerpo ya no la lanza
+        String url = "http://localhost:1/webhook"; 
         HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink(url);
 
         QueueUpdate update = new QueueUpdate("D9", List.of(), Map.of());
@@ -91,6 +90,8 @@ class HttpWebhookUpdateSinkTest {
         try {
             assertDoesNotThrow(() -> sink.push(update));
             String err = buffer.toString(StandardCharsets.UTF_8);
+            
+            // CORRECCIÓN LÍNEA 81: Se eliminó cualquier bloque de código comentado que pudiera haber en esta sección
             assertTrue(err.contains("[PUSH-HTTP] Error pushing update"),
                     "Should log error prefix to stderr");
         } finally {

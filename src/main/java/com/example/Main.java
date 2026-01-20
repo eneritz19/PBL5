@@ -1,4 +1,5 @@
 package com.example;
+
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -13,46 +14,47 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
 
-    // --- GLOBALS ---
+    // --- CONSTANTES (Corrige duplicados en líneas 37, 91, 138, 139) ---
+    private static final String MODE_MONITOR = "monitor";
+    private static final String MODE_MP = "mp";
+    private static final String METHOD_OPTIONS = "OPTIONS";
+    private static final String ERROR_MSG_GENERIC = "Error procesando petición";
+    private static final String JSON_ERROR_PREFIX = "{\"error\":\"";
+
     private static Engine monitorEngine;
     private static Engine mpEngine;
     private static ActiveEngine active;
     private static final Gson gson = new Gson();
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Main.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
-    // sink global (para recrear engines en migración)
     private static UpdateSink sink;
-
-    // Lock global: evita carreras entre /config y /add-task /remove-task /queue
     private static final Object modeLock = new Object();
-
-    // Capacity monitor inbox
     private static final int PER_DOCTOR_CAPACITY = 20;
 
+    // --- LINEA 36: Uso de AtomicReference para Thread-Safety ---
     static class ActiveEngine {
-        volatile Engine current;
-        volatile String mode = "monitor";
+        final AtomicReference<Engine> current = new AtomicReference<>();
+        final AtomicReference<String> mode = new AtomicReference<>(MODE_MONITOR);
     }
 
     public static void main(String[] args) throws Exception {
         System.out.println("Iniciando SkinXpert Operating Service (HTTP)...");
 
-        // 1) Sink (si quieres push real, cambia a HttpWebhookUpdateSink)
         sink = new ConsoleUpdateSink();
 
-        // 2) Engines iniciales (vacíos)
         monitorEngine = new MonitorEngine(new DoctorQueueManager(PER_DOCTOR_CAPACITY), sink);
         mpEngine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);
 
-        // 3) Activo por defecto
         active = new ActiveEngine();
-        active.current = monitorEngine;
-        active.mode = "monitor";
+        active.current.set(monitorEngine);
+        active.mode.set(MODE_MONITOR);
 
-        // 4) HTTP server
         int port = 8082;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
@@ -66,29 +68,18 @@ public class Main {
         server.start();
 
         System.out.println("Servidor escuchando en: http://localhost:" + port);
-        System.out.println("Modo inicial: " + active.mode);
-        System.out.println("Endpoints:");
-        System.out.println("  POST /add-task      -> {imageCode, doctorId, urgency, createdAtMillis?}");
-        System.out.println("  POST /remove-task   -> {doctorId, imageCode}");
-        System.out.println("  GET  /queue?doctorId=1");
-        System.out.println("  GET  /status");
-        System.out.println("  POST /config        -> {mode: monitor|mp}  (migra el estado)");
     }
 
     // =========================================================================
     // HANDLERS
     // =========================================================================
 
-    /**
-     * POST /add-task
-     * JSON esperado: { "imageCode": "img1", "doctorId": 1, "urgency": 3, "createdAtMillis": 123? }
-     */
     static class TaskHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
 
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+            if (METHOD_OPTIONS.equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
                 return;
             }
@@ -102,20 +93,17 @@ public class Main {
                 TaskDto dto = gson.fromJson(body, TaskDto.class);
 
                 if (dto == null || dto.imageCode == null || dto.imageCode.isBlank()) {
-                    sendResponse(exchange, 400, "{\"error\":\"Invalid JSON or missing imageCode\"}");
+                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + "Invalid JSON or missing imageCode\"}");
                     return;
                 }
                 if (dto.doctorId <= 0) {
-                    sendResponse(exchange, 400, "{\"error\":\"Invalid doctorId\"}");
+                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + "Invalid doctorId\"}");
                     return;
                 }
 
                 String doctorIdStr = "D" + dto.doctorId;
-
-                PhotoMsg.Urgency urgencyEnum;
-                if (dto.urgency >= 3) urgencyEnum = PhotoMsg.Urgency.ALTO;
-                else if (dto.urgency == 2) urgencyEnum = PhotoMsg.Urgency.MEDIO;
-                else urgencyEnum = PhotoMsg.Urgency.BAJO;
+                PhotoMsg.Urgency urgencyEnum = (dto.urgency >= 3) ? PhotoMsg.Urgency.ALTO : 
+                                               (dto.urgency == 2) ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.BAJO;
 
                 PhotoMsg photo = (dto.createdAtMillis != null)
                         ? new PhotoMsg(dto.imageCode, doctorIdStr, urgencyEnum, dto.createdAtMillis)
@@ -124,259 +112,182 @@ public class Main {
                 Engine engineSnapshot;
                 String modeSnapshot;
                 synchronized (modeLock) {
-                    engineSnapshot = active.current;
-                    modeSnapshot = active.mode;
+                    engineSnapshot = active.current.get();
+                    modeSnapshot = active.mode.get();
                 }
 
                 engineSnapshot.accept(photo);
-
                 sendResponse(exchange, 200, "{\"status\":\"ok\",\"mode\":\"" + modeSnapshot + "\"}");
-                System.out.println("[HTTP] add-task: " + dto.imageCode + " -> " + doctorIdStr +
-                        " (" + urgencyEnum + ") mode=" + modeSnapshot);
 
-            } catch (Exception e) {
-                LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
-                sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
+            } catch (InterruptedException e) { // LINEA 137: Re-interrupt
+                LOGGER.log(Level.SEVERE, "Interrumpido durante add-task", e);
+                Thread.currentThread().interrupt();
+            } catch (Exception e) { // LINEA 138: Constant
+                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);
+                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + "\"}");
             }
         }
     }
 
-    /**
-     * POST /remove-task
-     * JSON: { "doctorId": 1, "imageCode": "xxx.jpg" }
-     */
     static class RemoveHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
 
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+            if (METHOD_OPTIONS.equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
                 return;
             }
-            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(405, -1);
-                return;
-            }
+            
+            processRemoveRequest(exchange); // LINEA 179: Extract nested try
+        }
 
+        private void processRemoveRequest(HttpExchange exchange) throws IOException {
             try {
                 String body = readBody(exchange);
                 RemoveDto dto = gson.fromJson(body, RemoveDto.class);
 
-                if (dto == null || dto.imageCode == null || dto.imageCode.isBlank() || dto.doctorId <= 0) {
-                    sendResponse(exchange, 400, "{\"error\":\"Invalid JSON (doctorId, imageCode required)\"}");
+                if (dto == null || dto.imageCode == null || dto.doctorId <= 0) {
+                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + "Invalid JSON (doctorId, imageCode required)\"}");
                     return;
                 }
-
-                String doctorIdStr = "D" + dto.doctorId;
 
                 Engine engineSnapshot;
                 synchronized (modeLock) {
-                    engineSnapshot = active.current;
+                    engineSnapshot = active.current.get();
                 }
 
-                boolean removed;
-                try {
-                    removed = engineSnapshot.remove(doctorIdStr, dto.imageCode);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    sendResponse(exchange, 500, "{\"error\":\"interrupted\"}");
-                    return;
-                }
-
+                boolean removed = engineSnapshot.remove("D" + dto.doctorId, dto.imageCode);
                 sendResponse(exchange, 200, "{\"removed\":" + removed + "}");
-                System.out.println("[HTTP] remove-task: " + dto.imageCode + " from " + doctorIdStr + " -> " + removed);
 
+            } catch (InterruptedException ie) {
+                LOGGER.log(Level.SEVERE, "Interrumpido en remove", ie);
+                Thread.currentThread().interrupt();
+                sendResponse(exchange, 500, JSON_ERROR_PREFIX + "interrupted\"}");
             } catch (Exception e) {
-                LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
-                sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
+                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);
+                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + "\"}");
             }
         }
     }
 
-    /**
-     * GET /queue?doctorId=1
-     * Devuelve la cola REAL ordenada (lo que Java usa internamente).
-     */
     static class QueueHandler implements HttpHandler {
-    @Override
-    public void handle(HttpExchange exchange) throws IOException {
-        addCorsHeaders(exchange);
-
-        if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(405, -1);
-            return;
-        }
-
-        try {
-            String q = exchange.getRequestURI().getQuery(); // e.g. "doctorId=D1"
-            String raw = extractQuery(q, "doctorId");
-
-            if (raw == null || raw.isBlank()) {
-                sendResponse(exchange, 400, "{\"error\":\"Missing/invalid doctorId\"}");
-                return;
-            }
-
-            raw = raw.trim();
-            String doctorIdStr;
-
-            // ✅ Acepta "D1" o "d1"
-            if (raw.matches("(?i)^d\\d+$")) {
-                doctorIdStr = raw.toUpperCase();
-            }
-            // ✅ Acepta "1"
-            else if (raw.matches("^\\d+$")) {
-                doctorIdStr = "D" + raw;
-            } else {
-                sendResponse(exchange, 400, "{\"error\":\"Missing/invalid doctorId\"}");
-                return;
-            }
-
-            Engine engineSnapshot;
-            String modeSnapshot;
-            synchronized (modeLock) {
-                engineSnapshot = active.current;
-                modeSnapshot = active.mode;
-            }
-
-            QueueUpdate update = engineSnapshot.getQueue(doctorIdStr);
-
-            Map<String, Object> payload = Map.of(
-                    "mode", modeSnapshot,
-                    "doctorId", update.doctorId,
-                    "queue", update.queueOrdered,
-                    "sizes", update.sizes
-            );
-
-            sendResponse(exchange, 200, gson.toJson(payload));
-
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
-            sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
-        }
-    }
-}
-
-// helper nuevo (simple)
-private static String extractQuery(String query, String key) {
-    if (query == null || query.isBlank()) return null;
-    for (String p : query.split("&")) {
-        String[] kv = p.split("=", 2);
-        if (kv.length == 2 && kv[0].equals(key)) return kv[1];
-    }
-    return null;
-}
-
-
-    /**
-     * GET /status
-     * Devuelve estado (string) + mode
-     */
-    static class StatusHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
-
             if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(405, -1);
                 return;
             }
 
-            String stateSnapshot;
-            String modeSnapshot;
-            synchronized (modeLock) {
-                stateSnapshot = active.current.state();
-                modeSnapshot = active.mode;
+            try {
+                String q = exchange.getRequestURI().getQuery();
+                String raw = extractQuery(q, "doctorId"); // LINEA 261: Move method into here
+
+                if (raw == null || raw.isBlank()) {
+                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + "Missing/invalid doctorId\"}");
+                    return;
+                }
+
+                String doctorIdStr = raw.trim().matches("(?i)^d\\d+$") ? raw.trim().toUpperCase() : "D" + raw.trim();
+
+                Engine engineSnapshot;
+                String modeSnapshot;
+                synchronized (modeLock) {
+                    engineSnapshot = active.current.get();
+                    modeSnapshot = active.mode.get();
+                }
+
+                QueueUpdate update = engineSnapshot.getQueue(doctorIdStr);
+                Map<String, Object> payload = Map.of(
+                        "mode", modeSnapshot,
+                        "doctorId", update.doctorId,
+                        "queue", update.queueOrdered,
+                        "sizes", update.sizes
+                );
+                sendResponse(exchange, 200, gson.toJson(payload));
+
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);
+                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + "\"}");
             }
+        }
 
-            Map<String, Object> payload = Map.of(
-                    "mode", modeSnapshot,
-                    "state", stateSnapshot
-            );
-
-            sendResponse(exchange, 200, gson.toJson(payload));
+        private String extractQuery(String query, String key) {
+            if (query == null || query.isBlank()) return null;
+            for (String p : query.split("&")) {
+                String[] kv = p.split("=", 2);
+                if (kv.length == 2 && kv[0].equals(key)) return kv[1];
+            }
+            return null;
         }
     }
 
-    /**
-     * POST /config
-     * JSON: { "mode": "monitor" | "mp" }
-     *
-     * ✅ Migra el estado: dump del engine actual -> crea engine nuevo -> loadAll(state)
-     */
+    static class StatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            addCorsHeaders(exchange);
+            String stateSnapshot;
+            String modeSnapshot;
+            synchronized (modeLock) {
+                stateSnapshot = active.current.get().state();
+                modeSnapshot = active.mode.get();
+            }
+            sendResponse(exchange, 200, gson.toJson(Map.of("mode", modeSnapshot, "state", stateSnapshot)));
+        }
+    }
+
     static class ConfigHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
-
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+            if (METHOD_OPTIONS.equalsIgnoreCase(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(405, -1);
                 return;
             }
 
             try {
                 String body = readBody(exchange);
                 ConfigDto config = gson.fromJson(body, ConfigDto.class);
+                String desired = (config != null && config.mode != null) ? config.mode.trim().toLowerCase() : "";
 
-                if (config == null || config.mode == null) {
-                    sendResponse(exchange, 400, "{\"error\":\"Missing mode\"}");
-                    return;
-                }
-
-                String desired = config.mode.trim().toLowerCase();
-                if (!desired.equals("mp") && !desired.equals("monitor")) {
-                    sendResponse(exchange, 400, "{\"error\":\"mode must be monitor|mp\"}");
+                if (!desired.equals(MODE_MP) && !desired.equals(MODE_MONITOR)) {
+                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + "mode must be monitor|mp\"}");
                     return;
                 }
 
                 synchronized (modeLock) {
-                    if (desired.equals(active.mode)) {
-                        sendResponse(exchange, 200, "{\"current_mode\":\"" + active.mode + "\",\"note\":\"already in that mode\"}");
-                        return;
-                    }
+                    if (!desired.equals(active.mode.get())) {
+                        Map<String, List<QueueUpdate.QueueItem>> state = active.current.get().dumpAll();
+                        active.current.get().shutdown();
 
-                    // 1) Dump estado del engine actual
-                    Map<String, List<QueueUpdate.QueueItem>> state = active.current.dumpAll();
-
-                    // 2) Apaga el engine viejo (importante en MP por threads)
-                    active.current.shutdown();
-
-                    // 3) Crea engine NUEVO en el modo deseado (vacío) y carga estado
-                    if (desired.equals("mp")) {
-                        mpEngine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);
-                        mpEngine.loadAll(state);
-                        active.current = mpEngine;
-                        active.mode = "mp";
-                    } else {
-                        monitorEngine = new MonitorEngine(new DoctorQueueManager(PER_DOCTOR_CAPACITY), sink);
-                        monitorEngine.loadAll(state);
-                        active.current = monitorEngine;
-                        active.mode = "monitor";
+                        if (desired.equals(MODE_MP)) {
+                            mpEngine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);
+                            mpEngine.loadAll(state);
+                            active.current.set(mpEngine);
+                            active.mode.set(MODE_MP);
+                        } else {
+                            monitorEngine = new MonitorEngine(new DoctorQueueManager(PER_DOCTOR_CAPACITY), sink);
+                            monitorEngine.loadAll(state);
+                            active.current.set(monitorEngine);
+                            active.mode.set(MODE_MONITOR);
+                        }
                     }
                 }
+                sendResponse(exchange, 200, "{\"current_mode\":\"" + active.mode.get() + "\"}");
 
-                System.out.println("[HTTP] config: mode changed to " + active.mode + " (state migrated)");
-                sendResponse(exchange, 200,
-                        "{\"current_mode\":\"" + active.mode + "\",\"note\":\"state migrated\"}");
-
+            } catch (InterruptedException e) { // LINEA 366: Re-interrupt
+                LOGGER.log(Level.SEVERE, "Interrupción en config", e);
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
-                LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
-                sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
+                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);
+                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + "\"}");
             }
         }
     }
 
-    // =========================================================================
-    // UTILIDADES
-    // =========================================================================
-
     private static String readBody(HttpExchange exchange) throws IOException {
-        try (InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
-             BufferedReader br = new BufferedReader(isr)) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) sb.append(line);
@@ -388,9 +299,7 @@ private static String extractQuery(String query, String key) {
         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
         exchange.sendResponseHeaders(code, bytes.length);
-        try (OutputStream os = exchange.getResponseBody()) {
-            os.write(bytes);
-        }
+        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
     }
 
     private static void addCorsHeaders(HttpExchange exchange) {
@@ -400,39 +309,13 @@ private static String extractQuery(String query, String key) {
     }
 
     private static String safeMsg(String msg) {
-        if (msg == null) return "unknown";
-        return msg.replace("\"", "'");
+        return (msg == null) ? "unknown" : msg.replace("\"", "'");
     }
 
-    private static int extractIntQuery(String query, String key, int def) {
-        if (query == null || query.isBlank()) return def;
-        String[] parts = query.split("&");
-        for (String p : parts) {
-            String[] kv = p.split("=");
-            if (kv.length == 2 && kv[0].equals(key)) {
-                try { return Integer.parseInt(kv[1]); } catch (Exception ignored) {}
-            }
-        }
-        return def;
-    }
+    // LINEA 407: extractIntQuery eliminado por ser código muerto.
 
-    // =========================================================================
     // DTOs
-    // =========================================================================
-
-    static class TaskDto {
-        String imageCode;
-        int doctorId;
-        int urgency;
-        Long createdAtMillis; // opcional (rehydrate/aging real)
-    }
-
-    static class RemoveDto {
-        int doctorId;
-        String imageCode;
-    }
-
-    static class ConfigDto {
-        String mode;
-    }
+    static class TaskDto { String imageCode; int doctorId; int urgency; Long createdAtMillis; }
+    static class RemoveDto { int doctorId; String imageCode; }
+    static class ConfigDto { String mode; }
 }

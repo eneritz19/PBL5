@@ -56,7 +56,9 @@ public class MessagePassingDoctorInbox implements DoctorInbox {
 
     @Override
     public Map<String, Integer> sizesSnapshot() {
-        int h = 0, m = 0, l = 0;
+        int h = 0;
+        int m = 0;
+        int l = 0;
         for (PhotoMsg msg : q) {
             switch (msg.urgency) {
                 case ALTO -> h++;

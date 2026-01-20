@@ -1,9 +1,13 @@
 package com.example;
+
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PriorityDoctorInbox implements DoctorInbox {
+    private static final Logger LOGGER = Logger.getLogger(PriorityDoctorInbox.class.getName());
     private final String doctorId;
 
     private final Semaphore slots; // huecos
@@ -15,15 +19,10 @@ public class PriorityDoctorInbox implements DoctorInbox {
     private final Deque<PhotoMsg> med  = new ArrayDeque<>();
     private final Deque<PhotoMsg> low  = new ArrayDeque<>();
 
-    // =========================================================================
-    // AGING (evita starvation) - umbrales en minutos
-    // =========================================================================
-    private static final long MIN = 60_000L; // 1 minuto en milisegundos
-
-    // Ajusta estos valores según criterio clínico / demo
-    private static final long T_LOW_TO_MED_MS  = 15 * MIN; // BAJO -> MEDIO tras 15 min
-    private static final long T_MED_TO_HIGH_MS = 45 * MIN; // MEDIO -> ALTO tras 20 min
-    private static final long T_LOW_TO_HIGH_MS = 120 * MIN; // BAJO -> ALTO tras 40 min (opcional)
+    private static final long MIN = 60_000L; 
+    private static final long T_LOW_TO_MED_MS  = 15 * MIN; 
+    private static final long T_MED_TO_HIGH_MS = 45 * MIN; 
+    private static final long T_LOW_TO_HIGH_MS = 120 * MIN; 
 
     public PriorityDoctorInbox(String doctorId, int capacity) {
         this.doctorId = doctorId;
@@ -33,9 +32,7 @@ public class PriorityDoctorInbox implements DoctorInbox {
 
     @Override
     public void enqueue(PhotoMsg msg) throws InterruptedException {
-        // Capacidad: evita overflow sin busy-wait
         slots.acquire();
-
         lock.lock();
         try {
             switch (msg.urgency) {
@@ -46,14 +43,11 @@ public class PriorityDoctorInbox implements DoctorInbox {
         } finally {
             lock.unlock();
         }
-
         items.release();
     }
 
     /**
-     * Urgencia "efectiva" según tiempo de espera (aging).
-     * - BAJO puede subir a MEDIO o ALTO si espera demasiado
-     * - MEDIO puede subir a ALTO si espera demasiado
+     * CORRECCIÓN LÍNEA 55: Se elimina el bloque de código comentado que pedía Sonar.
      */
     private static PhotoMsg.Urgency effectiveUrgency(PhotoMsg msg, long nowMillis) {
         long wait = nowMillis - msg.createdAtMillis;
@@ -64,57 +58,52 @@ public class PriorityDoctorInbox implements DoctorInbox {
             return PhotoMsg.Urgency.BAJO;
         }
 
-        if (msg.urgency == PhotoMsg.Urgency.MEDIO) {
-            if (wait >= T_MED_TO_HIGH_MS) return PhotoMsg.Urgency.ALTO;
-            return PhotoMsg.Urgency.MEDIO;
+        if (msg.urgency == PhotoMsg.Urgency.MEDIO && wait >= T_MED_TO_HIGH_MS) {
+            return PhotoMsg.Urgency.ALTO;
         }
 
-        return PhotoMsg.Urgency.ALTO;
+        return msg.urgency == PhotoMsg.Urgency.MEDIO ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.ALTO;
     }
 
     /**
-     * Aplica aging moviendo mensajes entre colas.
-     * Debe llamarse siempre con el lock cogido.
+     * CORRECCIÓN LÍNEA 79: Refactorización para reducir Complejidad Cognitiva.
+     * Se han extraído las lógicas de movimiento a métodos privados.
      */
     private void applyAgingLocked() {
         long now = System.currentTimeMillis();
+        processLowAging(now);
+        processMedAging(now);
+    }
 
-        // Revisa BAJO -> MEDIO/ALTO
-        if (!low.isEmpty()) {
-            Iterator<PhotoMsg> it = low.iterator();
-            while (it.hasNext()) {
-                PhotoMsg m = it.next();
-                PhotoMsg.Urgency eff = effectiveUrgency(m, now);
-                if (eff != PhotoMsg.Urgency.BAJO) {
-                    it.remove();
-                    if (eff == PhotoMsg.Urgency.MEDIO) med.addLast(m);
-                    else high.addLast(m);
-                }
-            }
-        }
-
-        // Revisa MEDIO -> ALTO
-        if (!med.isEmpty()) {
-            Iterator<PhotoMsg> it = med.iterator();
-            while (it.hasNext()) {
-                PhotoMsg m = it.next();
-                PhotoMsg.Urgency eff = effectiveUrgency(m, now);
-                if (eff == PhotoMsg.Urgency.ALTO) {
-                    it.remove();
-                    high.addLast(m);
-                }
+    private void processLowAging(long now) {
+        Iterator<PhotoMsg> it = low.iterator();
+        while (it.hasNext()) {
+            PhotoMsg m = it.next();
+            PhotoMsg.Urgency eff = effectiveUrgency(m, now);
+            if (eff != PhotoMsg.Urgency.BAJO) {
+                it.remove();
+                if (eff == PhotoMsg.Urgency.MEDIO) med.addLast(m);
+                else high.addLast(m);
             }
         }
     }
 
-    // (Opcional) si más adelante quieres "sacar siguiente" para médico:
+    private void processMedAging(long now) {
+        Iterator<PhotoMsg> it = med.iterator();
+        while (it.hasNext()) {
+            PhotoMsg m = it.next();
+            if (effectiveUrgency(m, now) == PhotoMsg.Urgency.ALTO) {
+                it.remove();
+                high.addLast(m);
+            }
+        }
+    }
+
     public PhotoMsg takeNext() throws InterruptedException {
         items.acquire();
         lock.lock();
         try {
-            // ✅ Evita starvation: antes de elegir, promovemos por antigüedad
             applyAgingLocked();
-
             PhotoMsg msg;
             if (!high.isEmpty()) msg = high.removeFirst();
             else if (!med.isEmpty()) msg = med.removeFirst();
@@ -131,16 +120,11 @@ public class PriorityDoctorInbox implements DoctorInbox {
     public List<QueueUpdate.QueueItem> snapshotOrdered() {
         lock.lock();
         try {
-            // ✅ El snapshot refleja la prioridad efectiva (sin starvation)
             applyAgingLocked();
-
             ArrayList<QueueUpdate.QueueItem> out = new ArrayList<>(high.size() + med.size() + low.size());
-
-            // ✅ Urgencia efectiva: al estar en "high/med/low" ya es su prioridad actual
             for (PhotoMsg m : high) out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.ALTO.name(),  m.createdAtMillis));
             for (PhotoMsg m : med)  out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.MEDIO.name(), m.createdAtMillis));
             for (PhotoMsg m : low)  out.add(new QueueUpdate.QueueItem(m.imageCode, PhotoMsg.Urgency.BAJO.name(),  m.createdAtMillis));
-
             return out;
         } finally {
             lock.unlock();
@@ -151,10 +135,14 @@ public class PriorityDoctorInbox implements DoctorInbox {
     public Map<String, Integer> sizesSnapshot() {
         lock.lock();
         try {
-            // Si quieres que los contadores también reflejen aging, descomenta:
-            // applyAgingLocked();
-
-            int h = high.size(), m = med.size(), l = low.size();
+            /**
+             * CORRECCIÓN LÍNEA 155: Se elimina el código comentado.
+             * CORRECCIÓN LÍNEA 157: Declaración de variables en líneas separadas.
+             */
+            int h = high.size();
+            int m = med.size();
+            int l = low.size();
+            
             Map<String, Integer> map = new LinkedHashMap<>();
             map.put("ALTO", h);
             map.put("MEDIO", m);
@@ -165,36 +153,43 @@ public class PriorityDoctorInbox implements DoctorInbox {
             lock.unlock();
         }
     }
+
     @Override
-public boolean removeByImageCode(String imageCode) {
-    lock.lock();
-    try {
-        boolean removed =
-            removeFromDeque(high, imageCode) ||
-            removeFromDeque(med, imageCode)  ||
-            removeFromDeque(low, imageCode);
+    public boolean removeByImageCode(String imageCode) {
+        lock.lock();
+        try {
+            boolean removed = removeFromDeque(high, imageCode) ||
+                             removeFromDeque(med, imageCode)  ||
+                             removeFromDeque(low, imageCode);
 
-        if (removed) {
-            // Ajuste contadores: había 1 item real
-            items.tryAcquire(); // decrementa items si podía (no bloquea)
-            slots.release();    // libera capacidad
-        }
-        return removed;
-    } finally {
-        lock.unlock();
-    }
-}
-
-private boolean removeFromDeque(java.util.Deque<PhotoMsg> dq, String imageCode) {
-    var it = dq.iterator();
-    while (it.hasNext()) {
-        PhotoMsg m = it.next();
-        if (m.imageCode.equals(imageCode)) {
-            it.remove();
-            return true;
+            if (removed) {
+                /**
+                 * CORRECCIÓN LÍNEA 179: Manejo del valor booleano de tryAcquire.
+                 */
+                if (!items.tryAcquire()) {
+                    LOGGER.log(Level.WARNING, "No se pudo adquirir el permiso del ítem tras borrado manual");
+                }
+                slots.release();
+            }
+            return removed;
+        } finally {
+            lock.unlock();
         }
     }
-    return false;
-}
 
+    private boolean removeFromDeque(java.util.Deque<PhotoMsg> dq, String imageCode) {
+        var it = dq.iterator();
+        while (it.hasNext()) {
+            PhotoMsg m = it.next();
+            if (m.imageCode.equals(imageCode)) {
+                it.remove();
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public String getDoctorId() {
+        return this.doctorId;
+    }
 }
