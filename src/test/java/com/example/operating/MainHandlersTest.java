@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -27,7 +26,8 @@ class MainHandlersTest {
         }
     }
 
-    private HttpExchange createMockExchange(String method, String body, String query) throws IOException {
+    // CORRECCIÓN LÍNEA 30: Se elimina 'throws IOException' ya que no es necesaria
+    private HttpExchange createMockExchange(String method, String body, String query) {
         HttpExchange exchange = mock(HttpExchange.class);
         InputStream is = new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8));
 
