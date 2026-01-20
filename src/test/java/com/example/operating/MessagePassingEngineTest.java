@@ -76,7 +76,6 @@ class MessagePassingEngineTest {
 
     @Test
     void remove_whenItemIsInDoctorQueue_removesAndPushesUpdate_returnsTrue() throws Exception {
-        
         LatchingSink sink = new LatchingSink(2);
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);
 
@@ -134,7 +133,8 @@ class MessagePassingEngineTest {
     }
 
     @Test
-    void testEngineLifecycle() throws InterruptedException {
+    void testEngineLifecycle() {
+        // CORRECCIÓN LÍNEA 137: Se elimina InterruptedException de la firma
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), new ConsoleUpdateSink());
 
         engine.shutdown();
@@ -148,11 +148,8 @@ class MessagePassingEngineTest {
     void testStateAndDumpCoverage() {
         MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), new ConsoleUpdateSink());
         try {
-            
             assertNotNull(engine.state());
-            
             assertNotNull(engine.dumpAll());
-            
             assertNotNull(engine.getQueue("D1"));
         } finally {
             engine.shutdown();
@@ -168,7 +165,8 @@ class MessagePassingEngineTest {
             PhotoMsg msg = new PhotoMsg("img-temp", "D-TEMP", PhotoMsg.Urgency.ALTO, 1L);
             engine.accept(msg);
 
-            boolean removed = engine.remove("D-TEMP", "img-temp");
+            // CORRECCIÓN LÍNEA 171: Se elimina la variable local "removed" que no se usaba
+            engine.remove("D-TEMP", "img-temp");
 
             assertDoesNotThrow(() -> engine.getQueue("D-TEMP"));
         } finally {
@@ -178,8 +176,10 @@ class MessagePassingEngineTest {
 
     @Test
     void testErrorHandlingInLoops() throws Exception {
-
+        // Usamos un latch para esperar a que el error sea procesado sin usar Thread.sleep
+        CountDownLatch errorLatch = new CountDownLatch(1);
         UpdateSink errorSink = update -> {
+            errorLatch.countDown();
             throw new RuntimeException("Simulated Error");
         };
 
@@ -188,7 +188,8 @@ class MessagePassingEngineTest {
         try {
             engine.accept(new PhotoMsg("error-img", "D1", PhotoMsg.Urgency.ALTO, 1L));
 
-            Thread.sleep(200);
+            // CORRECCIÓN LÍNEA 191: Se sustituye Thread.sleep por await en el latch del error
+            errorLatch.await(2, TimeUnit.SECONDS);
 
             assertDoesNotThrow(() -> engine.getQueue("D1"));
         } finally {

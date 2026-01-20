@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.lang.Exception;
 
 import static org.junit.jupiter.api.Assertions.*;
 import com.example.HttpWebhookUpdateSink;
@@ -77,7 +76,6 @@ class HttpWebhookUpdateSinkTest {
 
     @Test
     void push_doesNotThrowIfServerIsDown_printsErrorToStderr() {
-    
         String url = "http://localhost:1/webhook";
         HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink(url);
 
@@ -88,7 +86,7 @@ class HttpWebhookUpdateSinkTest {
     }
 
     @Test
-    void push_whenInterrupted_restoresStatus() throws Exception {
+    void push_whenInterrupted_restoresStatus() {
         HttpWebhookUpdateSink sink = new HttpWebhookUpdateSink("http://localhost:1234");
         Thread.currentThread().interrupt(); 
         sink.push(new QueueUpdate("D1", List.of(), Map.of()));

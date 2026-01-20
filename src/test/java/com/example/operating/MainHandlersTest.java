@@ -23,6 +23,7 @@ class MainHandlersTest {
         try {
             Main.main(new String[] {});
         } catch (Exception ignored) {
+            // Se ignora la excepción porque el servidor puede estar ya levantado en el puerto 8082
         }
     }
 
@@ -41,7 +42,7 @@ class MainHandlersTest {
     }
 
     @Test
-    void testTaskHandlerFullCoverage() throws IOException {
+    void testTaskHandlerFullCoverage() {
         Main.TaskHandler handler = new Main.TaskHandler();
 
         assertDoesNotThrow(() -> handler.handle(createMockExchange("OPTIONS", "", null)));
@@ -54,7 +55,7 @@ class MainHandlersTest {
     }
 
     @Test
-    void testRemoveHandlerCoverage() throws IOException {
+    void testRemoveHandlerCoverage() {
         Main.RemoveHandler handler = new Main.RemoveHandler();
 
         String json = "{\"doctorId\":1,\"imageCode\":\"img1\"}";
@@ -66,7 +67,7 @@ class MainHandlersTest {
     }
 
     @Test
-    void testQueueHandlerCoverage() throws IOException {
+    void testQueueHandlerCoverage() {
         Main.QueueHandler handler = new Main.QueueHandler();
 
         assertDoesNotThrow(() -> handler.handle(createMockExchange("GET", "", "doctorId=1")));
@@ -79,7 +80,7 @@ class MainHandlersTest {
     }
 
     @Test
-    void testConfigHandlerFullCoverage() throws IOException {
+    void testConfigHandlerFullCoverage() {
         Main.ConfigHandler handler = new Main.ConfigHandler();
 
         assertDoesNotThrow(() -> handler.handle(createMockExchange("POST", "{\"mode\":\"mp\"}", null)));
@@ -90,7 +91,7 @@ class MainHandlersTest {
     }
 
     @Test
-    void testMainExceptionSafety() throws IOException {
+    void testMainExceptionSafety() {
         HttpExchange exchange = mock(HttpExchange.class);
 
         when(exchange.getResponseHeaders()).thenReturn(new Headers());
