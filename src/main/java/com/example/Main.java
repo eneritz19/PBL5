@@ -21,6 +21,7 @@ public class Main {
     private static Engine mpEngine;
     private static ActiveEngine active;
     private static final Gson gson = new Gson();
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(Main.class.getName());
 
     // sink global (para recrear engines en migración)
     private static UpdateSink sink;
@@ -134,7 +135,7 @@ public class Main {
                         " (" + urgencyEnum + ") mode=" + modeSnapshot);
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
                 sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
             }
         }
@@ -187,7 +188,7 @@ public class Main {
                 System.out.println("[HTTP] remove-task: " + dto.imageCode + " from " + doctorIdStr + " -> " + removed);
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
                 sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
             }
         }
@@ -250,7 +251,7 @@ public class Main {
             sendResponse(exchange, 200, gson.toJson(payload));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
             sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
         }
     }
@@ -363,7 +364,7 @@ private static String extractQuery(String query, String key) {
                         "{\"current_mode\":\"" + active.mode + "\",\"note\":\"state migrated\"}");
 
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(java.util.logging.Level.SEVERE, "Error procesando petición", e);
                 sendResponse(exchange, 500, "{\"error\":\"" + safeMsg(e.getMessage()) + "\"}");
             }
         }
