@@ -36,7 +36,7 @@ public class Main {
     private static final Object modeLock = new Object();
     private static final int PER_DOCTOR_CAPACITY = 20;
 
-    static class ActiveEngine {
+    public static class ActiveEngine {
         final AtomicReference<Engine> current = new AtomicReference<>();
         final AtomicReference<String> mode = new AtomicReference<>(MODE_MONITOR);
     }
@@ -68,7 +68,7 @@ public class Main {
         System.out.println("Servidor escuchando en: http://localhost:" + port);
     }
 
-    static class TaskHandler implements HttpHandler {
+    public static class TaskHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
@@ -129,7 +129,7 @@ public class Main {
         }
     }
 
-    static class RemoveHandler implements HttpHandler {
+    public static class RemoveHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
@@ -171,7 +171,7 @@ public class Main {
         }
     }
 
-    static class QueueHandler implements HttpHandler {
+    public static class QueueHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
@@ -223,7 +223,7 @@ public class Main {
         }
     }
 
-    static class StatusHandler implements HttpHandler {
+    public static class StatusHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
@@ -237,7 +237,7 @@ public class Main {
         }
     }
 
-    static class ConfigHandler implements HttpHandler {
+    public static class ConfigHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             addCorsHeaders(exchange);
@@ -313,19 +313,19 @@ public class Main {
     }
 
     // CORRECCIÓN LÍNEAS 318 y 319: Declaración de campos en líneas separadas para evitar issues de estilo
-    static class TaskDto { 
+    public static class TaskDto { 
         String imageCode; 
         int doctorId; 
         int urgency; 
         Long createdAtMillis; 
     }
     
-    static class RemoveDto { 
+    public static class RemoveDto { 
         int doctorId; 
         String imageCode; 
     }
     
-    static class ConfigDto { 
+    public static class ConfigDto { 
         String mode; 
     }
 }
