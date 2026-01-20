@@ -5,7 +5,11 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.stream.Collectors;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class HttpWebhookUpdateSink implements UpdateSink {
+    private static final Logger LOGGER = Logger.getLogger(HttpWebhookUpdateSink.class.getName());
     private final HttpClient client = HttpClient.newHttpClient();
     private final URI webhookUri;
 
@@ -34,8 +38,13 @@ public class HttpWebhookUpdateSink implements UpdateSink {
                     .build();
 
             client.send(req, HttpResponse.BodyHandlers.discarding());
+        } catch (InterruptedException e) {
+            // RESTAURAR EL ESTADO DE INTERRUPCIÓN (Esto soluciona el issue de Sonar)
+            LOGGER.log(Level.SEVERE, "[PUSH-HTTP] Thread interrupted during send", e);
+            Thread.currentThread().interrupt(); 
         } catch (Exception e) {
-            System.err.println("[PUSH-HTTP] Error pushing update: " + e.getMessage());
+            // Usamos el Logger que ya aprendimos para el resto de excepciones
+            LOGGER.log(Level.SEVERE, "[PUSH-HTTP] Error pushing update", e);
         }
     }
 }
