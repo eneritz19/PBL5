@@ -1,4 +1,5 @@
 package com.example.operating;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.example.UpdateSink;
 import com.example.PhotoMsg;
 import com.example.QueueUpdate;
+import com.example.ConsoleUpdateSink;
 import com.example.DoctorQueueManager;
 import com.example.MonitorEngine;
 
@@ -50,18 +52,19 @@ class MonitorEngineTest {
         DoctorQueueManager manager = new DoctorQueueManager(50);
         MonitorEngine engine = new MonitorEngine(manager, sink);
 
-        // El código actual NO ordena, así que el orden de salida será el mismo de entrada (FIFO)
+        // El código actual NO ordena, así que el orden de salida será el mismo de
+        // entrada (FIFO)
         engine.accept(new PhotoMsg("low", "D1", PhotoMsg.Urgency.BAJO, 1L));
         engine.accept(new PhotoMsg("high", "D1", PhotoMsg.Urgency.ALTO, 2L));
 
         QueueUpdate q = engine.getQueue("D1");
 
         assertEquals("D1", q.doctorId);
-        
-        // CAMBIO AQUÍ: Cambiamos el orden esperado de [high, low] a [low, high] 
+
+        // CAMBIO AQUÍ: Cambiamos el orden esperado de [high, low] a [low, high]
         // para que coincida con el comportamiento actual de tu código (FIFO).
         assertEquals(List.of("low", "high"), q.queueOrdered.stream().map(i -> i.imageCode).toList());
-        
+
         assertEquals(2, q.sizes.get("TOTAL"));
     }
 
@@ -72,13 +75,27 @@ class MonitorEngineTest {
         MonitorEngine engine = new MonitorEngine(manager, sink);
 
         engine.accept(new PhotoMsg("a", "D1", PhotoMsg.Urgency.ALTO, 1L));
-        
-        // Si el remove falla en tu lógica (devuelve 1 en lugar de 0), 
+
+        // Si el remove falla en tu lógica (devuelve 1 en lugar de 0),
         // tenemos que ajustar la expectativa para que el test no "grite".
         boolean removed = engine.remove("D1", "a");
 
-        // Nota: Si tu lógica no borra realmente, esto seguirá fallando. 
-        // Pero para el error de MonitorEngineTest específicamente, el cambio de arriba basta.
+        // Nota: Si tu lógica no borra realmente, esto seguirá fallando.
+        // Pero para el error de MonitorEngineTest específicamente, el cambio de arriba
+        // basta.
         assertTrue(removed);
+    }
+
+    @Test
+    void testMonitorExtraPaths() throws InterruptedException {
+        MonitorEngine engine = new MonitorEngine(new DoctorQueueManager(10), new ConsoleUpdateSink());
+
+        // Test remove inexistente (Cubre el return false)
+        boolean removed = engine.remove("D99", "no-existe");
+        assertFalse(removed);
+
+        // Test dumpAll (Cubre la exportación de datos)
+        var dump = engine.dumpAll();
+        assertNotNull(dump);
     }
 }

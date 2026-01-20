@@ -3,6 +3,7 @@ package com.example.operating;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -11,6 +12,7 @@ import com.example.UpdateSink;
 import com.example.QueueUpdate;
 import com.example.MessagePassingEngine;
 import com.example.PhotoMsg;
+import com.example.ConsoleUpdateSink;
 import com.example.MPDoctorQueueManager;
 
 class MessagePassingEngineTest {
@@ -80,9 +82,11 @@ class MessagePassingEngineTest {
 
         try {
             engine.accept(new PhotoMsg("img1", "D1", PhotoMsg.Urgency.ALTO, 1L));
-            
-            // CORRECCIÓN LÍNEA 130: En lugar de sleep, esperamos a que el primer push ocurra
-            // Usamos un pequeño bucle o simplemente verificamos que la lista 'all' ya tenga el primer item
+
+            // CORRECCIÓN LÍNEA 130: En lugar de sleep, esperamos a que el primer push
+            // ocurra
+            // Usamos un pequeño bucle o simplemente verificamos que la lista 'all' ya tenga
+            // el primer item
             long start = System.currentTimeMillis();
             while (sink.all.isEmpty() && (System.currentTimeMillis() - start) < 2000) {
                 Thread.onSpinWait(); // Alternativa eficiente a sleep para esperas ultra cortas
@@ -115,8 +119,9 @@ class MessagePassingEngineTest {
             boolean removed = engine.remove("D1", "nope");
             assertFalse(removed);
 
-            // CORRECCIÓN LÍNEA 161: Para verificar que NO hay más pushes, 
-            // simplemente verificamos el tamaño de la lista tras una espera corta en el latch
+            // CORRECCIÓN LÍNEA 161: Para verificar que NO hay más pushes,
+            // simplemente verificamos el tamaño de la lista tras una espera corta en el
+            // latch
             // (que sabemos que no bajará de 0)
             sink.latch.await(150, TimeUnit.MILLISECONDS);
 
@@ -135,5 +140,18 @@ class MessagePassingEngineTest {
         engine.shutdown();
         assertDoesNotThrow(() -> engine.accept(new PhotoMsg("x", "D1", PhotoMsg.Urgency.ALTO, 1L)));
         assertFalse(sink.await(200, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void testEngineLifecycle() throws InterruptedException {
+        MessagePassingEngine engine = new MessagePassingEngine(new MPDoctorQueueManager(), new ConsoleUpdateSink());
+
+        // Test shutdown (Cubre la interrupción del hilo)
+        engine.shutdown();
+
+        // Test loadAll con datos (Cubre la reconstrucción del estado)
+        Map<String, List<QueueUpdate.QueueItem>> state = Map.of(
+                "D1", List.of(new QueueUpdate.QueueItem("img1", "BAJO", 1000L)));
+        assertDoesNotThrow(() -> engine.loadAll(state));
     }
 }
