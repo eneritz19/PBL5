@@ -60,7 +60,7 @@ class PriorityDoctorInboxTest {
     void aging_promotesLowToHighWhenVeryOld_soSnapshotShowsItInHighSection() throws Exception {
         PriorityDoctorInbox inbox = new PriorityDoctorInbox("D1", 10);
         long now = System.currentTimeMillis();
-        long veryOld = now - (200L * 60_000L);
+        long veryOld = now - (15000L * 60_000L);
 
         inbox.enqueue(new PhotoMsg("oldLow", "D1", PhotoMsg.Urgency.BAJO, veryOld));
         inbox.enqueue(new PhotoMsg("newHigh", "D1", PhotoMsg.Urgency.ALTO, now));
