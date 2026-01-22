@@ -22,7 +22,7 @@ public class PriorityDoctorInbox implements DoctorInbox {
     private static final long MIN = 60_000L; 
     private static final long T_LOW_TO_MED_MS  = 2880 * MIN; 
     private static final long T_MED_TO_HIGH_MS = 7200 * MIN; 
-    private static final long T_LOW_TO_HIGH_MS = 1440 * MIN; 
+    private static final long T_LOW_TO_HIGH_MS = 14400 * MIN; 
 
     public PriorityDoctorInbox(String doctorId, int capacity) {
         this.doctorId = doctorId;
