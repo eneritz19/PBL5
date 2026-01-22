@@ -1,0 +1,30 @@
+# 1. Compilacion (Build)
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# pom.xml y descargamos dependencias
+COPY pom.xml .
+RUN mvn dependency:go-offline
+
+# copiar el codigo fuente
+COPY src ./src
+
+# Compilar y copiar las dependecnias a la carpeta target/lib
+RUN mvn clean package dependency:copy-dependencies -DoutputDirectory=target/lib -DskipTests
+
+# 2. Ejecucion (Runtime)
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+
+# copiar el JAR de tu aplicacion
+COPY --from=build /app/target/pbl5-1.0-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/lib ./lib
+
+# copiar la carpeta 'lib'
+COPY --from=build /app/target/lib ./lib
+
+# exponer el puerto del servidor HTTP
+EXPOSE 8082
+
+# arranque
+ENTRYPOINT ["java", "-cp", "app.jar:lib/*", "com.example.Main"]

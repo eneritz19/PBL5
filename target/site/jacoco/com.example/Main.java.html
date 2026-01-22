@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Main.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">pbl5</a> &gt; <a href="index.source.html" class="el_package">com.example</a> &gt; <span class="el_source">Main.java</span></div><h1>Main.java</h1><pre class="source lang-java linenums">package com.example;
+
+import com.google.gson.Gson;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+<span class="nc" id="L21">public class Main {</span>
+
+    private static final String MODE_MONITOR = &quot;monitor&quot;;
+    private static final String MODE_MP = &quot;mp&quot;;
+    private static final String METHOD_OPTIONS = &quot;OPTIONS&quot;;
+    private static final String ERROR_MSG_GENERIC = &quot;Error procesando petición&quot;;
+    private static final String JSON_ERROR_PREFIX = &quot;{\&quot;error\&quot;:\&quot;&quot;;
+
+    private static Engine monitorEngine;
+    private static Engine mpEngine;
+    private static ActiveEngine active;
+<span class="fc" id="L32">    private static final Gson gson = new Gson();</span>
+<span class="fc" id="L33">    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());</span>
+
+    private static UpdateSink sink;
+<span class="fc" id="L36">    private static final Object modeLock = new Object();</span>
+    private static final int PER_DOCTOR_CAPACITY = 20;
+
+<span class="fc" id="L39">    public static class ActiveEngine {</span>
+<span class="fc" id="L40">        final AtomicReference&lt;Engine&gt; current = new AtomicReference&lt;&gt;();</span>
+<span class="fc" id="L41">        final AtomicReference&lt;String&gt; mode = new AtomicReference&lt;&gt;(MODE_MONITOR);</span>
+    }
+
+    public static void main(String[] args) throws Exception {
+<span class="fc" id="L45">        System.out.println(&quot;Iniciando SkinXpert Operating Service (HTTP)...&quot;);</span>
+
+<span class="fc" id="L47">        sink = new ConsoleUpdateSink();</span>
+
+<span class="fc" id="L49">        monitorEngine = new MonitorEngine(new DoctorQueueManager(PER_DOCTOR_CAPACITY), sink);</span>
+<span class="fc" id="L50">        mpEngine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);</span>
+
+<span class="fc" id="L52">        active = new ActiveEngine();</span>
+<span class="fc" id="L53">        active.current.set(monitorEngine);</span>
+<span class="fc" id="L54">        active.mode.set(MODE_MONITOR);</span>
+
+<span class="fc" id="L56">        int port = 8082;</span>
+<span class="nc" id="L57">        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);</span>
+
+<span class="nc" id="L59">        server.createContext(&quot;/add-task&quot;, new TaskHandler());</span>
+<span class="nc" id="L60">        server.createContext(&quot;/remove-task&quot;, new RemoveHandler());</span>
+<span class="nc" id="L61">        server.createContext(&quot;/queue&quot;, new QueueHandler());</span>
+<span class="nc" id="L62">        server.createContext(&quot;/status&quot;, new StatusHandler());</span>
+<span class="nc" id="L63">        server.createContext(&quot;/config&quot;, new ConfigHandler());</span>
+
+<span class="nc" id="L65">        server.setExecutor(Executors.newCachedThreadPool());</span>
+<span class="nc" id="L66">        server.start();</span>
+
+<span class="nc" id="L68">        System.out.println(&quot;Servidor escuchando en: http://localhost:&quot; + port);</span>
+<span class="nc" id="L69">    }</span>
+
+<span class="fc" id="L71">    public static class TaskHandler implements HttpHandler {</span>
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+<span class="fc" id="L74">            addCorsHeaders(exchange);</span>
+
+<span class="fc bfc" id="L76" title="All 2 branches covered.">            if (METHOD_OPTIONS.equalsIgnoreCase(exchange.getRequestMethod())) {</span>
+<span class="fc" id="L77">                exchange.sendResponseHeaders(204, -1);</span>
+<span class="fc" id="L78">                return;</span>
+            }
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">            if (!&quot;POST&quot;.equalsIgnoreCase(exchange.getRequestMethod())) {</span>
+<span class="nc" id="L81">                exchange.sendResponseHeaders(405, -1);</span>
+<span class="nc" id="L82">                return;</span>
+            }
+
+            try {
+<span class="fc" id="L86">                String body = readBody(exchange);</span>
+<span class="fc" id="L87">                TaskDto dto = gson.fromJson(body, TaskDto.class);</span>
+
+<span class="pc bpc" id="L89" title="3 of 6 branches missed.">                if (dto == null || dto.imageCode == null || dto.imageCode.isBlank()) {</span>
+<span class="nc" id="L90">                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + &quot;Invalid JSON or missing imageCode\&quot;}&quot;);</span>
+<span class="nc" id="L91">                    return;</span>
+                }
+<span class="fc bfc" id="L93" title="All 2 branches covered.">                if (dto.doctorId &lt;= 0) {</span>
+<span class="fc" id="L94">                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + &quot;Invalid doctorId\&quot;}&quot;);</span>
+<span class="fc" id="L95">                    return;</span>
+                }
+
+<span class="fc" id="L98">                String doctorIdStr = &quot;D&quot; + dto.doctorId;</span>
+                
+                PhotoMsg.Urgency urgencyEnum;
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                if (dto.urgency &gt;= 3) {</span>
+<span class="fc" id="L102">                    urgencyEnum = PhotoMsg.Urgency.ALTO;</span>
+                } else {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                    urgencyEnum = (dto.urgency == 2) ? PhotoMsg.Urgency.MEDIO : PhotoMsg.Urgency.BAJO;</span>
+                }
+
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">                PhotoMsg photo = (dto.createdAtMillis != null)</span>
+<span class="fc" id="L108">                        ? new PhotoMsg(dto.imageCode, doctorIdStr, urgencyEnum, dto.createdAtMillis)</span>
+<span class="pc" id="L109">                        : new PhotoMsg(dto.imageCode, doctorIdStr, urgencyEnum);</span>
+
+                Engine engineSnapshot;
+                String modeSnapshot;
+<span class="fc" id="L113">                synchronized (modeLock) {</span>
+<span class="fc" id="L114">                    engineSnapshot = active.current.get();</span>
+<span class="fc" id="L115">                    modeSnapshot = active.mode.get();</span>
+<span class="fc" id="L116">                }</span>
+
+<span class="fc" id="L118">                engineSnapshot.accept(photo);</span>
+<span class="fc" id="L119">                sendResponse(exchange, 200, &quot;{\&quot;status\&quot;:\&quot;ok\&quot;,\&quot;mode\&quot;:\&quot;&quot; + modeSnapshot + &quot;\&quot;}&quot;);</span>
+
+<span class="nc" id="L121">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L122">                LOGGER.log(Level.SEVERE, &quot;Interrumpido durante add-task&quot;, e);</span>
+<span class="nc" id="L123">                Thread.currentThread().interrupt();</span>
+<span class="fc" id="L124">            } catch (Exception e) {</span>
+<span class="fc" id="L125">                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);</span>
+<span class="fc" id="L126">                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + &quot;\&quot;}&quot;);</span>
+<span class="pc" id="L127">            }</span>
+<span class="fc" id="L128">        }</span>
+    }
+
+<span class="fc" id="L131">    public static class RemoveHandler implements HttpHandler {</span>
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+<span class="fc" id="L134">            addCorsHeaders(exchange);</span>
+
+<span class="fc bfc" id="L136" title="All 2 branches covered.">            if (METHOD_OPTIONS.equalsIgnoreCase(exchange.getRequestMethod())) {</span>
+<span class="fc" id="L137">                exchange.sendResponseHeaders(204, -1);</span>
+<span class="fc" id="L138">                return;</span>
+            }
+            
+<span class="fc" id="L141">            processRemoveRequest(exchange);</span>
+<span class="fc" id="L142">        }</span>
+
+        private void processRemoveRequest(HttpExchange exchange) throws IOException {
+            try {
+<span class="fc" id="L146">                String body = readBody(exchange);</span>
+<span class="fc" id="L147">                RemoveDto dto = gson.fromJson(body, RemoveDto.class);</span>
+
+<span class="pc bpc" id="L149" title="2 of 6 branches missed.">                if (dto == null || dto.imageCode == null || dto.doctorId &lt;= 0) {</span>
+<span class="fc" id="L150">                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + &quot;Invalid JSON (doctorId, imageCode required)\&quot;}&quot;);</span>
+<span class="fc" id="L151">                    return;</span>
+                }
+
+                Engine engineSnapshot;
+<span class="fc" id="L155">                synchronized (modeLock) {</span>
+<span class="fc" id="L156">                    engineSnapshot = active.current.get();</span>
+<span class="fc" id="L157">                }</span>
+
+<span class="fc" id="L159">                boolean removed = engineSnapshot.remove(&quot;D&quot; + dto.doctorId, dto.imageCode);</span>
+<span class="fc" id="L160">                sendResponse(exchange, 200, &quot;{\&quot;removed\&quot;:&quot; + removed + &quot;}&quot;);</span>
+
+<span class="nc" id="L162">            } catch (InterruptedException ie) {</span>
+<span class="nc" id="L163">                LOGGER.log(Level.SEVERE, &quot;Interrumpido en remove&quot;, ie);</span>
+<span class="nc" id="L164">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L165">                sendResponse(exchange, 500, JSON_ERROR_PREFIX + &quot;interrupted\&quot;}&quot;);</span>
+<span class="nc" id="L166">            } catch (Exception e) {</span>
+<span class="nc" id="L167">                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);</span>
+<span class="nc" id="L168">                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + &quot;\&quot;}&quot;);</span>
+<span class="pc" id="L169">            }</span>
+<span class="fc" id="L170">        }</span>
+    }
+
+<span class="fc" id="L173">    public static class QueueHandler implements HttpHandler {</span>
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+<span class="fc" id="L176">            addCorsHeaders(exchange);</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">            if (!&quot;GET&quot;.equalsIgnoreCase(exchange.getRequestMethod())) {</span>
+<span class="fc" id="L178">                exchange.sendResponseHeaders(405, -1);</span>
+<span class="fc" id="L179">                return;</span>
+            }
+
+            try {
+<span class="fc" id="L183">                String q = exchange.getRequestURI().getQuery();</span>
+<span class="fc" id="L184">                String raw = extractQuery(q, &quot;doctorId&quot;);</span>
+
+<span class="pc bpc" id="L186" title="1 of 4 branches missed.">                if (raw == null || raw.isBlank()) {</span>
+<span class="fc" id="L187">                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + &quot;Missing/invalid doctorId\&quot;}&quot;);</span>
+<span class="fc" id="L188">                    return;</span>
+                }
+
+<span class="fc bfc" id="L191" title="All 2 branches covered.">                String doctorIdStr = raw.trim().matches(&quot;(?i)^d\\d+$&quot;) ? raw.trim().toUpperCase() : &quot;D&quot; + raw.trim();</span>
+
+                Engine engineSnapshot;
+                String modeSnapshot;
+<span class="fc" id="L195">                synchronized (modeLock) {</span>
+<span class="fc" id="L196">                    engineSnapshot = active.current.get();</span>
+<span class="fc" id="L197">                    modeSnapshot = active.mode.get();</span>
+<span class="fc" id="L198">                }</span>
+
+<span class="fc" id="L200">                QueueUpdate update = engineSnapshot.getQueue(doctorIdStr);</span>
+<span class="fc" id="L201">                Map&lt;String, Object&gt; payload = Map.of(</span>
+                        &quot;mode&quot;, modeSnapshot,
+                        &quot;doctorId&quot;, update.doctorId,
+                        &quot;queue&quot;, update.queueOrdered,
+                        &quot;sizes&quot;, update.sizes
+                );
+<span class="fc" id="L207">                sendResponse(exchange, 200, gson.toJson(payload));</span>
+
+<span class="nc" id="L209">            } catch (Exception e) {</span>
+<span class="nc" id="L210">                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);</span>
+<span class="nc" id="L211">                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + &quot;\&quot;}&quot;);</span>
+<span class="fc" id="L212">            }</span>
+<span class="fc" id="L213">        }</span>
+
+        private String extractQuery(String query, String key) {
+<span class="pc bpc" id="L216" title="1 of 4 branches missed.">            if (query == null || query.isBlank()) return null;</span>
+<span class="pc bpc" id="L217" title="1 of 2 branches missed.">            for (String p : query.split(&quot;&amp;&quot;)) {</span>
+<span class="fc" id="L218">                String[] kv = p.split(&quot;=&quot;, 2);</span>
+<span class="pc bpc" id="L219" title="2 of 4 branches missed.">                if (kv.length == 2 &amp;&amp; kv[0].equals(key)) return kv[1];</span>
+            }
+<span class="nc" id="L221">            return null;</span>
+        }
+    }
+
+<span class="nc" id="L225">    public static class StatusHandler implements HttpHandler {</span>
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+<span class="nc" id="L228">            addCorsHeaders(exchange);</span>
+            String stateSnapshot;
+            String modeSnapshot;
+<span class="nc" id="L231">            synchronized (modeLock) {</span>
+<span class="nc" id="L232">                stateSnapshot = active.current.get().state();</span>
+<span class="nc" id="L233">                modeSnapshot = active.mode.get();</span>
+<span class="nc" id="L234">            }</span>
+<span class="nc" id="L235">            sendResponse(exchange, 200, gson.toJson(Map.of(&quot;mode&quot;, modeSnapshot, &quot;state&quot;, stateSnapshot)));</span>
+<span class="nc" id="L236">        }</span>
+    }
+
+<span class="fc" id="L239">    public static class ConfigHandler implements HttpHandler {</span>
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+<span class="fc" id="L242">            addCorsHeaders(exchange);</span>
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">            if (METHOD_OPTIONS.equalsIgnoreCase(exchange.getRequestMethod())) {</span>
+<span class="nc" id="L244">                exchange.sendResponseHeaders(204, -1);</span>
+<span class="nc" id="L245">                return;</span>
+            }
+
+            try {
+<span class="fc" id="L249">                String body = readBody(exchange);</span>
+<span class="fc" id="L250">                ConfigDto config = gson.fromJson(body, ConfigDto.class);</span>
+<span class="pc bpc" id="L251" title="2 of 4 branches missed.">                String desired = (config != null &amp;&amp; config.mode != null) ? config.mode.trim().toLowerCase() : &quot;&quot;;</span>
+
+<span class="pc bpc" id="L253" title="1 of 4 branches missed.">                if (!desired.equals(MODE_MP) &amp;&amp; !desired.equals(MODE_MONITOR)) {</span>
+<span class="nc" id="L254">                    sendResponse(exchange, 400, JSON_ERROR_PREFIX + &quot;mode must be monitor|mp\&quot;}&quot;);</span>
+<span class="nc" id="L255">                    return;</span>
+                }
+
+<span class="fc" id="L258">                synchronized (modeLock) {</span>
+<span class="fc bfc" id="L259" title="All 2 branches covered.">                    if (!desired.equals(active.mode.get())) {</span>
+<span class="fc" id="L260">                        Map&lt;String, List&lt;QueueUpdate.QueueItem&gt;&gt; state = active.current.get().dumpAll();</span>
+<span class="fc" id="L261">                        active.current.get().shutdown();</span>
+
+<span class="fc bfc" id="L263" title="All 2 branches covered.">                        if (desired.equals(MODE_MP)) {</span>
+<span class="fc" id="L264">                            mpEngine = new MessagePassingEngine(new MPDoctorQueueManager(), sink);</span>
+<span class="fc" id="L265">                            mpEngine.loadAll(state);</span>
+<span class="fc" id="L266">                            active.current.set(mpEngine);</span>
+<span class="fc" id="L267">                            active.mode.set(MODE_MP);</span>
+                        } else {
+<span class="fc" id="L269">                            monitorEngine = new MonitorEngine(new DoctorQueueManager(PER_DOCTOR_CAPACITY), sink);</span>
+<span class="fc" id="L270">                            monitorEngine.loadAll(state);</span>
+<span class="fc" id="L271">                            active.current.set(monitorEngine);</span>
+<span class="fc" id="L272">                            active.mode.set(MODE_MONITOR);</span>
+                        }
+                    }
+<span class="fc" id="L275">                }</span>
+<span class="fc" id="L276">                sendResponse(exchange, 200, &quot;{\&quot;current_mode\&quot;:\&quot;&quot; + active.mode.get() + &quot;\&quot;}&quot;);</span>
+
+<span class="nc" id="L278">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L279">                LOGGER.log(Level.SEVERE, &quot;Interrupcion en config&quot;, e);</span>
+<span class="nc" id="L280">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L281">            } catch (Exception e) {</span>
+<span class="nc" id="L282">                LOGGER.log(Level.SEVERE, ERROR_MSG_GENERIC, e);</span>
+<span class="nc" id="L283">                sendResponse(exchange, 500, JSON_ERROR_PREFIX + safeMsg(e.getMessage()) + &quot;\&quot;}&quot;);</span>
+<span class="pc" id="L284">            }</span>
+<span class="fc" id="L285">        }</span>
+    }
+
+    private static String readBody(HttpExchange exchange) throws IOException {
+<span class="fc" id="L289">        try (BufferedReader br = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {</span>
+<span class="fc" id="L290">            StringBuilder sb = new StringBuilder();</span>
+            String line;
+<span class="fc bfc" id="L292" title="All 2 branches covered.">            while ((line = br.readLine()) != null) sb.append(line);</span>
+<span class="fc" id="L293">            return sb.toString();</span>
+        }
+    }
+
+    private static void sendResponse(HttpExchange exchange, int code, String response) throws IOException {
+<span class="fc" id="L298">        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);</span>
+<span class="fc" id="L299">        exchange.getResponseHeaders().set(&quot;Content-Type&quot;, &quot;application/json; charset=utf-8&quot;);</span>
+<span class="fc" id="L300">        exchange.sendResponseHeaders(code, bytes.length);</span>
+<span class="fc" id="L301">        try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }</span>
+<span class="fc" id="L302">    }</span>
+
+    private static void addCorsHeaders(HttpExchange exchange) {
+<span class="fc" id="L305">        exchange.getResponseHeaders().add(&quot;Access-Control-Allow-Origin&quot;, &quot;*&quot;);</span>
+<span class="fc" id="L306">        exchange.getResponseHeaders().add(&quot;Access-Control-Allow-Methods&quot;, &quot;GET, POST, OPTIONS&quot;);</span>
+<span class="fc" id="L307">        exchange.getResponseHeaders().add(&quot;Access-Control-Allow-Headers&quot;, &quot;Content-Type,Authorization&quot;);</span>
+<span class="fc" id="L308">    }</span>
+
+    public static String safeMsg(String msg) {
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        return (msg == null) ? &quot;unknown&quot; : msg.replace(&quot;\&quot;&quot;, &quot;'&quot;);</span>
+    }
+
+<span class="fc" id="L314">    public static class TaskDto { </span>
+        String imageCode; 
+        int doctorId; 
+        int urgency; 
+        Long createdAtMillis; 
+    }
+    
+<span class="fc" id="L321">    public static class RemoveDto { </span>
+        int doctorId; 
+        String imageCode; 
+    }
+    
+<span class="fc" id="L326">    public static class ConfigDto { </span>
+        String mode; 
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
