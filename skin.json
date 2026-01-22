@@ -1,10 +1,36 @@
 [
     {
+        "id": "12faa38fad3a23d0",
+        "type": "tab",
+        "label": "Nodos recuperados",
+        "disabled": false,
+        "info": "A los nodos de este flujo les faltaba una identificación de flujo válida cuando se importaron. Se han agregado a este flujo para que puedas restaurarlos o eliminarlos.",
+        "env": []
+    },
+    {
         "id": "f6f2187d.f17ca8",
         "type": "tab",
         "label": "Flow 1",
         "disabled": false,
         "info": ""
+    },
+    {
+        "id": "9c12c0e15685ca58",
+        "type": "MySQLdatabase",
+        "name": "skinxpert_mysql",
+        "host": "db",
+        "port": "3306",
+        "db": "skinXpert",
+        "tz": "+01:00",
+        "charset": "UTF8"
+    },
+    {
+        "id": "eeeda9a9257d2fa3",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-mysql": "2.0.0"
+        }
     },
     {
         "id": "3cc11d24.ff01a2",
@@ -3206,21 +3232,82 @@
         ]
     },
     {
-        "id": "9c12c0e15685ca58",
-        "type": "MySQLdatabase",
-        "name": "skinxpert_mysql",
-        "host": "db",
-        "port": "3306",
-        "db": "skinXpert",
-        "tz": "+01:00",
-        "charset": "UTF8"
+        "id": "img_server_in",
+        "type": "http in",
+        "z": "f6f2187d.f17ca8",
+        "name": "GET /uploads/:imagen",
+        "url": "/uploads/:imagen",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 4480,
+        "wires": [
+            [
+                "img_path_config"
+            ]
+        ]
     },
     {
-        "id": "eeeda9a9257d2fa3",
-        "type": "global-config",
-        "env": [],
-        "modules": {
-            "node-red-node-mysql": "2.0.0"
-        }
+        "id": "img_path_config",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Configurar Ruta",
+        "func": "// 1. Obtenemos el nombre de la foto que pide el móvil\nvar nombreFoto = msg.req.params.imagen;\n\n// 2. Definimos la ruta EXACTA que tienes en tu Docker\nvar uploadDir = \"/usr/share/nginx/html/uploads/\"; \n\n// Asignamos la ruta completa al archivo\nmsg.filename = uploadDir + nombreFoto;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 4480,
+        "wires": [
+            [
+                "read_file"
+            ]
+        ]
+    },
+    {
+        "id": "read_file",
+        "type": "file in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Leer Archivo",
+        "filename": "",
+        "format": "",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 590,
+        "y": 4480,
+        "wires": [
+            [
+                "img_response"
+            ]
+        ]
+    },
+    {
+        "id": "img_response",
+        "type": "http response",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "statusCode": "",
+        "headers": {
+            "content-type": "image/jpeg"
+        },
+        "x": 790,
+        "y": 4480,
+        "wires": []
+    },
+    {
+        "id": "fcc33af771f16f44",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "MovileFotos",
+        "info": "",
+        "x": 130,
+        "y": 4420,
+        "wires": []
     }
 ]

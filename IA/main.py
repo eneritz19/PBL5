@@ -9,8 +9,9 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 
 app = FastAPI(title="SkinXpert API (Keras)")
 
-
-# CONFIG
+# ============================================================
+# 0) CONFIG
+# ============================================================
 SEED = 42
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
@@ -24,7 +25,9 @@ MODEL1_PATH = MODELS_DIR / "model1_triage_final.keras"
 MODEL2_PATH = MODELS_DIR / "model2_final.keras"
 MODEL3_PATH = MODELS_DIR / "model3_best_finetuned.keras"
 
-# CLASES FIJAS
+# ============================================================
+# 1) CLASES (FIJAS) — IMPORTANTE: mismo orden que class_indices
+# ============================================================
 CLASSES_M1 = ["Cancer", "Nevus", "Other_Benign"]
 CLASSES_M2 = ["AK", "BCC", "MEL", "SCC"]
 CLASSES_M3 = [
@@ -32,9 +35,11 @@ CLASSES_M3 = [
     "Nevus", "Psoriasis", "Systemic", "Urticaria", "Viral_Infection"
 ]
 
-# MAPEO DE PREDICCION A ID DE BASE DE DATOS
+#============================================================
+# 2) MAPEO DE PREDICCIÓN A ID DE BASE DE DATOS
+# ============================================================
 DISEASE_TO_ID = {
-    # Modelo 2 (canceres y lesiones premalignas)
+    # Modelo 2 (cánceres y lesiones premalignas)
     "AK": 2,        # Actinic Keratosis
     "BCC": 3,       # Basal Cell Carcinoma
     "MEL": 4,       # Melanoma
@@ -53,23 +58,29 @@ DISEASE_TO_ID = {
     "Viral_Infection": 14    # Viral Infection
 }
 
-# URGENCIA / RIESGO
+# ============================================================
+# 3) URGENCIA / RIESGO
+# ============================================================
 HIGH_URGENCY = {"MEL", "SCC"}
 MEDIUM_URGENCY = {"BCC", "AK"}
 LOW_BENIGN = {"Nevus", "Benign_Tumor", "Acne_Rosacea"}
 MEDIUM_BENIGN = {"Fungal_Infection", "Systemic", "Viral_Infection"}
 
-# UMBRALES DE CONFIANZA (REJECT)
+# ============================================================
+# 4) UMBRALES DE CONFIANZA (REJECT)
+# ============================================================
 THRESH_M1_CANCER = 0.35
 REJECT_TOP1 = 0.45
 REJECT_MARGIN = 0.10
 TOPK = 3
 
-# CARGA MODELOS (global)
-print("Buscando modelos en:", MODELS_DIR)
+# ============================================================
+# 5) CARGA MODELOS (global)
+# ============================================================
+print("🔍 Buscando modelos en:", MODELS_DIR)
 print("=" * 60)
 
-# VERIFICACION 
+# ✅ VERIFICACIÓN MEJORADA
 if not MODEL1_PATH.exists():
     print(f"NO ENCONTRADO: {MODEL1_PATH}")
     print(f"   Contenido de {MODELS_DIR}:")
@@ -89,7 +100,7 @@ else:
     print(f"Encontrado: {MODEL3_PATH}")
 
 print("=" * 60)
-print("Cargando modelos en memoria...")
+print("⏳ Cargando modelos en memoria...")
 
 model1 = tf.keras.models.load_model(MODEL1_PATH)
 model2 = tf.keras.models.load_model(MODEL2_PATH)
@@ -101,8 +112,10 @@ print(f"   M2 output: {model2.output_shape} | classes: {len(CLASSES_M2)}")
 print(f"   M3 output: {model3.output_shape} | classes: {len(CLASSES_M3)}")
 print("=" * 60)
 
-# HELPERS
 
+# ============================================================
+# 6) HELPERS
+# ============================================================
 def pil_to_tensor(image: Image.Image) -> np.ndarray:
     """PIL -> np array (1, IMG_SIZE, IMG_SIZE, 3) preprocesado como EfficientNet."""
     img = image.convert("RGB").resize((IMG_SIZE, IMG_SIZE))
@@ -177,19 +190,19 @@ def pipeline_predict(img_arr: np.ndarray):
       2) M2 o M3 => predicción final
     """
 
-    # M1 TRIAGE 
+    # --- M1 TRIAGE ---
     raw1 = model1.predict(img_arr, verbose=0)[0]
-    probs1 = probs_from_model_output(raw1)  
+    probs1 = probs_from_model_output(raw1)  # ✅ Verifica antes de aplicar softmax
     top1_m1 = topk(probs1, CLASSES_M1, k=3)
 
     p_cancer = float(probs1[CLASSES_M1.index("Cancer")])
     pred_m1 = CLASSES_M1[int(np.argmax(probs1))]
 
-    # Decision de ruta
+    # Decisión de ruta
     if pred_m1 == "Cancer" or p_cancer >= THRESH_M1_CANCER:
         route = "M2"
         raw2 = model2.predict(img_arr, verbose=0)[0]
-        probs2 = probs_from_model_output(raw2)  
+        probs2 = probs_from_model_output(raw2)  # Verifica antes de aplicar softmax
         top_final = topk(probs2, CLASSES_M2, k=TOPK)
         pred_final_label = top_final[0]["label"]
         pred_confidence = top_final[0]["prob"]
@@ -199,7 +212,7 @@ def pipeline_predict(img_arr: np.ndarray):
     else:
         route = "M3"
         raw3 = model3.predict(img_arr, verbose=0)[0]
-        probs3 = probs_from_model_output(raw3)  
+        probs3 = probs_from_model_output(raw3)  # Verifica antes de aplicar softmax
         top_final = topk(probs3, CLASSES_M3, k=TOPK)
         pred_final_label = top_final[0]["label"]
         pred_confidence = top_final[0]["prob"]
@@ -217,11 +230,11 @@ def pipeline_predict(img_arr: np.ndarray):
     return {
         # CAMPOS PRINCIPALES PARA NODE-RED:
         "id_skindiseases": disease_id,
-        "confianza": pred_confidence, 
+        "confianza": pred_confidence,  # Ahora será 0-1 correctamente (no 0.5 fijo)
         "disease_name": pred_final_label,
         "urgency_label": urgency,
         
-        # INFORMACION ADICIONAL:
+        # INFORMACIÓN ADICIONAL:
         "status": status,
         "route_used": route,
         "m1": {
@@ -238,8 +251,9 @@ def pipeline_predict(img_arr: np.ndarray):
         "decision_explanation": explanation
     }
 
-# ENDPOINTS
-
+# ============================================================
+# 7) ENDPOINTS
+# ============================================================
 @app.post("/predecir")
 async def predict(file: UploadFile = File(...)):
     """
